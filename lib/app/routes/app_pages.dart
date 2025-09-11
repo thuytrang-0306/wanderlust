@@ -8,6 +8,8 @@ import 'package:wanderlust/presentation/pages/auth/forgot_password/forgot_passwo
 import 'package:wanderlust/presentation/pages/auth/verify_email/verify_email_page.dart';
 import 'package:wanderlust/presentation/pages/home/home_page.dart';
 import 'package:wanderlust/presentation/pages/main/main_page.dart';
+import 'package:wanderlust/presentation/pages/typography_showcase.dart';
+import 'package:wanderlust/presentation/pages/design_system_showcase.dart';
 
 part 'app_routes.dart';
 
@@ -54,6 +56,14 @@ class AppPages {
     GetPage(
       name: Routes.HOME,
       page: () => const HomePage(),
+    ),
+    GetPage(
+      name: '/typography',
+      page: () => const TypographyShowcase(),
+    ),
+    GetPage(
+      name: '/design-system',
+      page: () => const DesignSystemShowcase(),
     ),
   ];
 }

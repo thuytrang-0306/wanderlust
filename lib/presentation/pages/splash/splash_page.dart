@@ -53,8 +53,8 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     await Future.delayed(const Duration(seconds: 3));
     
     // Check if user has seen onboarding
-    // For now, always go to onboarding
-    Get.offNamed(Routes.ONBOARDING);
+    // For now, go to design system showcase to test our base
+    Get.offNamed('/design-system');
   }
   
   @override
@@ -111,10 +111,11 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
               opacity: _fadeAnimation,
               child: Text(
                 'Wanderlust',
-                style: AppTypography.heading1.copyWith(
+                style: AppTypography.h1.copyWith(
                   color: AppColors.white,
-                  fontSize: 36.sp,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 40.sp,
+                  fontWeight: AppTypography.bold,
+                  letterSpacing: -1,
                 ),
               ),
             ),
@@ -123,8 +124,9 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
               opacity: _fadeAnimation,
               child: Text(
                 'Explore the World',
-                style: AppTypography.bodyLarge.copyWith(
+                style: AppTypography.bodyL.copyWith(
                   color: AppColors.white.withValues(alpha: 0.9),
+                  fontWeight: AppTypography.medium,
                 ),
               ),
             ),

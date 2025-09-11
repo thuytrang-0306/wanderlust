@@ -7,11 +7,18 @@ import 'package:wanderlust/app/config/app_theme.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 import 'package:wanderlust/app/bindings/initial_binding.dart';
 import 'package:wanderlust/core/services/firebase_service.dart';
+import 'package:wanderlust/core/services/storage_service.dart';
+import 'package:wanderlust/core/services/connectivity_service.dart';
+import 'package:wanderlust/core/services/image_service.dart';
+import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:wanderlust/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Logger
+  LoggerService.init();
   
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
@@ -34,7 +41,12 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // Initialize services
+  await Get.putAsync(() => StorageService().init());
   await Get.putAsync(() => FirebaseService().init());
+  Get.put(ConnectivityService());
+  Get.put(ImageService());
   
   runApp(const WanderlustApp());
 }

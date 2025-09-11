@@ -19,7 +19,7 @@ class AppTheme {
       onError: AppColors.white,
     ),
     scaffoldBackgroundColor: AppColors.background,
-    fontFamily: AppTypography.fontFamily,
+    fontFamily: 'Gilroy',
     
     // AppBar Theme
     appBarTheme: AppBarTheme(
@@ -27,7 +27,7 @@ class AppTheme {
       elevation: 0,
       centerTitle: true,
       iconTheme: const IconThemeData(color: AppColors.textPrimary),
-      titleTextStyle: AppTypography.heading5,
+      titleTextStyle: AppTypography.h3,
     ),
     
     // Elevated Button Theme
@@ -86,7 +86,7 @@ class AppTheme {
         borderRadius: BorderRadius.circular(12.r),
         borderSide: const BorderSide(color: AppColors.error),
       ),
-      hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textHint),
+      hintStyle: AppTypography.inputHint,
     ),
     
     // Card Theme
@@ -138,7 +138,7 @@ class AppTheme {
       onError: AppColors.white,
     ),
     scaffoldBackgroundColor: const Color(0xFF121212),
-    fontFamily: AppTypography.fontFamily,
+    fontFamily: 'Gilroy',
     
     // Similar configurations for dark theme...
     // You can customize these later based on your dark mode design

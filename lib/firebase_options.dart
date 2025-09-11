@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -64,5 +61,13 @@ class DefaultFirebaseOptions {
     projectId: 'wanderlust-19cb5',
     storageBucket: 'wanderlust-19cb5.firebasestorage.app',
     iosBundleId: 'com.wanderlust.app',
+  );
+  
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyAqx10GRxcUF2NzrbKfSxxEc0AX1zpWzFQ',
+    appId: '1:399185771213:web:placeholder',
+    messagingSenderId: '399185771213',
+    projectId: 'wanderlust-19cb5',
+    storageBucket: 'wanderlust-19cb5.firebasestorage.app',
   );
 }

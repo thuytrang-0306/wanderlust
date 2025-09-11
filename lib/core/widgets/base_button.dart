@@ -45,12 +45,12 @@ class BaseButton extends StatelessWidget {
   double _getHeight() {
     switch (size) {
       case ButtonSize.small:
-        return AppSpacing.buttonHeightSm;
+        return AppSpacing.buttonHeightSM;
       case ButtonSize.large:
-        return AppSpacing.buttonHeightLg;
+        return AppSpacing.buttonHeightLG;
       case ButtonSize.medium:
       default:
-        return AppSpacing.buttonHeightMd;
+        return AppSpacing.buttonHeightMD;
     }
   }
   
