@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get/get.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 
@@ -41,6 +42,13 @@ class ConnectivityService extends GetxService {
     _isChecking.value = true;
     
     try {
+      // For web platform, assume connected (browser handles connectivity)
+      if (kIsWeb) {
+        _isConnected.value = true;
+        return true;
+      }
+      
+      // For mobile platforms, check actual connectivity
       final result = await InternetAddress.lookup('google.com')
           .timeout(const Duration(seconds: 3));
       
@@ -65,6 +73,11 @@ class ConnectivityService extends GetxService {
       }
       return false;
     } catch (e) {
+      // On web, this will always throw, so assume connected
+      if (kIsWeb) {
+        _isConnected.value = true;
+        return true;
+      }
       LoggerService.e('Connectivity check error', error: e);
       return _isConnected.value;
     } finally {
