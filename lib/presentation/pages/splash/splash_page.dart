@@ -53,8 +53,8 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     await Future.delayed(const Duration(seconds: 3));
     
     // Check if user has seen onboarding
-    // For now, go to design system showcase to test our base
-    Get.offNamed('/design-system');
+    // For now, always go to onboarding
+    Get.offNamed(Routes.ONBOARDING);
   }
   
   @override
