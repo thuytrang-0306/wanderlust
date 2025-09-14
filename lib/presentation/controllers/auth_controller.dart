@@ -14,7 +14,13 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     firebaseUser.bindStream(_auth.authStateChanges());
-    ever(firebaseUser, _setInitialScreen);
+    // Don't auto-navigate, let SplashPage handle initial navigation
+    // ever(firebaseUser, _setInitialScreen);
+    
+    // Just update authentication state
+    ever(firebaseUser, (User? user) {
+      isAuthenticated.value = user != null;
+    });
   }
   
   void _setInitialScreen(User? user) {
