@@ -231,6 +231,25 @@ fvm flutter build apk --debug
 fvm flutter analyze
 ```
 
+### IMPORTANT: Post-Task Cleanup & Optimization
+**🧹 When user confirms "OK" or task completion, ALWAYS:**
+1. **Review all staged changes** - Check what was added/modified
+2. **Identify cleanup opportunities:**
+   - Remove unused files, imports, variables
+   - Delete temporary/test files
+   - Clean up commented code
+   - Remove debug prints/logs
+3. **Optimize for production:**
+   - Check for performance issues
+   - Ensure proper error handling
+   - Verify no hardcoded values
+   - Confirm no sensitive data exposed
+4. **Summary report:**
+   - List what was implemented
+   - Highlight any cleanup done
+   - Note any potential improvements
+5. **Keep codebase production-ready** at all times
+
 **Only run on actual devices/emulators when needed for UI testing:**
 ```bash
 fvm flutter run -d chrome  # Web (fastest runtime)
