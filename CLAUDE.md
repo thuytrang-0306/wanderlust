@@ -291,6 +291,122 @@ fvm flutter run  # Any available device
 - **IMPORTANT: Always run app after implementing features to check for compilation errors**
 - **Fix all errors before proceeding to next task**
 
+### UI/UX Implementation Notes
+- **iPhone Navigation Bar**: The black bar at bottom of iOS screenshots is the iPhone navigation indicator, NOT part of the app design. Do not implement it in the UI.
+- **Design Reference**: Always refer to Figma designs in `/assets/designs/` for accurate UI implementation
+- **Screenshot Reference**: Screenshots in `/assets/screenshots/` may include system UI elements (status bar, navigation bar) that are not part of the app
+
+### 🎯 FIGMA TO FLUTTER CONVERSION RULES (100% Accuracy)
+
+#### 1. ANALYZE DESIGN SYSTEMATICALLY
+When given a design PNG, analyze in this order:
+1. **Layout Structure**: Identify all components top to bottom
+2. **Spacing**: Measure gaps between elements (use 4px grid)
+3. **Typography**: Note all text styles, sizes, weights, colors
+4. **Colors**: Extract exact hex codes from design
+5. **Interactions**: Identify buttons, gestures, animations
+6. **States**: Check for different states (active, inactive, error)
+
+#### 2. COMPONENT MAPPING
+```dart
+// Always use app's base components
+Typography → AppTypography (h1-h4, bodyXL-XS)
+Colors → AppColors (primary, secondary, neutral, semantic)
+Spacing → AppSpacing (s0-s14, based on 4px grid)
+Buttons → Theme buttons with consistent height (48-56h)
+```
+
+#### 3. EXACT MEASUREMENTS
+- **Text Sizes**: Always use exact .sp from design
+- **Spacing**: Round to nearest 4px grid unit
+- **Button Heights**: Standard 48h or 56h
+- **Border Radius**: Use AppSpacing values (s3=12r, s6=24r)
+- **Padding**: Use AppSpacing for consistency
+
+#### 4. COLOR PRECISION
+```dart
+// If color not in AppColors, use exact hex
+Color(0xFF2F3137) // Use exact hex when needed
+AppColors.primary // Use theme colors when available
+```
+
+#### 5. RESPONSIVE RULES
+```dart
+// Images
+height: 0.35.sh // Percentage of screen
+maxHeight: 280.h // Max constraint
+minHeight: 200.h // Min constraint
+
+// Containers
+padding: EdgeInsets.symmetric(horizontal: AppSpacing.s6)
+width: double.infinity // Full width buttons
+
+// Text
+maxLines: 3
+overflow: TextOverflow.ellipsis
+```
+
+#### 6. VIETNAMESE TEXT HANDLING
+- Keep original Vietnamese text from design
+- Use proper font weights for Vietnamese
+- Consider text length for overflow handling
+
+#### 7. COMMON PATTERNS
+```dart
+// Skip button (top right)
+TextStyle(
+  fontSize: 16.sp,
+  fontWeight: FontWeight.w500,
+  color: Color(0xFF2F3137),
+)
+
+// Page indicators
+height: 8.h
+width: currentPage ? 24.w : 8.w
+color: active ? AppColors.primary : AppColors.neutral300
+
+// Bottom padding from device
+padding: EdgeInsets.only(bottom: 67.h)
+```
+
+#### 8. VERIFICATION CHECKLIST
+Before completing any UI task:
+- [ ] All text matches design (size, weight, color)
+- [ ] Spacing matches design (use exact values)
+- [ ] Colors are exact (hex codes or theme colors)
+- [ ] Layout structure identical to design
+- [ ] Responsive on different screen sizes
+- [ ] No overflow errors
+- [ ] Center alignment where needed
+- [ ] Proper padding from screen edges
+
+#### 9. IMPLEMENTATION WORKFLOW
+1. **Read design image** thoroughly
+2. **List all components** and their properties
+3. **Map to app's design system** (colors, typography, spacing)
+4. **Implement with exact values**
+5. **Test on multiple screen sizes**
+6. **Compare screenshot with design**
+7. **Fine-tune until 100% match**
+
+#### 10. QUICK REFERENCE
+```dart
+// Common spacings
+s1: 4.h   s2: 8.h   s3: 12.h  s4: 16.h
+s5: 20.h  s6: 24.h  s7: 28.h  s8: 32.h
+s9: 36.h  s10: 40.h s11: 44.h s12: 48.h
+
+// Common text sizes
+h1: 32.sp  h2: 28.sp  h3: 24.sp  h4: 20.sp
+bodyXL: 20.sp  bodyL: 18.sp  bodyM: 16.sp
+bodyS: 14.sp   bodyXS: 12.sp
+
+// Button heights
+Standard: 48.h
+Large: 56.h
+Small: 40.h
+```
+
 ### Asset Notes
 - `/assets/designs/` folder (21MB) - **FOR REFERENCE ONLY, NOT FOR APP USE**
   - Contains design mockups and specifications
