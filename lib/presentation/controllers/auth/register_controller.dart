@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/services/firebase_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
@@ -95,8 +96,8 @@ class RegisterController extends BaseController {
       // Update display name
       await userCredential.user?.updateDisplayName(nameController.text.trim());
       
-      // Send email verification
-      await userCredential.user?.sendEmailVerification();
+      // Don't send email verification here - let VerifyEmailController handle it
+      // This prevents duplicate sends and rate limiting
       
       LoggerService.i('User registered successfully: ${userCredential.user?.email}');
       
@@ -150,17 +151,58 @@ class RegisterController extends BaseController {
     isSocialLoading.value = true;
     
     try {
-      // TODO: Implement Google Sign In
-      Get.snackbar(
-        'Thông báo',
-        'Tính năng đang được phát triển',
-        snackPosition: SnackPosition.TOP,
+      // Configure Google Sign In
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
       );
+      
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      
+      // If user cancels
+      if (googleUser == null) {
+        isSocialLoading.value = false;
+        return;
+      }
+      
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      
+      // Sign in to Firebase with the Google credential
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      
+      LoggerService.i('Google sign in successful: ${userCredential.user?.email}');
+      
+      // Navigate to home (user is already registered via Google)
+      Get.offAllNamed(Routes.HOME);
+      
+      Get.snackbar(
+        'Đăng ký thành công',
+        'Chào mừng ${userCredential.user?.displayName ?? 'bạn'}!',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Get.theme.primaryColor,
+        colorText: Colors.white,
+      );
+      
     } catch (e) {
       LoggerService.e('Google sign in error: $e');
+      
+      String errorMessage = 'Không thể đăng nhập với Google';
+      if (e.toString().contains('network')) {
+        errorMessage = 'Lỗi kết nối mạng';
+      } else if (e.toString().contains('canceled')) {
+        errorMessage = 'Đăng nhập đã bị hủy';
+      }
+      
       Get.snackbar(
         'Lỗi',
-        'Không thể đăng nhập với Google',
+        errorMessage,
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
         colorText: Colors.white,
