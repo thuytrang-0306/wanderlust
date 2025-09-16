@@ -484,6 +484,54 @@ Small: 40.h
   - `/assets/animations/` - Lottie animations
   - `/assets/fonts/` - Font files
 
+## 📱 Flutter Resolution-Aware Images System
+
+### IMPORTANT: Multi-Resolution Asset Rules
+Flutter's resolution-aware image system allows automatic selection of appropriate assets based on device pixel density.
+
+#### Folder Structure Requirements
+```
+assets/icons/
+├── icon_name.png        # 1x resolution (default)
+├── 2x/
+│   └── icon_name.png    # 2x resolution (same name!)
+└── 3x/
+    └── icon_name.png    # 3x resolution (same name!)
+```
+
+#### Key Rules
+1. **Folder Names**: Must be exactly `2x` and `3x` (NOT `2.0x` or `3.0x`)
+2. **File Names**: Must be IDENTICAL across all folders
+   - ✅ Correct: `tab_home.png` in all three locations
+   - ❌ Wrong: `tab_home.png`, `tab_home@2x.png`, `tab_home@3x.png`
+3. **Pubspec Declaration**: Must declare ALL folders
+   ```yaml
+   assets:
+     - assets/icons/
+     - assets/icons/2x/
+     - assets/icons/3x/
+   ```
+
+#### Icon Naming Convention
+- Use descriptive names with underscores: `tab_home.png`, `icon_search.png`
+- Keep names consistent and lowercase
+- No special characters or suffixes (@2x, @3x)
+
+#### How It Works
+- Flutter automatically selects the right resolution based on device:
+  - 1x: Low density screens (mdpi ~160dpi)
+  - 2x: Medium density screens (xhdpi ~320dpi)  
+  - 3x: High density screens (xxhdpi ~480dpi)
+- Only reference the base name in code: `Image.asset('assets/icons/tab_home.png')`
+- Flutter handles the rest automatically
+
+#### Common Mistakes to Avoid
+1. ❌ Adding @2x or @3x to filenames
+2. ❌ Using 2.0x or 3.0x as folder names
+3. ❌ Forgetting to declare 2x/3x folders in pubspec.yaml
+4. ❌ Different filenames in different resolution folders
+5. ❌ Referencing the full path with 2x/3x in code
+
 ### Important Paths
 - MainActivity: `/android/app/src/main/kotlin/com/wanderlust/app/MainActivity.kt`
 - Info.plist: `/ios/Runner/Info.plist`

@@ -29,7 +29,7 @@ class AuthController extends GetxController {
       Get.offAllNamed(Routes.LOGIN);
     } else {
       isAuthenticated.value = true;
-      Get.offAllNamed(Routes.MAIN);
+      Get.offAllNamed(Routes.MAIN_NAVIGATION);
     }
   }
   

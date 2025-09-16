@@ -73,9 +73,9 @@ String _getInitialRoute() {
   } else if (currentUser != null) {
     // User is logged in
     if (currentUser.emailVerified) {
-      // Email is verified - go to home
-      LoggerService.i('Initial route: HOME (authenticated & verified)');
-      return Routes.HOME;
+      // Email is verified - go to main navigation
+      LoggerService.i('Initial route: MAIN_NAVIGATION (authenticated & verified)');
+      return Routes.MAIN_NAVIGATION;
     } else {
       // Email not verified - go to verification
       LoggerService.i('Initial route: VERIFY_EMAIL (not verified)');

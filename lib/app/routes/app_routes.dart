@@ -11,8 +11,7 @@ abstract class Routes {
   static const VERIFY_EMAIL = '/verify-email';
   
   // Main App
-  static const MAIN = '/main';
-  static const HOME = '/home';
+  static const MAIN_NAVIGATION = '/main-navigation';
   
   // Future Implementation
   // static const EXPLORE = '/explore';

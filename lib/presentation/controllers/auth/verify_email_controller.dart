@@ -55,7 +55,7 @@ class VerifyEmailController extends BaseController {
     if (user.emailVerified) {
       LoggerService.i('User email already verified');
       isEmailVerified.value = true;
-      Get.offAllNamed(Routes.HOME);
+      Get.offAllNamed(Routes.MAIN_NAVIGATION);
       return;
     }
     
@@ -106,7 +106,7 @@ class VerifyEmailController extends BaseController {
       if (user.emailVerified) {
         LoggerService.i('User email already verified');
         isEmailVerified.value = true;
-        Get.offAllNamed(Routes.HOME);
+        Get.offAllNamed(Routes.MAIN_NAVIGATION);
         return;
       }
       
@@ -232,7 +232,7 @@ class VerifyEmailController extends BaseController {
         
         // Navigate to home
         await Future.delayed(const Duration(seconds: 1));
-        Get.offAllNamed(Routes.HOME);
+        Get.offAllNamed(Routes.MAIN_NAVIGATION);
         
       } else {
         setError('Email chưa được xác thực');
@@ -307,7 +307,7 @@ class VerifyEmailController extends BaseController {
             
             // Navigate to home
             await Future.delayed(const Duration(seconds: 1));
-            Get.offAllNamed(Routes.HOME);
+            Get.offAllNamed(Routes.MAIN_NAVIGATION);
           }
         } catch (e) {
           LoggerService.e('Error checking email verification: $e');

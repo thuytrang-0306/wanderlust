@@ -4,8 +4,7 @@ import 'package:wanderlust/presentation/pages/auth/login/login_page.dart';
 import 'package:wanderlust/presentation/pages/auth/register/register_page.dart';
 import 'package:wanderlust/presentation/pages/auth/forgot_password/forgot_password_page.dart';
 import 'package:wanderlust/presentation/pages/auth/verify_email/verify_email_page.dart';
-import 'package:wanderlust/presentation/pages/home/home_page.dart';
-import 'package:wanderlust/presentation/pages/main/main_page.dart';
+import 'package:wanderlust/presentation/pages/main/main_navigation_page.dart';
 
 part 'app_routes.dart';
 
@@ -38,13 +37,8 @@ class AppPages {
       transition: Transition.rightToLeft,
     ),
     GetPage(
-      name: Routes.MAIN,
-      page: () => const MainPage(),
-      transition: Transition.fadeIn,
-    ),
-    GetPage(
-      name: Routes.HOME,
-      page: () => const HomePage(),
+      name: Routes.MAIN_NAVIGATION,
+      page: () => const MainNavigationPage(),
     ),
   ];
 }

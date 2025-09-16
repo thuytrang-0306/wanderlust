@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
-import 'package:wanderlust/core/widgets/base_button.dart';
+import 'package:wanderlust/core/widgets/app_button.dart';
 
 class ErrorStateWidget extends StatelessWidget {
   final String? error;
@@ -78,12 +78,12 @@ class ErrorStateWidget extends StatelessWidget {
             ],
             if (onRetry != null) ...[
               SizedBox(height: 24.h),
-              BaseButton(
+              AppButton.primary(
                 text: retryText ?? 'Try Again',
                 onPressed: onRetry,
                 size: ButtonSize.medium,
-                width: 160.w,
-                icon: const Icon(Icons.refresh, color: AppColors.white),
+                fullWidth: false,
+                icon: Icons.refresh,
               ),
             ],
           ],

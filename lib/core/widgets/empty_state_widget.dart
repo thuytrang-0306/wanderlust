@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
-import 'package:wanderlust/core/widgets/base_button.dart';
+import 'package:wanderlust/core/widgets/app_button.dart';
 
 class EmptyStateWidget extends StatelessWidget {
   final String? icon;
@@ -54,11 +54,11 @@ class EmptyStateWidget extends StatelessWidget {
             ],
             if (buttonText != null && onButtonPressed != null) ...[
               SizedBox(height: 24.h),
-              BaseButton(
+              AppButton.primary(
                 text: buttonText!,
                 onPressed: onButtonPressed,
                 size: ButtonSize.medium,
-                width: 200.w,
+                fullWidth: false,
               ),
             ],
           ],

@@ -73,9 +73,9 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     } else if (currentUser != null) {
       // User is logged in
       if (currentUser.emailVerified) {
-        // Email is verified - go to home
-        LoggerService.i('Navigating to: HOME (authenticated & verified)');
-        Get.offAllNamed(Routes.HOME);
+        // Email is verified - go to main navigation
+        LoggerService.i('Navigating to: MAIN_NAVIGATION (authenticated & verified)');
+        Get.offAllNamed(Routes.MAIN_NAVIGATION);
       } else {
         // Email not verified - go to verification
         LoggerService.i('Navigating to: VERIFY_EMAIL (not verified)');

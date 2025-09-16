@@ -98,8 +98,8 @@ class LoginController extends BaseController {
           title: 'Xác thực email',
         );
       } else {
-        // Navigate to home screen
-        Get.offAllNamed(Routes.HOME);
+        // Navigate to main screen
+        Get.offAllNamed(Routes.MAIN_NAVIGATION);
         
         AppSnackbar.showSuccess(
           message: 'Chào mừng bạn trở lại!',
@@ -175,8 +175,8 @@ class LoginController extends BaseController {
       
       LoggerService.i('Google sign in successful: ${userCredential.user?.email}');
       
-      // Navigate to home
-      Get.offAllNamed(Routes.HOME);
+      // Navigate to main
+      Get.offAllNamed(Routes.MAIN_NAVIGATION);
       
       AppSnackbar.showSuccess(
           message: 'Chào mừng ${userCredential.user?.displayName ?? 'bạn'}!',

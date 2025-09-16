@@ -172,8 +172,8 @@ class RegisterController extends BaseController {
       
       LoggerService.i('Google sign in successful: ${userCredential.user?.email}');
       
-      // Navigate to home (user is already registered via Google)
-      Get.offAllNamed(Routes.HOME);
+      // Navigate to main navigation (user is already registered via Google)
+      Get.offAllNamed(Routes.MAIN_NAVIGATION);
       
       Get.snackbar(
         'Đăng ký thành công',
