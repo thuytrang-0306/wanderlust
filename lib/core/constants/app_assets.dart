@@ -24,6 +24,9 @@ class AppAssets {
   // NOTE: Placeholder images not created yet - use network images for now
   // TODO: Create actual placeholder images when needed
   
+  // 3D Illustrations (TODO: Add actual files when available)
+  static const String travel3d = '$_imagesPath/travel_3d.png';
+  
   // ============= ICONS =============
   // Bottom Navigation icons (PNG with multi-resolution)
   static const String iconTabHome = '$_iconsPath/tab_home.png';

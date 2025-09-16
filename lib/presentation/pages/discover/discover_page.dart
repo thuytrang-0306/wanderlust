@@ -71,26 +71,18 @@ class DiscoverPage extends StatelessWidget {
                           ),
                         ),
                         SizedBox(width: AppSpacing.s3),
-                        Image.asset(
-                          'assets/images/travel_illustration.png',
+                        Container(
                           width: 100.w,
                           height: 80.h,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 100.w,
-                              height: 80.h,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              child: Icon(
-                                Icons.flight_takeoff,
-                                color: const Color(0xFF9455FD),
-                                size: 40.sp,
-                              ),
-                            );
-                          },
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Icon(
+                            Icons.flight_takeoff,
+                            color: const Color(0xFF9455FD),
+                            size: 40.sp,
+                          ),
                         ),
                       ],
                     ),
@@ -200,12 +192,13 @@ class DiscoverPage extends StatelessWidget {
         width: 160.w,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16.r),
-          image: DecorationImage(
-            image: AssetImage(imagePath),
-            fit: BoxFit.cover,
-            onError: (exception, stackTrace) {
-              // Handle error
-            },
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primary.withValues(alpha: 0.6),
+              AppColors.secondary.withValues(alpha: 0.6),
+            ],
           ),
         ),
         child: Stack(
@@ -278,9 +271,13 @@ class DiscoverPage extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12.r),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/blog_placeholder.jpg'),
-          fit: BoxFit.cover,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary.withValues(alpha: 0.8),
+            AppColors.primary.withValues(alpha: 0.4),
+          ],
         ),
       ),
       child: Container(
@@ -291,8 +288,15 @@ class DiscoverPage extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [
               Colors.transparent,
-              Colors.black.withValues(alpha: 0.5),
+              Colors.black.withValues(alpha: 0.3),
             ],
+          ),
+        ),
+        child: Center(
+          child: Icon(
+            Icons.auto_stories,
+            size: 40.sp,
+            color: Colors.white.withValues(alpha: 0.8),
           ),
         ),
       ),

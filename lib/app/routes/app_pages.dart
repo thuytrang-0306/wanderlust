@@ -5,6 +5,10 @@ import 'package:wanderlust/presentation/pages/auth/register/register_page.dart';
 import 'package:wanderlust/presentation/pages/auth/forgot_password/forgot_password_page.dart';
 import 'package:wanderlust/presentation/pages/auth/verify_email/verify_email_page.dart';
 import 'package:wanderlust/presentation/pages/main/main_navigation_page.dart';
+import 'package:wanderlust/presentation/pages/planning/trip_edit_page.dart';
+import 'package:wanderlust/presentation/bindings/trip_edit_binding.dart';
+import 'package:wanderlust/presentation/pages/community/create_post_page.dart';
+import 'package:wanderlust/presentation/bindings/create_post_binding.dart';
 
 part 'app_routes.dart';
 
@@ -39,6 +43,18 @@ class AppPages {
     GetPage(
       name: Routes.MAIN_NAVIGATION,
       page: () => const MainNavigationPage(),
+    ),
+    GetPage(
+      name: Routes.TRIP_EDIT,
+      page: () => const TripEditPage(),
+      binding: TripEditBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.CREATE_POST,
+      page: () => const CreatePostPage(),
+      binding: CreatePostBinding(),
+      transition: Transition.rightToLeft,
     ),
   ];
 }

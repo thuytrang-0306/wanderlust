@@ -13,6 +13,12 @@ abstract class Routes {
   // Main App
   static const MAIN_NAVIGATION = '/main-navigation';
   
+  // Planning
+  static const TRIP_EDIT = '/trip-edit';
+  
+  // Community
+  static const CREATE_POST = '/create-post';
+  
   // Future Implementation
   // static const EXPLORE = '/explore';
   // static const BOOKINGS = '/bookings';

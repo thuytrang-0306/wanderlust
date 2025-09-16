@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/presentation/pages/planning/planning_page.dart';
+import 'package:wanderlust/app/routes/app_pages.dart';
 
 class PlanningController extends GetxController {
   // Search controller
@@ -78,16 +79,14 @@ class PlanningController extends GetxController {
     }
   }
   
-  void createNewTrip() {
-    // TODO: Navigate to create trip page
-    Get.snackbar(
-      'Tạo chuyến đi',
-      'Tính năng đang được phát triển',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Get.theme.primaryColor,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-    );
+  void createNewTrip() async {
+    // Navigate to create trip page
+    final result = await Get.toNamed(Routes.TRIP_EDIT);
+    
+    if (result != null) {
+      // Refresh trips list after creating new trip
+      _loadFakeTrips();
+    }
   }
   
   void showTripOptions(TripModel trip) {
@@ -117,9 +116,18 @@ class PlanningController extends GetxController {
             ListTile(
               leading: const Icon(Icons.edit),
               title: const Text('Chỉnh sửa'),
-              onTap: () {
+              onTap: () async {
                 Get.back();
-                // TODO: Edit trip
+                // Navigate to edit trip page
+                final result = await Get.toNamed(
+                  Routes.TRIP_EDIT,
+                  arguments: {'tripId': trip.id},
+                );
+                
+                if (result != null) {
+                  // Refresh trips list after editing
+                  _loadFakeTrips();
+                }
               },
             ),
             ListTile(
