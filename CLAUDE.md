@@ -298,6 +298,14 @@ fvm flutter run  # Any available device
 
 ### 🎯 FIGMA TO FLUTTER CONVERSION RULES (100% Accuracy)
 
+#### ⚠️ CRITICAL: ALWAYS EXAMINE DESIGN IMAGES CAREFULLY
+**NEVER ASSUME** - Always check these details in design:
+1. **Background colors/gradients** - Headers often have gradients, not solid colors
+2. **Layout style** - Flat list vs Card-based (boxes with shadows/borders)
+3. **Exact spacing** - Padding between elements, margins
+4. **Text positioning** - Same line vs separate lines
+5. **Decorations** - Borders, shadows, rounded corners or flat
+
 #### 1. ANALYZE DESIGN SYSTEMATICALLY
 When given a design PNG, analyze in this order:
 1. **Layout Structure**: Identify all components top to bottom
@@ -381,15 +389,60 @@ Before completing any UI task:
 - [ ] Proper padding from screen edges
 
 #### 9. IMPLEMENTATION WORKFLOW
-1. **Read design image** thoroughly
-2. **List all components** and their properties
-3. **Map to app's design system** (colors, typography, spacing)
-4. **Implement with exact values**
-5. **Test on multiple screen sizes**
-6. **Compare screenshot with design**
-7. **Fine-tune until 100% match**
+1. **Read design image** thoroughly - ZOOM IN để xem chi tiết
+2. **DON'T ASSUME** - Kiểm tra kỹ:
+   - Background có phải solid color hay gradient?
+   - Items có phải cards (với shadow/border) hay flat?
+   - Text nằm cùng dòng hay khác dòng?
+3. **List all components** and their properties
+4. **Map to app's design system** (colors, typography, spacing)
+5. **Implement with exact values**
+6. **Test on multiple screen sizes**
+7. **Compare screenshot with design** - User sẽ kiểm tra và báo lỗi nếu sai
+8. **Fine-tune until 100% match**
 
-#### 10. QUICK REFERENCE
+#### 10. COMMON UI PATTERNS TO WATCH FOR
+```dart
+// Flat List Items (không phải cards)
+Material(
+  color: Colors.white,
+  child: InkWell(
+    child: Padding(
+      padding: EdgeInsets.symmetric(horizontal: s5, vertical: s4),
+      // content here
+    ),
+  ),
+)
+
+// Card-based List Items
+Container(
+  margin: EdgeInsets.only(bottom: s3),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(12.r),
+    boxShadow: [...],
+  ),
+  // content here
+)
+
+// Gradient Headers
+Container(
+  decoration: BoxDecoration(
+    gradient: LinearGradient(
+      colors: [Color(0xFFE8E0FF), Color(0xFFF5F0FF)],
+    ),
+  ),
+)
+
+// Section Headers với background
+Container(
+  color: Color(0xFFF5F7F8),
+  width: double.infinity,
+  padding: EdgeInsets.symmetric(horizontal: s5, vertical: s3),
+)
+```
+
+#### 11. QUICK REFERENCE
 ```dart
 // Common spacings
 s1: 4.h   s2: 8.h   s3: 12.h  s4: 16.h
