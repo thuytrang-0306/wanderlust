@@ -8,6 +8,7 @@ import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 import 'package:wanderlust/core/services/storage_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/core/widgets/app_snackbar.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -60,12 +61,9 @@ class HomePage extends StatelessWidget {
       }
     } catch (e) {
       LoggerService.e('Logout error: $e');
-      Get.snackbar(
-        'Lỗi',
-        'Không thể đăng xuất',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error,
-        colorText: AppColors.white,
+      AppSnackbar.showError(
+        message: 'Không thể đăng xuất',
+        position: SnackPosition.BOTTOM,
       );
     }
   }
@@ -73,12 +71,10 @@ class HomePage extends StatelessWidget {
   void _resetOnboarding() {
     // For testing: Reset onboarding flag
     StorageService.to.write('hasSeenOnboarding', false);
-    Get.snackbar(
-      'Debug',
-      'Onboarding đã được reset. Khởi động lại app để xem.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.warning,
-      colorText: AppColors.black,
+    AppSnackbar.showWarning(
+      message: 'Onboarding đã được reset. Khởi động lại app để xem.',
+      title: 'Debug',
+      position: SnackPosition.BOTTOM,
     );
   }
 

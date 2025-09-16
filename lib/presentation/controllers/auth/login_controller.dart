@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
-import 'package:wanderlust/core/services/firebase_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 
 class LoginController extends BaseController {
@@ -93,23 +93,16 @@ class LoginController extends BaseController {
         // Navigate to email verification screen
         Get.offNamed(Routes.VERIFY_EMAIL);
         
-        Get.snackbar(
-          'Xác thực email',
-          'Vui lòng xác thực email của bạn',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
+        AppSnackbar.showWarning(
+          message: 'Vui lòng xác thực email của bạn',
+          title: 'Xác thực email',
         );
       } else {
         // Navigate to home screen
         Get.offAllNamed(Routes.HOME);
         
-        Get.snackbar(
-          'Đăng nhập thành công',
-          'Chào mừng bạn trở lại!',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Get.theme.primaryColor,
-          colorText: Colors.white,
+        AppSnackbar.showSuccess(
+          message: 'Chào mừng bạn trở lại!',
         );
       }
       
@@ -137,12 +130,8 @@ class LoginController extends BaseController {
       }
       
       setError(errorMessage);
-      Get.snackbar(
-        'Lỗi',
-        errorMessage,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.showError(
+        message: errorMessage,
       );
       
     } catch (e) {
@@ -189,12 +178,8 @@ class LoginController extends BaseController {
       // Navigate to home
       Get.offAllNamed(Routes.HOME);
       
-      Get.snackbar(
-        'Đăng nhập thành công',
-        'Chào mừng ${userCredential.user?.displayName ?? 'bạn'}!',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Get.theme.primaryColor,
-        colorText: Colors.white,
+      AppSnackbar.showSuccess(
+          message: 'Chào mừng ${userCredential.user?.displayName ?? 'bạn'}!',
       );
       
     } catch (e) {
@@ -207,12 +192,8 @@ class LoginController extends BaseController {
         errorMessage = 'Đăng nhập đã bị hủy';
       }
       
-      Get.snackbar(
-        'Lỗi',
-        errorMessage,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.showError(
+        message: errorMessage,
       );
     } finally {
       isSocialLoading.value = false;

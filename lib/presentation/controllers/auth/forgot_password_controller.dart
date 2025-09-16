@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/core/widgets/app_snackbar.dart';
 
 class ForgotPasswordController extends BaseController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -51,12 +52,8 @@ class ForgotPasswordController extends BaseController {
       
       LoggerService.i('Password reset email sent to: ${emailController.text}');
       
-      Get.snackbar(
-        'Thành công',
-        'Email đặt lại mật khẩu đã được gửi đến ${emailController.text}',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+      AppSnackbar.showSuccess(
+        message: 'Email đặt lại mật khẩu đã được gửi đến ${emailController.text}',
         duration: const Duration(seconds: 4),
       );
       
@@ -82,24 +79,16 @@ class ForgotPasswordController extends BaseController {
       }
       
       setError(errorMessage);
-      Get.snackbar(
-        'Lỗi',
-        errorMessage,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.showError(
+        message: errorMessage,
       );
       
     } catch (e) {
       LoggerService.e('Password reset error: $e');
       setError('Đã xảy ra lỗi không xác định');
       
-      Get.snackbar(
-        'Lỗi',
-        'Không thể gửi email đặt lại mật khẩu',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.showError(
+        message: 'Không thể gửi email đặt lại mật khẩu',
       );
     } finally {
       if (!isEmailSent.value) {

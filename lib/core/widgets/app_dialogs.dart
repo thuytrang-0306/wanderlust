@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
-import 'package:wanderlust/core/widgets/base_button.dart';
+import 'package:wanderlust/core/constants/app_spacing.dart';
 
 class AppDialogs {
   static void showLoading({
@@ -11,8 +11,9 @@ class AppDialogs {
     bool barrierDismissible = false,
   }) {
     Get.dialog(
-      WillPopScope(
-        onWillPop: () async => barrierDismissible,
+      PopScope(
+        canPop: barrierDismissible,
+        onPopInvokedWithResult: (didPop, result) {},
         child: Center(
           child: Container(
             padding: EdgeInsets.all(24.w),
@@ -134,7 +135,7 @@ class AppDialogs {
               width: 40.w,
               height: 40.w,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(

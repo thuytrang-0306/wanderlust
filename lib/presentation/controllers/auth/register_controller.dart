@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
-import 'package:wanderlust/core/services/firebase_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 
 class RegisterController extends BaseController {
@@ -104,12 +104,9 @@ class RegisterController extends BaseController {
       // Navigate to email verification screen
       Get.offNamed(Routes.VERIFY_EMAIL);
       
-      Get.snackbar(
-        'Đăng ký thành công',
-        'Vui lòng kiểm tra email để xác thực tài khoản',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Get.theme.primaryColor,
-        colorText: Colors.white,
+      AppSnackbar.showSuccess(
+        message: 'Vui lòng kiểm tra email để xác thực tài khoản',
+        title: 'Đăng ký thành công',
       );
       
     } on FirebaseAuthException catch (e) {
@@ -130,12 +127,8 @@ class RegisterController extends BaseController {
       }
       
       setError(errorMessage);
-      Get.snackbar(
-        'Lỗi',
-        errorMessage,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.showError(
+        message: errorMessage,
       );
       
     } catch (e) {
@@ -200,12 +193,8 @@ class RegisterController extends BaseController {
         errorMessage = 'Đăng nhập đã bị hủy';
       }
       
-      Get.snackbar(
-        'Lỗi',
-        errorMessage,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.showError(
+        message: errorMessage,
       );
     } finally {
       isSocialLoading.value = false;

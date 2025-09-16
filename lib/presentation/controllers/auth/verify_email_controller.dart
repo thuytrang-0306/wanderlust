@@ -7,7 +7,7 @@ import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:wanderlust/core/widgets/app_snackbar.dart';
 
 class VerifyEmailController extends BaseController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -117,12 +117,10 @@ class VerifyEmailController extends BaseController {
       // Start timer after successful send
       startTimer();
       
-      Get.snackbar(
-        'Email đã gửi',
-        'Vui lòng kiểm tra hộp thư ${user.email}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.success,
-        colorText: AppColors.white,
+      AppSnackbar.showSuccess(
+        message: 'Vui lòng kiểm tra hộp thư ${user.email}',
+        title: 'Email đã gửi',
+        position: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 3),
       );
       
