@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/presentation/controllers/account/account_controller.dart';
+import 'package:wanderlust/presentation/controllers/discover/discover_controller.dart';
 
 class MainNavigationController extends BaseController {
   // Current tab index
@@ -18,7 +19,8 @@ class MainNavigationController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    // Initialize AccountController when main navigation loads
+    // Initialize controllers for tabs when main navigation loads
+    Get.lazyPut(() => DiscoverController());
     Get.lazyPut(() => AccountController());
   }
   
