@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
@@ -25,12 +24,12 @@ class RegisterPage extends StatelessWidget {
             key: controller.formKey,
             child: Column(
               children: [
-                SizedBox(height: 30.h),
+                SizedBox(height: 40.h),
                 
                 // Logo and app name - Smaller size
                 _buildCompactLogoSection(),
                 
-                SizedBox(height: AppSpacing.s3),
+                SizedBox(height: AppSpacing.s4),
                 
                 // Title
                 Text(
@@ -45,97 +44,125 @@ class RegisterPage extends StatelessWidget {
                 
                 const Spacer(),
                 
-                // Name input
-                _buildTextField(
-                  controller: controller.nameController,
-                  label: 'Tên đăng ký',
-                  hintText: 'Nhập tên của bạn',
-                  validator: controller.validateName,
-                  keyboardType: TextInputType.name,
-                ),
-                
-                SizedBox(height: AppSpacing.s4),
-                
-                // Email input
-                _buildTextField(
-                  controller: controller.emailController,
-                  label: 'Email',
-                  hintText: 'Nhập email của bạn',
-                  validator: controller.validateEmail,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                
-                SizedBox(height: AppSpacing.s4),
-                
-                // Password input
-                Obx(() => _buildTextField(
-                  controller: controller.passwordController,
-                  label: 'Mật khẩu',
-                  hintText: '••••••••',
-                  validator: controller.validatePassword,
-                  obscureText: !controller.isPasswordVisible.value,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      controller.isPasswordVisible.value
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: AppColors.textTertiary,
-                      size: 20.sp,
+                // Form section - centered
+                Column(
+                  children: [
+                    // Name input
+                    _buildTextField(
+                      controller: controller.nameController,
+                      label: 'Tên đăng ký',
+                      hintText: 'Nhập tên của bạn',
+                      validator: controller.validateName,
+                      keyboardType: TextInputType.name,
+                      textInputAction: TextInputAction.next,
                     ),
-                    onPressed: controller.togglePasswordVisibility,
-                  ),
-                )),
-                
-                SizedBox(height: AppSpacing.s3),
-                
-                // Register button
-                Obx(() => SizedBox(
-                  width: double.infinity,
-                  height: 48.h,
-                  child: ElevatedButton(
-                    onPressed: controller.isLoading ? null : controller.register,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28.r),
+                    
+                    SizedBox(height: AppSpacing.s4),
+                    
+                    // Email input
+                    _buildTextField(
+                      controller: controller.emailController,
+                      label: 'Email',
+                      hintText: 'Nhập email của bạn',
+                      validator: controller.validateEmail,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    
+                    SizedBox(height: AppSpacing.s4),
+                    
+                    // Password input
+                    Obx(() => _buildTextField(
+                      controller: controller.passwordController,
+                      label: 'Mật khẩu',
+                      hintText: 'Nhập mật khẩu của bạn',
+                      validator: controller.validatePassword,
+                      obscureText: !controller.isPasswordVisible.value,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => controller.register(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          controller.isPasswordVisible.value
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: AppColors.textTertiary,
+                          size: 20.sp,
+                        ),
+                        onPressed: controller.togglePasswordVisibility,
                       ),
-                      elevation: 0,
-                    ),
-                    child: controller.isLoading
-                        ? SizedBox(
-                            width: 24.w,
-                            height: 24.w,
-                            child: const CircularProgressIndicator(
-                              color: AppColors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            'Đăng ký',
-                            style: AppTypography.button.copyWith(
-                              color: AppColors.white,
-                              fontSize: 16.sp,
-                            ),
+                    )),
+                    
+                    SizedBox(height: AppSpacing.s5),
+                    
+                    // Register button
+                    Obx(() => SizedBox(
+                      width: double.infinity,
+                      height: 56.h,
+                      child: ElevatedButton(
+                        onPressed: controller.isLoading ? null : controller.register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28.r),
                           ),
-                  ),
-                )),
-                
-                SizedBox(height: AppSpacing.s3),
-                
-                // Or login with
-                Text(
-                  'Hoặc đăng nhập với',
-                  style: AppTypography.bodyM.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                          elevation: 0,
+                        ),
+                        child: controller.isLoading
+                            ? SizedBox(
+                                width: 24.w,
+                                height: 24.w,
+                                child: const CircularProgressIndicator(
+                                  color: AppColors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                'Đăng ký',
+                                style: AppTypography.button.copyWith(
+                                  color: AppColors.white,
+                                  fontSize: 16.sp,
+                                ),
+                              ),
+                      ),
+                    )),
+                  ],
                 ),
                 
-                SizedBox(height: AppSpacing.s3),
+                const Spacer(),
+                
+                // Or login with - with divider lines
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        color: AppColors.neutral200,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+                      child: Text(
+                        'Hoặc đăng nhập với',
+                        style: AppTypography.bodyM.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        color: AppColors.neutral200,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: AppSpacing.s4),
                 
                 // Social login buttons
                 _buildSocialButtons(controller),
                 
-                SizedBox(height: AppSpacing.s3),
+                SizedBox(height: AppSpacing.s5),
                 
                 // Terms and conditions
                 Padding(
@@ -181,7 +208,7 @@ class RegisterPage extends StatelessWidget {
                   ),
                 ),
                 
-                SizedBox(height: AppSpacing.s6),
+                SizedBox(height: AppSpacing.s4),
                 
                 // Already have account
                 RichText(
@@ -204,45 +231,12 @@ class RegisterPage extends StatelessWidget {
                   ),
                 ),
                 
-                SizedBox(height: AppSpacing.s2),
+                SizedBox(height: 20.h),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-  
-  Widget _buildLogoSection() {
-    return Column(
-      children: [
-        // Logo icon
-        Container(
-          width: 80.w,
-          height: 80.w,
-          decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          child: Icon(
-            Icons.location_on_rounded,
-            color: AppColors.white,
-            size: 48.sp,
-          ),
-        ),
-        
-        SizedBox(height: AppSpacing.s4),
-        
-        // App name
-        Text(
-          'Wanderlust',
-          style: AppTypography.h1.copyWith(
-            color: AppColors.primary,
-            fontWeight: AppTypography.bold,
-            fontSize: 32.sp,
-          ),
-        ),
-      ],
     );
   }
   
@@ -279,6 +273,8 @@ class RegisterPage extends StatelessWidget {
     String? Function(String?)? validator,
     bool obscureText = false,
     TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    Function(String)? onFieldSubmitted,
     Widget? suffixIcon,
   }) {
     return TextFormField(
@@ -286,6 +282,8 @@ class RegisterPage extends StatelessWidget {
       validator: validator,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       style: AppTypography.bodyM.copyWith(
         color: AppColors.textPrimary,
         fontSize: 16.sp,

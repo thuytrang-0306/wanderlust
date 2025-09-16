@@ -4,7 +4,6 @@ abstract class Routes {
   Routes._();
   
   // Auth Flow
-  static const SPLASH = '/splash';
   static const ONBOARDING = '/onboarding';
   static const LOGIN = '/login';
   static const REGISTER = '/register';

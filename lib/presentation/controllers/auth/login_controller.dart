@@ -29,8 +29,7 @@ class LoginController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    // Pre-fill email for demo
-    emailController.text = 'nttt3690@gmail.com';
+    // Don't pre-fill email - better UX
   }
   
   @override

@@ -1,6 +1,4 @@
 import 'package:get/get.dart';
-import 'package:wanderlust/app/bindings/initial_binding.dart';
-import 'package:wanderlust/presentation/pages/splash/splash_page.dart';
 import 'package:wanderlust/presentation/pages/onboarding/onboarding_page.dart';
 import 'package:wanderlust/presentation/pages/auth/login/login_page.dart';
 import 'package:wanderlust/presentation/pages/auth/register/register_page.dart';
@@ -14,15 +12,7 @@ part 'app_routes.dart';
 class AppPages {
   AppPages._();
   
-  // Skip splash page, go directly to onboarding after native splash
-  static const INITIAL = Routes.ONBOARDING;
-  
   static final routes = [
-    GetPage(
-      name: Routes.SPLASH,
-      page: () => const SplashPage(),
-      binding: InitialBinding(),
-    ),
     GetPage(
       name: Routes.ONBOARDING,
       page: () => const OnboardingPage(),

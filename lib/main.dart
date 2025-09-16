@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wanderlust/app/config/app_theme.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 import 'package:wanderlust/app/bindings/initial_binding.dart';
@@ -48,11 +49,49 @@ void main() async {
   Get.put(ConnectivityService());
   Get.put(ImageService());
   
-  runApp(const WanderlustApp());
+  // Determine initial route based on app state
+  final String initialRoute = _getInitialRoute();
+  
+  runApp(WanderlustApp(initialRoute: initialRoute));
+}
+
+String _getInitialRoute() {
+  final storage = Get.find<StorageService>();
+  final hasSeenOnboarding = storage.read('hasSeenOnboarding') ?? false;
+  final currentUser = FirebaseAuth.instance.currentUser;
+  
+  LoggerService.d('App Initialization Check:');
+  LoggerService.d('- Has seen onboarding: $hasSeenOnboarding');
+  LoggerService.d('- Current user: ${currentUser?.email}');
+  LoggerService.d('- Email verified: ${currentUser?.emailVerified}');
+  
+  // Decision tree for initial route
+  if (!hasSeenOnboarding) {
+    // First time user - show onboarding
+    LoggerService.i('Initial route: ONBOARDING (first time)');
+    return Routes.ONBOARDING;
+  } else if (currentUser != null) {
+    // User is logged in
+    if (currentUser.emailVerified) {
+      // Email is verified - go to home
+      LoggerService.i('Initial route: HOME (authenticated & verified)');
+      return Routes.HOME;
+    } else {
+      // Email not verified - go to verification
+      LoggerService.i('Initial route: VERIFY_EMAIL (not verified)');
+      return Routes.VERIFY_EMAIL;
+    }
+  } else {
+    // Not logged in - go to login
+    LoggerService.i('Initial route: LOGIN (not authenticated)');
+    return Routes.LOGIN;
+  }
 }
 
 class WanderlustApp extends StatelessWidget {
-  const WanderlustApp({super.key});
+  final String initialRoute;
+  
+  const WanderlustApp({super.key, required this.initialRoute});
   
   @override
   Widget build(BuildContext context) {
@@ -68,7 +107,7 @@ class WanderlustApp extends StatelessWidget {
           darkTheme: AppTheme.darkTheme,
           themeMode: ThemeMode.light,
           initialBinding: InitialBinding(),
-          initialRoute: AppPages.INITIAL,
+          initialRoute: initialRoute,
           getPages: AppPages.routes,
           defaultTransition: Transition.fadeIn,
           transitionDuration: const Duration(milliseconds: 300),

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
+import 'package:wanderlust/core/services/storage_service.dart';
+import 'package:wanderlust/core/utils/logger_service.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -50,11 +53,39 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   }
   
   void _navigateToNext() async {
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 2));
     
-    // Check if user has seen onboarding
-    // For now, always go to onboarding (placeholder - will implement one-time logic later)
-    Get.offNamed(Routes.ONBOARDING);
+    // Production flow logic
+    final storage = Get.find<StorageService>();
+    final hasSeenOnboarding = storage.read('hasSeenOnboarding') ?? false;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    
+    LoggerService.d('Navigation Check:');
+    LoggerService.d('- Has seen onboarding: $hasSeenOnboarding');
+    LoggerService.d('- Current user: ${currentUser?.email}');
+    LoggerService.d('- Email verified: ${currentUser?.emailVerified}');
+    
+    // Decision tree for navigation
+    if (!hasSeenOnboarding) {
+      // First time user - show onboarding
+      LoggerService.i('Navigating to: ONBOARDING (first time)');
+      Get.offAllNamed(Routes.ONBOARDING);
+    } else if (currentUser != null) {
+      // User is logged in
+      if (currentUser.emailVerified) {
+        // Email is verified - go to home
+        LoggerService.i('Navigating to: HOME (authenticated & verified)');
+        Get.offAllNamed(Routes.HOME);
+      } else {
+        // Email not verified - go to verification
+        LoggerService.i('Navigating to: VERIFY_EMAIL (not verified)');
+        Get.offAllNamed(Routes.VERIFY_EMAIL);
+      }
+    } else {
+      // Not logged in - go to login
+      LoggerService.i('Navigating to: LOGIN (not authenticated)');
+      Get.offAllNamed(Routes.LOGIN);
+    }
   }
   
   @override

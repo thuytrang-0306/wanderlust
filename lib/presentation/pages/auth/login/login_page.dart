@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
@@ -25,7 +24,7 @@ class LoginPage extends StatelessWidget {
             key: controller.formKey,
             child: Column(
               children: [
-                const Spacer(flex: 2),
+                SizedBox(height: 60.h),
                 
                 // Logo and app name
                 _buildLogoSection(),
@@ -43,110 +42,138 @@ class LoginPage extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 
-                const Spacer(flex: 2),
+                const Spacer(),
                 
-                // Email input
-                _buildTextField(
-                  controller: controller.emailController,
-                  label: 'Email',
-                  hintText: 'nttt3690@gmail.com',
-                  validator: controller.validateEmail,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                
-                SizedBox(height: AppSpacing.s4),
-                
-                // Password input
-                Obx(() => _buildTextField(
-                  controller: controller.passwordController,
-                  label: 'Mật khẩu',
-                  hintText: '••••••••',
-                  validator: controller.validatePassword,
-                  obscureText: !controller.isPasswordVisible.value,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      controller.isPasswordVisible.value
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: AppColors.textTertiary,
-                      size: 20.sp,
+                // Form section - centered
+                Column(
+                  children: [
+                    // Email input
+                    _buildTextField(
+                      controller: controller.emailController,
+                      label: 'Email',
+                      hintText: 'Nhập email của bạn',
+                      validator: controller.validateEmail,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
                     ),
-                    onPressed: controller.togglePasswordVisibility,
-                  ),
-                )),
-                
-                SizedBox(height: AppSpacing.s4),
-                
-                // Forgot password link
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: controller.navigateToForgotPassword,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      'Bạn quên mật khẩu?',
-                      style: AppTypography.bodyM.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: AppTypography.medium,
+                    
+                    SizedBox(height: AppSpacing.s4),
+                    
+                    // Password input
+                    Obx(() => _buildTextField(
+                      controller: controller.passwordController,
+                      label: 'Mật khẩu',
+                      hintText: 'Nhập mật khẩu của bạn',
+                      validator: controller.validatePassword,
+                      obscureText: !controller.isPasswordVisible.value,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => controller.login(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          controller.isPasswordVisible.value
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: AppColors.textTertiary,
+                          size: 20.sp,
+                        ),
+                        onPressed: controller.togglePasswordVisibility,
                       ),
-                    ),
-                  ),
-                ),
-                
-                const Spacer(flex: 1),
-                
-                // Login button
-                Obx(() => SizedBox(
-                  width: double.infinity,
-                  height: 56.h,
-                  child: ElevatedButton(
-                    onPressed: controller.isLoading ? null : controller.login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28.r),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: controller.isLoading
-                        ? SizedBox(
-                            width: 24.w,
-                            height: 24.w,
-                            child: const CircularProgressIndicator(
-                              color: AppColors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            'Đăng nhập',
-                            style: AppTypography.button.copyWith(
-                              color: AppColors.white,
-                              fontSize: 16.sp,
-                            ),
+                    )),
+                    
+                    SizedBox(height: AppSpacing.s4),
+                    
+                    // Forgot password link
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: controller.navigateToForgotPassword,
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          'Bạn quên mật khẩu?',
+                          style: AppTypography.bodyM.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: AppTypography.medium,
                           ),
-                  ),
-                )),
-                
-                SizedBox(height: AppSpacing.s6),
-                
-                // Or login with
-                Text(
-                  'Hoặc đăng nhập với',
-                  style: AppTypography.bodyM.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                        ),
+                      ),
+                    ),
+                    
+                    SizedBox(height: AppSpacing.s6),
+                    
+                    // Login button
+                    Obx(() => SizedBox(
+                      width: double.infinity,
+                      height: 56.h,
+                      child: ElevatedButton(
+                        onPressed: controller.isLoading ? null : controller.login,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28.r),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: controller.isLoading
+                            ? SizedBox(
+                                width: 24.w,
+                                height: 24.w,
+                                child: const CircularProgressIndicator(
+                                  color: AppColors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                'Đăng nhập',
+                                style: AppTypography.button.copyWith(
+                                  color: AppColors.white,
+                                  fontSize: 16.sp,
+                                ),
+                              ),
+                      ),
+                    )),
+                  ],
                 ),
                 
-                SizedBox(height: AppSpacing.s6),
+                const Spacer(),
+                
+                // Or login with - with divider lines
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        color: AppColors.neutral200,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+                      child: Text(
+                        'Hoặc đăng nhập với',
+                        style: AppTypography.bodyM.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        color: AppColors.neutral200,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: AppSpacing.s5),
                 
                 // Social login buttons
                 _buildSocialButtons(controller),
                 
-                const Spacer(flex: 2),
+                
+                SizedBox(height: AppSpacing.s6),
                 
                 // Don't have account
                 RichText(
@@ -169,7 +196,7 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
                 
-                const Spacer(flex: 1),
+                SizedBox(height: 20.h),
               ],
             ),
           ),
@@ -211,6 +238,8 @@ class LoginPage extends StatelessWidget {
     String? Function(String?)? validator,
     bool obscureText = false,
     TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    Function(String)? onFieldSubmitted,
     Widget? suffixIcon,
   }) {
     return TextFormField(
@@ -218,6 +247,8 @@ class LoginPage extends StatelessWidget {
       validator: validator,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       style: AppTypography.bodyM.copyWith(
         color: AppColors.textPrimary,
         fontSize: 16.sp,

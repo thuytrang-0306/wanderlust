@@ -179,6 +179,8 @@ class ForgotPasswordPage extends StatelessWidget {
       controller: controller.emailController,
       validator: controller.validateEmail,
       keyboardType: TextInputType.emailAddress,
+      textInputAction: TextInputAction.done,
+      onFieldSubmitted: (_) => controller.sendPasswordResetEmail(),
       style: AppTypography.bodyM.copyWith(
         color: AppColors.textPrimary,
         fontSize: 16.sp,
@@ -189,7 +191,7 @@ class ForgotPasswordPage extends StatelessWidget {
           color: AppColors.textSecondary,
           fontSize: 14.sp,
         ),
-        hintText: 'nttt3690@gmail.com',
+        hintText: 'Nhập email của bạn',
         hintStyle: AppTypography.bodyM.copyWith(
           color: AppColors.textHint.withValues(alpha: 0.5),
           fontSize: 16.sp,

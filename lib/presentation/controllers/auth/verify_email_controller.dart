@@ -277,7 +277,9 @@ class VerifyEmailController extends BaseController {
   
   // Close page
   void closePage() {
-    Get.back();
+    // Sign out and go to login page
+    _auth.signOut();
+    Get.offAllNamed(Routes.LOGIN);
   }
   
   // Start checking email verification status periodically
