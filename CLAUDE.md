@@ -407,6 +407,69 @@ Large: 56.h
 Small: 40.h
 ```
 
+## 🎯 Best Practices & Widget System
+
+### 🧩 Core Widget System
+**IMPORTANT: Always use app's common widgets for consistency and maintainability**
+
+#### Common Widgets Created:
+1. **AppButton** (`/lib/core/widgets/app_button.dart`)
+   - Primary color: #9455FDCC (80% opacity)
+   - Padding: 12h vertical
+   - Factory constructors: `.primary()`, `.secondary()`, `.outline()`, `.text()`, `.danger()`
+   - Sizes: Small (40h), Medium (48h), Large (56h)
+   - Built-in loading state
+
+2. **AppTextField** (`/lib/core/widgets/app_text_field.dart`)
+   - Factory constructors: `.email()`, `.password()`, `.name()`, `.phone()`, `.search()`, `.multiline()`
+   - Consistent styling with design system
+   - Built-in validation
+
+3. **AppSnackbar** (`/lib/core/widgets/app_snackbar.dart`)
+   - Types: `.showSuccess()`, `.showError()`, `.showWarning()`, `.showInfo()`
+   - Consistent animations and styling
+   - Centralized notification system
+
+4. **AppDialogs** (`/lib/core/widgets/app_dialogs.dart`)
+   - Loading, Confirm, Alert dialogs
+   - Consistent styling across app
+
+5. **AppLogo** (`/lib/core/widgets/app_logo.dart`)
+   - Factory constructors: `.splash()`, `.auth()`, `.compact()`, `.header()`
+   - Sizes: Small (60w), Medium (80w), Large (100w), XLarge (120w)
+   - Styles: Vertical, Horizontal, LogoOnly, NameOnly
+
+6. **SocialLoginButtons** (`/lib/core/widgets/social_login_buttons.dart`)
+   - Consistent social auth buttons
+   - Platforms: Google, Facebook, Apple, Twitter
+   - Circular design with borders
+
+7. **DividerWithText** (`/lib/core/widgets/divider_with_text.dart`)
+   - Factory constructors: `.or()`, `.orLoginWith()`, `.orRegisterWith()`
+   - Consistent divider styling
+
+### 🎨 Widget Usage Rules
+1. **NEVER create duplicate UI components** - Always check for existing widgets
+2. **ALWAYS use AppButton** instead of ElevatedButton/TextButton
+3. **ALWAYS use AppTextField** instead of TextFormField
+4. **ALWAYS use AppSnackbar** instead of Get.snackbar()
+5. **ALWAYS use AppLogo** for logo display
+6. **ALWAYS use SocialLoginButtons** for social auth
+7. **ALWAYS use DividerWithText** for section dividers
+
+### 🔄 Component Reusability
+- Extract common UI patterns into widgets
+- Use factory constructors for common variations
+- Keep widgets flexible with parameters
+- Maintain consistent naming conventions
+
+### 📦 Benefits of Widget System
+1. **Consistency**: Uniform UI/UX across the app
+2. **Maintainability**: Change once, update everywhere
+3. **Development Speed**: Faster feature development
+4. **Type Safety**: Factory constructors ensure correct usage
+5. **Clean Code**: No duplicate code, follows DRY principle
+
 ### Asset Notes
 - `/assets/designs/` folder (21MB) - **FOR REFERENCE ONLY, NOT FOR APP USE**
   - Contains design mockups and specifications
