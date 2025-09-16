@@ -537,6 +537,59 @@ Small: 40.h
   - `/assets/animations/` - Lottie animations
   - `/assets/fonts/` - Font files
 
+## 🎨 Asset Management Rules
+
+### CRITICAL: Asset Path Management
+1. **ALWAYS use AppAssets class** for asset paths
+   - Located at `/lib/core/constants/app_assets.dart`
+   - Single source of truth for all asset paths
+   - Never hardcode asset paths in widgets
+
+2. **Before adding asset paths to AppAssets:**
+   - ✅ Verify the file actually exists in the assets folder
+   - ❌ Don't add placeholder/fake paths
+   - ❌ Don't reference design mockups from `/assets/designs/`
+   
+3. **Current REAL assets in project:**
+   ```
+   /assets/images/
+   ├── logo.png
+   ├── app_icon.png
+   ├── app_icon_adaptive.png
+   ├── splash_logo_ios_style.png
+   ├── on_boarding_1.png
+   ├── on_boarding_2.png
+   └── on_boarding_3.png
+   
+   /assets/icons/
+   ├── tab_home.png (+ 2x, 3x folders)
+   ├── tab_community.png (+ 2x, 3x folders)
+   ├── tab_planning.png (+ 2x, 3x folders)
+   ├── tab_notifications.png (+ 2x, 3x folders)
+   └── tab_account.png (+ 2x, 3x folders)
+   ```
+
+4. **For placeholder images:**
+   - Use network images (Unsplash, Lorem Picsum) for development
+   - Add TODO comment in code when using temporary images
+   - Example: `// TODO: Replace with actual asset when available`
+
+5. **Asset organization:**
+   ```dart
+   // Good - organized by type and purpose
+   static const String logo = '$_imagesPath/logo.png';
+   static const String iconTabHome = '$_iconsPath/tab_home.png';
+   
+   // Bad - hardcoded paths
+   Image.asset('assets/images/logo.png')  // ❌
+   Image.asset(AppAssets.logo)           // ✅
+   ```
+
+6. **Error handling for assets:**
+   - Always provide errorBuilder for Image.asset
+   - Use placeholder containers when assets missing
+   - Never crash the app due to missing assets
+
 ## 📱 Flutter Resolution-Aware Images System
 
 ### IMPORTANT: Multi-Resolution Asset Rules

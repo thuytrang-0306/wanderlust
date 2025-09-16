@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
+import 'package:wanderlust/core/constants/app_assets.dart';
 
 enum LogoSize {
   small,   // 60w
@@ -90,7 +91,7 @@ class AppLogo extends StatelessWidget {
 
     // Build logo image
     Widget logoWidget = Image.asset(
-      'assets/images/logo.png',
+      AppAssets.logo,
       width: logoSize,
       height: logoSize,
       fit: BoxFit.contain,

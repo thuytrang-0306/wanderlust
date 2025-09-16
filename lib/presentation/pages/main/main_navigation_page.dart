@@ -9,6 +9,7 @@ import 'package:wanderlust/presentation/pages/community/community_page.dart';
 import 'package:wanderlust/presentation/pages/planning/planning_page.dart';
 import 'package:wanderlust/presentation/pages/notifications/notifications_page.dart';
 import 'package:wanderlust/presentation/pages/account/account_page.dart';
+import 'package:wanderlust/core/constants/app_assets.dart';
 
 class MainNavigationPage extends StatelessWidget {
   const MainNavigationPage({super.key});
@@ -59,31 +60,31 @@ class MainNavigationPage extends StatelessWidget {
           elevation: 0,
           items: [
             _buildNavItem(
-              icon: 'assets/icons/tab_home.png',
+              icon: AppAssets.iconTabHome,
               label: 'Khám phá',
               index: 0,
               currentIndex: controller.currentIndex.value,
             ),
             _buildNavItem(
-              icon: 'assets/icons/tab_community.png',
+              icon: AppAssets.iconTabCommunity,
               label: 'Cộng đồng',
               index: 1,
               currentIndex: controller.currentIndex.value,
             ),
             _buildNavItem(
-              icon: 'assets/icons/tab_planning.png',
+              icon: AppAssets.iconTabPlanning,
               label: 'Lập kế hoạch',
               index: 2,
               currentIndex: controller.currentIndex.value,
             ),
             _buildNavItem(
-              icon: 'assets/icons/tab_notifications.png',
+              icon: AppAssets.iconTabNotifications,
               label: 'Thông báo',
               index: 3,
               currentIndex: controller.currentIndex.value,
             ),
             _buildNavItem(
-              icon: 'assets/icons/tab_account.png',
+              icon: AppAssets.iconTabAccount,
               label: 'Tài khoản',
               index: 4,
               currentIndex: controller.currentIndex.value,

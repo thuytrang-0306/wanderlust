@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 import 'package:wanderlust/core/services/storage_service.dart';
+import 'package:wanderlust/core/constants/app_assets.dart';
 
 class OnboardingController extends GetxController {
   final PageController pageController = PageController();
@@ -10,17 +11,17 @@ class OnboardingController extends GetxController {
   // Onboarding data - Vietnamese text as per design
   final List<OnboardingData> onboardingPages = [
     OnboardingData(
-      image: 'assets/images/on_boarding_1.png',
+      image: AppAssets.onboarding1,
       title: 'Hãy đến với chuyến đi mới',
       subtitle: 'Hãy sẵn sàng khám phá thế giới theo cách chưa từng có.',
     ),
     OnboardingData(
-      image: 'assets/images/on_boarding_2.png',
+      image: AppAssets.onboarding2,
       title: 'Lên kế hoạch cho chuyến đi',
       subtitle: 'Tạo lịch trình chi tiết và quản lý mọi booking trong một nơi.',
     ),
     OnboardingData(
-      image: 'assets/images/on_boarding_3.png',
+      image: AppAssets.onboarding3,
       title: 'Khám phá điểm đến tuyệt vời',
       subtitle: 'Tìm kiếm những địa điểm độc đáo và trải nghiệm khó quên.',
     ),

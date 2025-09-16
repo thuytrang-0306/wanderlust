@@ -10,57 +10,34 @@ class AppAssets {
   static const String _fontsPath = '$_basePath/fonts';
   
   // ============= IMAGES =============
-  // Logo & Branding
+  // Logo & Branding (ACTUAL FILES)
   static const String logo = '$_imagesPath/logo.png';
-  static const String logoLight = '$_imagesPath/logo_light.png';
-  static const String logoDark = '$_imagesPath/logo_dark.png';
-  static const String splash = '$_imagesPath/splash.png';
+  static const String splashLogoIosStyle = '$_imagesPath/splash_logo_ios_style.png';
+  static const String appIcon = '$_imagesPath/app_icon.png';
+  static const String appIconAdaptive = '$_imagesPath/app_icon_adaptive.png';
   
-  // Onboarding
-  static const String onboarding1 = '$_imagesPath/onboarding_1.png';
-  static const String onboarding2 = '$_imagesPath/onboarding_2.png';
-  static const String onboarding3 = '$_imagesPath/onboarding_3.png';
+  // Onboarding (ACTUAL FILES)
+  static const String onboarding1 = '$_imagesPath/on_boarding_1.png';
+  static const String onboarding2 = '$_imagesPath/on_boarding_2.png';
+  static const String onboarding3 = '$_imagesPath/on_boarding_3.png';
   
-  // Placeholders
-  static const String placeholder = '$_imagesPath/placeholder.png';
-  static const String userPlaceholder = '$_imagesPath/user_placeholder.png';
-  static const String destinationPlaceholder = '$_imagesPath/destination_placeholder.png';
-  
-  // Backgrounds
-  static const String backgroundPattern = '$_imagesPath/bg_pattern.png';
-  static const String backgroundGradient = '$_imagesPath/bg_gradient.png';
+  // NOTE: Placeholder images not created yet - use network images for now
+  // TODO: Create actual placeholder images when needed
   
   // ============= ICONS =============
-  // Navigation icons
-  static const String iconHome = '$_iconsPath/ic_home.svg';
-  static const String iconExplore = '$_iconsPath/ic_explore.svg';
-  static const String iconBooking = '$_iconsPath/ic_booking.svg';
-  static const String iconProfile = '$_iconsPath/ic_profile.svg';
+  // Bottom Navigation icons (PNG with multi-resolution)
+  static const String iconTabHome = '$_iconsPath/tab_home.png';
+  static const String iconTabCommunity = '$_iconsPath/tab_community.png';
+  static const String iconTabPlanning = '$_iconsPath/tab_planning.png';
+  static const String iconTabNotifications = '$_iconsPath/tab_notifications.png';
+  static const String iconTabAccount = '$_iconsPath/tab_account.png';
   
-  // Action icons
-  static const String iconSearch = '$_iconsPath/ic_search.svg';
-  static const String iconFilter = '$_iconsPath/ic_filter.svg';
-  static const String iconNotification = '$_iconsPath/ic_notification.svg';
-  static const String iconSettings = '$_iconsPath/ic_settings.svg';
-  static const String iconShare = '$_iconsPath/ic_share.svg';
-  static const String iconFavorite = '$_iconsPath/ic_favorite.svg';
-  static const String iconLocation = '$_iconsPath/ic_location.svg';
-  static const String iconCalendar = '$_iconsPath/ic_calendar.svg';
-  
-  // Social icons
-  static const String iconGoogle = '$_iconsPath/ic_google.svg';
-  static const String iconFacebook = '$_iconsPath/ic_facebook.svg';
-  static const String iconApple = '$_iconsPath/ic_apple.svg';
+  // NOTE: SVG icons and Lottie animations not created yet
+  // TODO: Add SVG icons when designer provides them
+  // TODO: Add Lottie animations when created
   
   // ============= ANIMATIONS =============
-  // Lottie animations
-  static const String animLoading = '$_animationsPath/loading.json';
-  static const String animSuccess = '$_animationsPath/success.json';
-  static const String animError = '$_animationsPath/error.json';
-  static const String animEmpty = '$_animationsPath/empty.json';
-  static const String animNoInternet = '$_animationsPath/no_internet.json';
-  static const String animWelcome = '$_animationsPath/welcome.json';
-  static const String animTravel = '$_animationsPath/travel.json';
+  // Currently no animation files exist in the animations folder
   
   // ============= FONTS =============
   static const String fontGilroy = 'Gilroy';
