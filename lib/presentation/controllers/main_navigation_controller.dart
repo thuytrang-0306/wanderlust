@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
+import 'package:wanderlust/presentation/controllers/account/account_controller.dart';
 
 class MainNavigationController extends BaseController {
   // Current tab index
@@ -13,6 +14,13 @@ class MainNavigationController extends BaseController {
     'Thông báo',
     'Tài khoản',
   ];
+  
+  @override
+  void onInit() {
+    super.onInit();
+    // Initialize AccountController when main navigation loads
+    Get.lazyPut(() => AccountController());
+  }
   
   // Change tab
   void changeTab(int index) {
