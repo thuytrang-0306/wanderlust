@@ -77,6 +77,9 @@ class PlanningController extends GetxController {
                trip.description.toLowerCase().contains(query.toLowerCase());
       }).toList();
     }
+    
+    // Refresh the UI
+    filteredTrips.refresh();
   }
   
   void createNewTrip() async {

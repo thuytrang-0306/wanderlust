@@ -24,8 +24,43 @@ class PlanningPage extends GetView<PlanningController> {
                 child: Container(
                   color: const Color(0xFFF5F7F8),
                   child: Obx(() {
-                    if (controller.trips.isEmpty) {
+                    if (controller.filteredTrips.isEmpty && controller.trips.isEmpty) {
                       return _buildEmptyState();
+                    }
+                    
+                    if (controller.filteredTrips.isEmpty && controller.trips.isNotEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(AppSpacing.s8),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 64.sp,
+                                color: Colors.grey[400],
+                              ),
+                              SizedBox(height: AppSpacing.s4),
+                              Text(
+                                'Không tìm thấy chuyến đi',
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              SizedBox(height: AppSpacing.s2),
+                              Text(
+                                'Thử tìm kiếm với từ khóa khác',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
                     }
                     
                     return ListView.builder(
@@ -35,9 +70,9 @@ class PlanningPage extends GetView<PlanningController> {
                         top: AppSpacing.s2,
                         bottom: 100.h, // Space for FAB
                       ),
-                      itemCount: controller.trips.length,
+                      itemCount: controller.filteredTrips.length,
                       itemBuilder: (context, index) {
-                        return _buildTripCard(controller.trips[index]);
+                        return _buildTripCard(controller.filteredTrips[index]);
                       },
                     );
                   }),

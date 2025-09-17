@@ -228,29 +228,33 @@ class DiscoverPage extends GetView<DiscoverController> {
   Widget _buildSearchBar() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-      child: Container(
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: AppColors.neutral50,
-          borderRadius: BorderRadius.circular(24.r),
-        ),
-        child: TextField(
-          controller: controller.searchController,
-          decoration: InputDecoration(
-            hintText: 'Tìm kiếm theo địa điểm',
-            hintStyle: AppTypography.bodyM.copyWith(
-              color: AppColors.neutral400,
-            ),
-            prefixIcon: Icon(
-              Icons.search,
-              color: AppColors.neutral400,
-              size: 24.sp,
-            ),
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.s4,
-              vertical: AppSpacing.s3,
-            ),
+      child: GestureDetector(
+        onTap: () => Get.toNamed('/search-filter'),
+        child: Container(
+          height: 48.h,
+          decoration: BoxDecoration(
+            color: AppColors.neutral50,
+            borderRadius: BorderRadius.circular(24.r),
+          ),
+          child: Row(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+                child: Icon(
+                  Icons.search,
+                  color: AppColors.neutral400,
+                  size: 24.sp,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  'Tìm kiếm theo địa điểm',
+                  style: AppTypography.bodyM.copyWith(
+                    color: AppColors.neutral400,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

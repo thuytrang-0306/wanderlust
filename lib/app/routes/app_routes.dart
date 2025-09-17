@@ -41,6 +41,13 @@ abstract class Routes {
   // Account/Profile
   static const USER_PROFILE = '/user-profile';
   
+  // Search
+  static const SEARCH_FILTER = '/search-filter';
+  
+  // Settings
+  static const SETTINGS = '/settings';
+  static const MY_TRIPS = '/my-trips';
+  
   // Future Implementation
   // static const EXPLORE = '/explore';
   // static const BOOKINGS = '/bookings';
