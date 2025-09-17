@@ -850,87 +850,94 @@ class DiscoverPage extends GetView<DiscoverController> {
                       // Content
                       Expanded(
                         child: Padding(
-                          padding: EdgeInsets.all(AppSpacing.s3),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.s3,
+                            vertical: AppSpacing.s2,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              // Title
+                              Text(
+                                combo['title']!,
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.15,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 3.h),
+                              // Location
+                              Row(
                                 children: [
-                                  Text(
-                                    combo['title']!,
-                                    style: AppTypography.bodyM.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.2,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 11.sp,
+                                    color: AppColors.neutral500,
                                   ),
-                                  SizedBox(height: 6.h),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.location_on_outlined,
-                                        size: 14.sp,
-                                        color: AppColors.neutral500,
+                                  SizedBox(width: 2.w),
+                                  Expanded(
+                                    child: Text(
+                                      combo['location']!,
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        color: AppColors.neutral600,
                                       ),
-                                      SizedBox(width: 2.w),
-                                      Expanded(
-                                        child: Text(
-                                          combo['location']!,
-                                          style: AppTypography.bodyXS.copyWith(
-                                            color: AppColors.neutral600,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 4.h),
-                                  Text(
-                                    combo['duration']!,
-                                    style: AppTypography.bodyXS.copyWith(
-                                      color: AppColors.neutral500,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              SizedBox(height: 2.h),
+                              // Duration
+                              Text(
+                                combo['duration']!,
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  color: AppColors.neutral500,
+                                ),
+                              ),
+                              const Spacer(),
+                              // Price
+                              Text(
+                                '${combo['price']} VND',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 3.h),
+                              // Creator
+                              Row(
                                 children: [
-                                  Text(
-                                    '${combo['price']} VND',
-                                    style: AppTypography.bodyL.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.bold,
+                                  Container(
+                                    width: 18.w,
+                                    height: 18.h,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      image: DecorationImage(
+                                        image: CachedNetworkImageProvider(
+                                          'https://i.pravatar.cc/150?img=${index + 6}',
+                                        ),
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                   ),
-                                  SizedBox(height: 6.h),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 24.w,
-                                        height: 24.h,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          image: DecorationImage(
-                                            image: CachedNetworkImageProvider(
-                                              'https://i.pravatar.cc/150?img=${index + 6}',
-                                            ),
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
+                                  SizedBox(width: 4.w),
+                                  Expanded(
+                                    child: Text(
+                                      'Được tạo bởi ${combo['creator']}',
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        color: AppColors.neutral600,
                                       ),
-                                      SizedBox(width: 6.w),
-                                      Text(
-                                        'Được tạo bởi ${combo['creator']}',
-                                        style: AppTypography.bodyXS.copyWith(
-                                          color: AppColors.neutral600,
-                                        ),
-                                      ),
-                                    ],
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                 ],
                               ),
