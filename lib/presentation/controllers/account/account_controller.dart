@@ -79,7 +79,7 @@ class AccountController extends GetxController {
   }
   
   void navigateToProfile() {
-    AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
+    Get.toNamed('/user-profile');
   }
   
   void navigateToChangePassword() {

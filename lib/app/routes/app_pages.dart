@@ -21,6 +21,7 @@ import 'package:wanderlust/presentation/pages/payment/customer_info_page.dart';
 import 'package:wanderlust/presentation/pages/payment/payment_method_page.dart';
 import 'package:wanderlust/presentation/pages/payment/payment_success_page.dart';
 import 'package:wanderlust/presentation/pages/combo/combo_detail_page.dart';
+import 'package:wanderlust/presentation/pages/account/user_profile_page.dart';
 import 'package:wanderlust/presentation/bindings/create_post_binding.dart';
 
 part 'app_routes.dart';
@@ -132,6 +133,11 @@ class AppPages {
     GetPage(
       name: Routes.PAYMENT_SUCCESS,
       page: () => const PaymentSuccessPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.USER_PROFILE,
+      page: () => const UserProfilePage(),
       transition: Transition.rightToLeft,
     ),
   ];

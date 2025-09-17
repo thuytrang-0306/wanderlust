@@ -38,6 +38,9 @@ abstract class Routes {
   // Combo Tours
   static const COMBO_DETAIL = '/combo-detail';
   
+  // Account/Profile
+  static const USER_PROFILE = '/user-profile';
+  
   // Future Implementation
   // static const EXPLORE = '/explore';
   // static const BOOKINGS = '/bookings';
