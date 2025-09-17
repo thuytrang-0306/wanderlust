@@ -182,7 +182,7 @@ class BlogDetailPage extends StatelessWidget {
         children: [
           // Title
           Text(
-            'Lorem ipsum dolor sit amet, consectetur.',
+            'Chia sẻ kinh nghiệm du lịch thú vị',
             style: TextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.w700,
@@ -194,7 +194,7 @@ class BlogDetailPage extends StatelessWidget {
           
           // Body paragraphs
           Text(
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas id sit eu tellus sed cursus eleifend id porta. Lorem adipiscing mus vestibulum consequat porta eu ultrices feugiat. Et, faucibus ut amet turpis. Facilisis faucibus semper cras purus.',
+            'Nội dung bài viết đang được tải. Hãy khám phá những chia sẻ kinh nghiệm du lịch thú vị và hữu ích từ cộng đồng. Mỗi bài viết là một hành trình khám phá đầy thú vị.',
             style: TextStyle(
               fontSize: 15.sp,
               color: AppColors.textSecondary,
@@ -203,7 +203,7 @@ class BlogDetailPage extends StatelessWidget {
           ),
           SizedBox(height: 16.h),
           Text(
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas id sit eu tellus sed cursus eleifend id porta.',
+            'Tiếp tục khám phá những điều thú vị và trải nghiệm tuyệt vời trong hành trình du lịch này.',
             style: TextStyle(
               fontSize: 15.sp,
               color: AppColors.textSecondary,
@@ -455,7 +455,7 @@ class BlogDetailPage extends StatelessWidget {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                      'Nội dung bài viết đang được tải...',
                       style: TextStyle(
                         fontSize: 14.sp,
                         color: AppColors.textSecondary,

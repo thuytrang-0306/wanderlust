@@ -188,7 +188,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                             ),
                             SizedBox(height: 12.h),
                             Text(
-                              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas id sit eu tellus sed cursus eleifend id porta...',
+                              'Mô tả chi tiết đang được cập nhật. Chỗ ơ nghỉ lý tưởng với đầy đủ tiện nghi và dịch vụ chất lượng cao.',
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 color: const Color(0xFF6B7280),

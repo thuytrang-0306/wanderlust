@@ -191,7 +191,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
           ),
           SizedBox(height: 8.h),
           Obx(() => Text(
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas id sit eu tellus sed cursus eleifend id porta. ${controller.showFullDescription.value ? "Sed vel nunc et tortor sodales tempus. Nulla facilisi. Donec in magna et tortor hendrerit tempus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae." : ""}',
+            'Mô tả chi tiết đang được cập nhật. Hãy khám phá combo du lịch tuyệt vời này. ${controller.showFullDescription.value ? "Combo này bao gồm nhiều hoạt động thú vị và trải nghiệm đáng nhớ, được thiết kế dành cho những người yêu thích khám phá và tham gia các hoạt động nước ngoài." : ""}',
             style: TextStyle(
               fontSize: 14.sp,
               color: AppColors.neutral600,

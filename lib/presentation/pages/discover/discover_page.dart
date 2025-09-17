@@ -538,8 +538,8 @@ class DiscoverPage extends GetView<DiscoverController> {
             itemCount: 2,
             itemBuilder: (context, index) {
               final regions = [
-                {'name': 'Miền Bắc', 'desc': 'Lorem ipsum dolor'},
-                {'name': 'Miền Trung', 'desc': 'Lorem ipsum dolor'},
+                {'name': 'Miền Bắc', 'desc': 'Khám phá vùng đất tuyệt đẹp này'},
+                {'name': 'Miền Trung', 'desc': 'Khám phá vùng đất tuyệt đẹp này'},
               ];
               
               final region = regions[index];
@@ -620,13 +620,13 @@ class DiscoverPage extends GetView<DiscoverController> {
           itemBuilder: (context, index) {
             final blogs = [
               {
-                'title': 'Lorem ipsum dolor sit amet, cons.',
-                'desc': 'Lorem ipsum dolor sit amet, consectetur adipi...',
+                'title': 'Chia sẻ kinh nghiệm du lịch thú vị',
+                'desc': 'Nội dung bài viết đang được tải...',
                 'author': 'Thế Hùng',
               },
               {
-                'title': 'Lorem ipsum dolor sit amet, cons.',
-                'desc': 'Lorem ipsum dolor sit amet, consectetur adipi...',
+                'title': 'Hướng dẫn du lịch chi tiết',
+                'desc': 'Nội dung bài viết đang được tải...',
                 'author': 'Jung Môi An',
               },
             ];

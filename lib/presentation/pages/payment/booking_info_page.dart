@@ -693,7 +693,7 @@ class BookingInfoPage extends GetView<BookingInfoController> {
           
           // Price item
           Text(
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas id sit eu tellus sed cursus eleifend id porta',
+            'Đang cập nhật thông tin chi tiết về điều kiện đặt phòng và chính sách hủy',
             style: TextStyle(
               fontSize: 13.sp,
               color: const Color(0xFF6B7280),

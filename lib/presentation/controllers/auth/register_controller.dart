@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
@@ -9,6 +10,7 @@ import 'package:wanderlust/app/routes/app_pages.dart';
 
 class RegisterController extends BaseController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   // Form controllers
   final nameController = TextEditingController();
@@ -95,6 +97,9 @@ class RegisterController extends BaseController {
       
       // Update display name
       await userCredential.user?.updateDisplayName(nameController.text.trim());
+      
+      // Create user document in Firestore
+      await _createUserDocument(userCredential.user!);
       
       // Don't send email verification here - let VerifyEmailController handle it
       // This prevents duplicate sends and rate limiting
@@ -204,5 +209,52 @@ class RegisterController extends BaseController {
   // Navigate to login
   void navigateToLogin() {
     Get.offNamed(Routes.LOGIN);
+  }
+  
+  // Create user document in Firestore
+  Future<void> _createUserDocument(User user) async {
+    try {
+      final userDoc = _firestore.collection('users').doc(user.uid);
+      
+      // Check if user document already exists
+      final docSnapshot = await userDoc.get();
+      if (!docSnapshot.exists) {
+        // Create new user document
+        await userDoc.set({
+          'uid': user.uid,
+          'email': user.email,
+          'displayName': user.displayName ?? nameController.text.trim(),
+          'photoURL': user.photoURL ?? '',
+          'phoneNumber': user.phoneNumber ?? '',
+          'bio': '',
+          'address': '',
+          'city': '',
+          'country': 'Vietnam',
+          'totalTrips': 0,
+          'totalBookings': 0,
+          'totalPosts': 0,
+          'totalFollowers': 0,
+          'totalFollowing': 0,
+          'language': 'vi',
+          'currency': 'VND',
+          'notificationSettings': {
+            'push': true,
+            'email': true,
+            'sms': false,
+            'marketing': false,
+          },
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'lastActive': FieldValue.serverTimestamp(),
+          'isVerified': false,
+          'role': 'user',
+        });
+        
+        LoggerService.i('User document created in Firestore for ${user.email}');
+      }
+    } catch (e) {
+      LoggerService.e('Error creating user document: $e');
+      // Don't throw - user can still use the app even if Firestore fails
+    }
   }
 }

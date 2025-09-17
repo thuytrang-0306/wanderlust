@@ -27,7 +27,7 @@ class AccommodationDetailController extends BaseController {
       'rating': 4.8,
       'price': 480000,
       'currency': 'VND',
-      'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas id sit eu tellus sed cursus eleifend id porta. Lorem adipiscing mus vestibulum consequat porta eu ultrices feugiat. Et, faucibus ut amet turpis.',
+      'description': 'Mô tả chi tiết đang được cập nhật. Homestay nằm giữa thiên nhiên hùng vĩ, mang đến trải nghiệm tuyệt vời cho du khách với không gian yên bình và dịch vụ tận tình.',
       'amenities': [
         'Wifi miễn phí',
         'Ti vi',

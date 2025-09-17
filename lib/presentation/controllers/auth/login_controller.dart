@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
@@ -9,6 +10,7 @@ import 'package:wanderlust/app/routes/app_pages.dart';
 
 class LoginController extends BaseController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   // Form controllers
   final emailController = TextEditingController();
@@ -175,6 +177,11 @@ class LoginController extends BaseController {
       
       LoggerService.i('Google sign in successful: ${userCredential.user?.email}');
       
+      // Create or update user document in Firestore
+      if (userCredential.user != null) {
+        await _createOrUpdateUserDocument(userCredential.user!);
+      }
+      
       // Navigate to main
       Get.offAllNamed(Routes.MAIN_NAVIGATION);
       
@@ -208,5 +215,56 @@ class LoginController extends BaseController {
   // Navigate to forgot password
   void navigateToForgotPassword() {
     Get.toNamed(Routes.FORGOT_PASSWORD);
+  }
+  
+  // Create or update user document in Firestore for social login
+  Future<void> _createOrUpdateUserDocument(User user) async {
+    try {
+      final userDoc = _firestore.collection('users').doc(user.uid);
+      final docSnapshot = await userDoc.get();
+      
+      if (!docSnapshot.exists) {
+        // Create new user document
+        await userDoc.set({
+          'uid': user.uid,
+          'email': user.email,
+          'displayName': user.displayName ?? '',
+          'photoURL': user.photoURL ?? '',
+          'phoneNumber': user.phoneNumber ?? '',
+          'bio': '',
+          'address': '',
+          'city': '',
+          'country': 'Vietnam',
+          'totalTrips': 0,
+          'totalBookings': 0,
+          'totalPosts': 0,
+          'totalFollowers': 0,
+          'totalFollowing': 0,
+          'language': 'vi',
+          'currency': 'VND',
+          'notificationSettings': {
+            'push': true,
+            'email': true,
+            'sms': false,
+            'marketing': false,
+          },
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'lastActive': FieldValue.serverTimestamp(),
+          'isVerified': user.emailVerified,
+          'role': 'user',
+        });
+        LoggerService.i('User document created for social login: ${user.email}');
+      } else {
+        // Update last active
+        await userDoc.update({
+          'lastActive': FieldValue.serverTimestamp(),
+          'photoURL': user.photoURL ?? docSnapshot.data()?['photoURL'] ?? '',
+          'displayName': user.displayName ?? docSnapshot.data()?['displayName'] ?? '',
+        });
+      }
+    } catch (e) {
+      LoggerService.e('Error creating/updating user document: $e');
+    }
   }
 }

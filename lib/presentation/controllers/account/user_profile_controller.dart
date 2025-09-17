@@ -1,13 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:wanderlust/data/services/image_upload_service.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/core/widgets/app_dialogs.dart';
 import 'package:wanderlust/core/services/storage_service.dart';
 
 class UserProfileController extends BaseController {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ImageUploadService _imageUpload = Get.put(ImageUploadService());
+  
   // User data
   final userName = 'Nguyen Thuy Trang'.obs;
   final userEmail = 'thuytrang@gmail.com'.obs;
@@ -75,20 +82,37 @@ class UserProfileController extends BaseController {
       );
       
       if (image != null) {
-        // TODO: Upload to Firebase Storage and update user profile
         AppSnackbar.showInfo(
-          message: 'Đang cập nhật ảnh đại diện...',
+          message: 'Đang tải ảnh lên...',
         );
         
-        // Simulate upload
-        await Future.delayed(const Duration(seconds: 2));
+        // Upload image using ImageUploadService (Cloudinary/ImgBB)
+        final imageUrl = await _imageUpload.uploadAvatar(File(image.path));
         
-        // Update local state
-        userAvatar.value = image.path;
-        
-        AppSnackbar.showSuccess(
-          message: 'Cập nhật ảnh đại diện thành công',
-        );
+        if (imageUrl != null) {
+          // Update Firestore
+          final user = _auth.currentUser;
+          if (user != null) {
+            await _firestore.collection('users').doc(user.uid).update({
+              'photoURL': imageUrl,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+            
+            // Update Firebase Auth profile
+            await user.updatePhotoURL(imageUrl);
+          }
+          
+          // Update local state
+          userAvatar.value = imageUrl;
+          
+          AppSnackbar.showSuccess(
+            message: 'Cập nhật ảnh đại diện thành công',
+          );
+        } else {
+          AppSnackbar.showError(
+            message: 'Không thể tải ảnh lên',
+          );
+        }
       }
     } catch (e) {
       AppSnackbar.showError(

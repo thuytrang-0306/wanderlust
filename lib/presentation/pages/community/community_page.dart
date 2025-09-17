@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/presentation/controllers/community/community_controller.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wanderlust/core/widgets/app_image.dart';
 
 class CommunityPage extends GetView<CommunityController> {
   const CommunityPage({super.key});
@@ -142,18 +142,12 @@ class CommunityPage extends GetView<CommunityController> {
                   ),
                 ),
                 child: ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: post.userAvatar,
+                  child: AppImage(
+                    imageData: post.userAvatar,
+                    width: 40.w,
+                    height: 40.w,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: AppColors.neutral200,
-                      child: Icon(
-                        Icons.person,
-                        color: AppColors.neutral400,
-                        size: 20.sp,
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
+                    errorWidget: Container(
                       color: AppColors.neutral200,
                       child: Icon(
                         Icons.person,
@@ -280,8 +274,8 @@ class CommunityPage extends GetView<CommunityController> {
     if (images.length == 1) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12.r),
-        child: CachedNetworkImage(
-          imageUrl: images[0],
+        child: AppImage(
+          imageData: images[0],
           height: 200.h,
           width: double.infinity,
           fit: BoxFit.cover,
@@ -293,8 +287,8 @@ class CommunityPage extends GetView<CommunityController> {
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12.r),
-              child: CachedNetworkImage(
-                imageUrl: images[0],
+              child: AppImage(
+                imageData: images[0],
                 height: 150.h,
                 fit: BoxFit.cover,
               ),
@@ -304,8 +298,8 @@ class CommunityPage extends GetView<CommunityController> {
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12.r),
-              child: CachedNetworkImage(
-                imageUrl: images[1],
+              child: AppImage(
+                imageData: images[1],
                 height: 150.h,
                 fit: BoxFit.cover,
               ),
@@ -366,8 +360,8 @@ class CommunityPage extends GetView<CommunityController> {
           // Background Image
           ClipRRect(
             borderRadius: BorderRadius.circular(12.r),
-            child: CachedNetworkImage(
-              imageUrl: review.imageUrl,
+            child: AppImage(
+              imageData: review.imageUrl,
               width: 200.w,
               height: 240.h,
               fit: BoxFit.cover,

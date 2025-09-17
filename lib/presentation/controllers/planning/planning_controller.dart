@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wanderlust/data/services/trip_service.dart';
+import 'package:wanderlust/data/models/trip_model.dart' as data_model;
 import 'package:wanderlust/presentation/pages/planning/planning_page.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 
 class PlanningController extends GetxController {
+  final TripService _tripService = Get.put(TripService());
+  
   // Search controller
   final TextEditingController searchController = TextEditingController();
   
   // Observable list of trips
   final RxList<TripModel> trips = <TripModel>[].obs;
   final RxList<TripModel> filteredTrips = <TripModel>[].obs;
+  final RxBool isLoading = false.obs;
+  
+  // Stream subscription
+  Stream<List<data_model.TripModel>>? _tripsStream;
   
   @override
   void onInit() {
     super.onInit();
-    _loadFakeTrips();
+    _loadTripsFromFirestore();
   }
   
   @override
@@ -23,11 +31,53 @@ class PlanningController extends GetxController {
     super.onClose();
   }
   
-  void _loadFakeTrips() {
-    // Fake data matching the design
+  void _loadTripsFromFirestore() {
+    isLoading.value = true;
+    
+    // Listen to real-time updates from Firestore
+    _tripsStream = _tripService.getUserTrips();
+    _tripsStream?.listen((firestoreTrips) {
+      // Convert Firestore models to UI models
+      trips.value = firestoreTrips.map((trip) {
+        return TripModel(
+          id: trip.id,
+          name: trip.name,
+          imageUrl: trip.coverImage.isEmpty 
+            ? 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800'
+            : trip.coverImage,
+          dateRange: trip.dateRange,
+          description: trip.description,
+          status: _convertStatus(trip.status),
+          statusText: trip.status.displayName,
+        );
+      }).toList();
+      
+      // If no trips, add some fake data for demo
+      if (trips.isEmpty) {
+        _addDemoTrips();
+      }
+      
+      filteredTrips.value = trips;
+      isLoading.value = false;
+    });
+  }
+  
+  TripStatus _convertStatus(data_model.TripStatus status) {
+    switch (status) {
+      case data_model.TripStatus.ongoing:
+        return TripStatus.ongoing;
+      case data_model.TripStatus.completed:
+        return TripStatus.upcoming;
+      default:
+        return TripStatus.planned;
+    }
+  }
+  
+  void _addDemoTrips() {
+    // Demo trips for first-time users
     trips.value = [
       TripModel(
-        id: '1',
+        id: 'demo1',
         name: 'Đà nẵng chào nành',
         imageUrl: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800',
         dateRange: 'CN, 9/1 - T3, 11/1',
@@ -83,12 +133,40 @@ class PlanningController extends GetxController {
   }
   
   void createNewTrip() async {
-    // Navigate to create trip page
+    // Navigate to trip edit page
     final result = await Get.toNamed(Routes.TRIP_EDIT);
     
-    if (result != null) {
-      // Refresh trips list after creating new trip
-      _loadFakeTrips();
+    if (result != null && result is Map<String, dynamic>) {
+      // Create trip in Firestore
+      isLoading.value = true;
+      final newTrip = await _tripService.createTrip(
+        name: result['name'],
+        description: result['description'],
+        startDate: result['startDate'],
+        endDate: result['endDate'],
+        budget: result['budget'] ?? 0,
+      );
+      
+      if (newTrip != null) {
+        Get.snackbar(
+          'Thành công',
+          'Đã tạo chuyến đi "${newTrip.name}"',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        
+        // Navigate to trip detail
+        Get.toNamed('/trip-detail', arguments: {
+          'tripId': newTrip.id,
+          'tripName': newTrip.name,
+        });
+      } else {
+        Get.snackbar(
+          'Lỗi',
+          'Không thể tạo chuyến đi. Vui lòng thử lại.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+      isLoading.value = false;
     }
   }
   
@@ -129,7 +207,7 @@ class PlanningController extends GetxController {
                 
                 if (result != null) {
                   // Refresh trips list after editing
-                  _loadFakeTrips();
+                  _loadTripsFromFirestore();
                 }
               },
             ),
