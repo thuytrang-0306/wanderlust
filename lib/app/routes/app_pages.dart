@@ -13,6 +13,8 @@ import 'package:wanderlust/presentation/pages/trip/add_note_page.dart';
 import 'package:wanderlust/presentation/pages/trip/search_location_page.dart';
 import 'package:wanderlust/presentation/pages/community/create_post_page.dart';
 import 'package:wanderlust/presentation/pages/community/blog_detail_page.dart';
+import 'package:wanderlust/presentation/pages/community/saved_collections_page.dart';
+import 'package:wanderlust/presentation/pages/community/collection_detail_page.dart';
 import 'package:wanderlust/presentation/bindings/create_post_binding.dart';
 
 part 'app_routes.dart';
@@ -84,6 +86,16 @@ class AppPages {
     GetPage(
       name: Routes.BLOG_DETAIL,
       page: () => const BlogDetailPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.SAVED_COLLECTIONS,
+      page: () => const SavedCollectionsPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.COLLECTION_DETAIL,
+      page: () => const CollectionDetailPage(),
       transition: Transition.rightToLeft,
     ),
   ];

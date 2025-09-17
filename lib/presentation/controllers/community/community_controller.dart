@@ -151,12 +151,6 @@ class CommunityController extends GetxController {
   }
   
   void openBookmarks() {
-    // TODO: Navigate to bookmarks page
-    Get.snackbar(
-      'Bookmarks',
-      'Danh sách bài viết đã lưu',
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 2),
-    );
+    Get.toNamed('/saved-collections');
   }
 }

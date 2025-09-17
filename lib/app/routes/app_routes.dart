@@ -23,6 +23,8 @@ abstract class Routes {
   // Community
   static const CREATE_POST = '/create-post';
   static const BLOG_DETAIL = '/blog-detail';
+  static const SAVED_COLLECTIONS = '/saved-collections';
+  static const COLLECTION_DETAIL = '/collection-detail';
   
   // Future Implementation
   // static const EXPLORE = '/explore';
