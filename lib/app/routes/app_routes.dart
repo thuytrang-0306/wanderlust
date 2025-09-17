@@ -26,6 +26,9 @@ abstract class Routes {
   static const SAVED_COLLECTIONS = '/saved-collections';
   static const COLLECTION_DETAIL = '/collection-detail';
   
+  // Accommodation
+  static const ACCOMMODATION_DETAIL = '/accommodation-detail';
+  
   // Future Implementation
   // static const EXPLORE = '/explore';
   // static const BOOKINGS = '/bookings';

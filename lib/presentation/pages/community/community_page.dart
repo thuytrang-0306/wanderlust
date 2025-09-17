@@ -349,14 +349,19 @@ class CommunityPage extends GetView<CommunityController> {
   }
 
   Widget _buildReviewCard(ReviewModel review) {
-    return Container(
-      width: 200.w,
-      height: 240.h,
-      margin: EdgeInsets.only(right: AppSpacing.s3),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Stack(
+    return GestureDetector(
+      onTap: () => Get.toNamed('/accommodation-detail', arguments: {
+        'accommodationId': review.id,
+        'accommodationName': review.name,
+      }),
+      child: Container(
+        width: 200.w,
+        height: 240.h,
+        margin: EdgeInsets.only(right: AppSpacing.s3),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Stack(
         children: [
           // Background Image
           ClipRRect(
@@ -467,6 +472,7 @@ class CommunityPage extends GetView<CommunityController> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

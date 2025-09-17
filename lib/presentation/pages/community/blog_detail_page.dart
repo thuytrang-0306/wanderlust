@@ -273,7 +273,12 @@ class BlogDetailPage extends StatelessWidget {
     required String duration,
     required String imageUrl,
   }) {
-    return Container(
+    return GestureDetector(
+      onTap: () => Get.toNamed('/accommodation-detail', arguments: {
+        'accommodationName': title,
+        'location': location,
+      }),
+      child: Container(
       width: 180.w,
       margin: EdgeInsets.only(right: 12.w),
       decoration: BoxDecoration(
@@ -393,6 +398,7 @@ class BlogDetailPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

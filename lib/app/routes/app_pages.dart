@@ -15,6 +15,7 @@ import 'package:wanderlust/presentation/pages/community/create_post_page.dart';
 import 'package:wanderlust/presentation/pages/community/blog_detail_page.dart';
 import 'package:wanderlust/presentation/pages/community/saved_collections_page.dart';
 import 'package:wanderlust/presentation/pages/community/collection_detail_page.dart';
+import 'package:wanderlust/presentation/pages/accommodation/accommodation_detail_page.dart';
 import 'package:wanderlust/presentation/bindings/create_post_binding.dart';
 
 part 'app_routes.dart';
@@ -96,6 +97,11 @@ class AppPages {
     GetPage(
       name: Routes.COLLECTION_DETAIL,
       page: () => const CollectionDetailPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.ACCOMMODATION_DETAIL,
+      page: () => const AccommodationDetailPage(),
       transition: Transition.rightToLeft,
     ),
   ];
