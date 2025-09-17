@@ -117,13 +117,15 @@ class CommunityPage extends GetView<CommunityController> {
   }
 
   Widget _buildPostCard(PostModel post) {
-    return Container(
-      margin: EdgeInsets.only(bottom: AppSpacing.s3),
-      padding: EdgeInsets.all(AppSpacing.s4),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-      ),
-      child: Column(
+    return GestureDetector(
+      onTap: () => Get.toNamed('/blog-detail', arguments: {'postId': post.id}),
+      child: Container(
+        margin: EdgeInsets.only(bottom: AppSpacing.s3),
+        padding: EdgeInsets.all(AppSpacing.s4),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // User Info
@@ -269,6 +271,7 @@ class CommunityPage extends GetView<CommunityController> {
             ],
           ),
         ],
+      ),
       ),
     );
   }
