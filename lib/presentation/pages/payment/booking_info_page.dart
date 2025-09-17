@@ -419,34 +419,36 @@ class BookingInfoPage extends GetView<BookingInfoController> {
   }
   
   Widget _buildGuestInfoSection() {
-    return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Column(
-        children: [
-          // Header with arrow
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Thông tin khách',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF111827),
+    return GestureDetector(
+      onTap: () => controller.editGuestInfo(),
+      child: Container(
+        margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Column(
+          children: [
+            // Header with arrow
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Thông tin khách',
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF111827),
+                  ),
                 ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                size: 24.sp,
-                color: const Color(0xFF9CA3AF),
-              ),
-            ],
-          ),
+                Icon(
+                  Icons.chevron_right,
+                  size: 24.sp,
+                  color: const Color(0xFF9CA3AF),
+                ),
+              ],
+            ),
           SizedBox(height: 12.h),
           
           // Guest name
@@ -468,12 +470,12 @@ class BookingInfoPage extends GetView<BookingInfoController> {
             ],
           ),
           SizedBox(height: 4.h),
-          Padding(
+          Obx(() => Padding(
             padding: EdgeInsets.only(left: 26.w),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'NGUYEN THUY TRANG',
+                controller.bookingData['guestName'] ?? 'NGUYEN THUY TRANG',
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
@@ -481,8 +483,9 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                 ),
               ),
             ),
-          ),
+          )),
         ],
+      ),
       ),
     );
   }
@@ -519,14 +522,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                   color: const Color(0xFF6B7280),
                 ),
               ),
-              Text(
-                'User name',
+              Obx(() => Text(
+                controller.bookingData['userName'] ?? 'User name',
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF374151),
                 ),
-              ),
+              )),
             ],
           ),
           
@@ -543,14 +546,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                   color: const Color(0xFF6B7280),
                 ),
               ),
-              Text(
-                '012345678',
+              Obx(() => Text(
+                controller.bookingData['phone'] ?? '012345678',
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF374151),
                 ),
-              ),
+              )),
             ],
           ),
           
@@ -567,14 +570,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                   color: const Color(0xFF6B7280),
                 ),
               ),
-              Text(
-                'thuytrang@gmail.com',
+              Obx(() => Text(
+                controller.bookingData['email'] ?? 'thuytrang@gmail.com',
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF374151),
                 ),
-              ),
+              )),
             ],
           ),
         ],
@@ -583,34 +586,36 @@ class BookingInfoPage extends GetView<BookingInfoController> {
   }
   
   Widget _buildPaymentMethodSection() {
-    return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Column(
-        children: [
-          // Header with arrow
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Phương thức thanh toán',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF111827),
+    return GestureDetector(
+      onTap: () => controller.selectPaymentMethod(),
+      child: Container(
+        margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Column(
+          children: [
+            // Header with arrow
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Phương thức thanh toán',
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF111827),
+                  ),
                 ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                size: 24.sp,
-                color: const Color(0xFF9CA3AF),
-              ),
-            ],
-          ),
+                Icon(
+                  Icons.chevron_right,
+                  size: 24.sp,
+                  color: const Color(0xFF9CA3AF),
+                ),
+              ],
+            ),
           SizedBox(height: 12.h),
           
           // Payment method
@@ -649,17 +654,18 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                 ),
               ),
               SizedBox(width: 12.w),
-              Text(
-                'VIB ••6969',
+              Obx(() => Text(
+                controller.bookingData['paymentMethod'] ?? 'VIB ••6969',
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF374151),
                 ),
-              ),
+              )),
             ],
           ),
         ],
+      ),
       ),
     );
   }

@@ -31,6 +31,8 @@ abstract class Routes {
   
   // Payment
   static const BOOKING_INFO = '/booking-info';
+  static const CUSTOMER_INFO = '/customer-info';
+  static const PAYMENT_METHOD = '/payment-method';
   
   // Future Implementation
   // static const EXPLORE = '/explore';

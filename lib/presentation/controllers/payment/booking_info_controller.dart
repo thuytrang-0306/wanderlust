@@ -40,22 +40,35 @@ class BookingInfoController extends BaseController {
     }
   }
   
-  void editGuestInfo() {
-    // Navigate to edit guest info page
-    Get.snackbar(
-      'Chỉnh sửa',
-      'Mở trang chỉnh sửa thông tin khách',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+  void editGuestInfo() async {
+    // Navigate to customer info page
+    final result = await Get.toNamed('/customer-info');
+    
+    if (result != null && result is Map<String, dynamic>) {
+      // Update booking data with new customer info
+      bookingData['guestName'] = '${result['lastName']} ${result['firstName']}'.toUpperCase();
+      bookingData['userName'] = '${result['lastName']} ${result['firstName']}';
+      bookingData['phone'] = result['phone'];
+      bookingData['email'] = result['email'];
+    }
   }
   
-  void selectPaymentMethod() {
-    // Navigate to payment method selection
-    Get.snackbar(
-      'Phương thức thanh toán',
-      'Chọn phương thức thanh toán',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+  void selectPaymentMethod() async {
+    // Navigate to payment method page
+    final result = await Get.toNamed('/payment-method');
+    
+    if (result != null && result is Map<String, dynamic>) {
+      // Update payment method display
+      String paymentDisplay = '';
+      
+      if (result['type'] == 'card') {
+        paymentDisplay = '${result['cardType']} ••${result['lastFourDigits']}';
+      } else if (result['type'] == 'digital') {
+        paymentDisplay = result['method'];
+      }
+      
+      bookingData['paymentMethod'] = paymentDisplay;
+    }
   }
   
   void processPayment() async {
