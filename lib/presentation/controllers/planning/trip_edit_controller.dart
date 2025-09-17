@@ -129,6 +129,14 @@ class TripEditController extends GetxController {
       return;
     }
     
+    // Format date range
+    String dateRange = '';
+    if (startDate.value != null && endDate.value != null) {
+      final startStr = 'T${startDate.value!.weekday == 7 ? "CN" : (startDate.value!.weekday + 1).toString()}, ${startDate.value!.day}/${startDate.value!.month}';
+      final endStr = 'CN, ${endDate.value!.day}/${endDate.value!.month}';
+      dateRange = '$startStr - $endStr';
+    }
+    
     // TODO: Save to repository
     final tripData = {
       'tripName': tripNameController.text.trim(),
@@ -136,6 +144,7 @@ class TripEditController extends GetxController {
       'startDate': startDate.value,
       'endDate': endDate.value,
       'numberOfPeople': numberOfPeople.value,
+      'dateRange': dateRange,
     };
     
     if (isEditMode.value) {
@@ -152,7 +161,12 @@ class TripEditController extends GetxController {
       );
     }
     
-    // Navigate back
-    Get.back(result: tripData);
+    // Navigate to Trip Detail page
+    Get.offNamed('/trip-detail', arguments: {
+      'tripName': tripNameController.text.trim(),
+      'dateRange': dateRange,
+      'peopleCount': numberOfPeople.value,
+      'tripImage': '', // Will be added later when image picker is implemented
+    });
   }
 }

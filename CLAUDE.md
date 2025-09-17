@@ -460,6 +460,51 @@ Large: 56.h
 Small: 40.h
 ```
 
+## 📱 TextField & Input Design Guidelines
+
+### IMPORTANT: TextField Styling Rules
+1. **Borderless TextField** - Khi design không có viền:
+   ```dart
+   // ❌ WRONG - Container có thể tạo viền không mong muốn
+   Container(
+     child: TextField(...)
+   )
+   
+   // ✅ CORRECT - Dùng Padding để giữ layout tự nhiên
+   Padding(
+     padding: EdgeInsets.all(20.w),
+     child: TextField(
+       decoration: InputDecoration(
+         border: InputBorder.none,
+         enabledBorder: InputBorder.none,
+         focusedBorder: InputBorder.none,
+         filled: false,
+         contentPadding: EdgeInsets.zero,
+       ),
+     ),
+   )
+   ```
+
+2. **Full-screen Text Editor**:
+   - Use `expands: true` với `maxLines: null`
+   - Set `textAlignVertical: TextAlignVertical.top`
+   - Always `autofocus: true` cho editor pages
+
+3. **Map/Location UI**:
+   - Map container PHẢI có border radius
+   - Use ClipRRect để clip content trong border
+   - Navigation button là floating overlay
+
+4. **Fixed Layout vs Scrollable**:
+   - Check design kỹ - nhiều page KHÔNG cần ScrollView
+   - Use Column + Expanded cho fixed layouts
+   - Map screens thường là fixed với Expanded map
+
+5. **AppTextField Usage**:
+   - ALWAYS use AppTextField cho form fields
+   - NEVER create custom TextField wrapper
+   - AppTextField requires 'label' parameter
+
 ## 🎯 Best Practices & Widget System
 
 ### 🧩 Core Widget System

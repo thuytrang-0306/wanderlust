@@ -478,16 +478,14 @@ class DiscoverPage extends GetView<DiscoverController> {
           Container(
             width: 80.w,
             height: 80.h,
-            child: Image.asset(
-              'assets/images/travel_illustration.png',
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Icon(
-                  Icons.travel_explore,
-                  size: 60.sp,
-                  color: AppColors.primary.withOpacity(0.5),
-                );
-              },
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Icon(
+              Icons.travel_explore,
+              size: 60.sp,
+              color: AppColors.primary.withOpacity(0.5),
             ),
           ),
         ],

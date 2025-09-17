@@ -15,6 +15,10 @@ abstract class Routes {
   
   // Planning
   static const TRIP_EDIT = '/trip-edit';
+  static const TRIP_DETAIL = '/trip-detail';
+  static const ADD_PRIVATE_LOCATION = '/add-private-location';
+  static const ADD_NOTE = '/add-note';
+  static const SEARCH_LOCATION = '/search-location';
   
   // Community
   static const CREATE_POST = '/create-post';

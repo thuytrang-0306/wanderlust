@@ -150,22 +150,32 @@ class PlanningPage extends GetView<PlanningController> {
   }
 
   Widget _buildTripCard(TripModel trip) {
-    return Container(
-      height: 180.h,
-      margin: EdgeInsets.only(bottom: AppSpacing.s3),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.r),
-        child: Stack(
+    return GestureDetector(
+      onTap: () {
+        // Navigate to Trip Detail page
+        Get.toNamed('/trip-detail', arguments: {
+          'tripName': trip.name,
+          'dateRange': trip.dateRange,
+          'peopleCount': 2, // Default value, will be updated when TripModel has this field
+          'tripImage': trip.imageUrl,
+        });
+      },
+      child: Container(
+        height: 180.h,
+        margin: EdgeInsets.only(bottom: AppSpacing.s3),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16.r),
+          child: Stack(
           children: [
             // Background Image
             Positioned.fill(
@@ -285,6 +295,7 @@ class PlanningPage extends GetView<PlanningController> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

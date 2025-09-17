@@ -7,6 +7,10 @@ import 'package:wanderlust/presentation/pages/auth/verify_email/verify_email_pag
 import 'package:wanderlust/presentation/pages/main/main_navigation_page.dart';
 import 'package:wanderlust/presentation/pages/planning/trip_edit_page.dart';
 import 'package:wanderlust/presentation/bindings/trip_edit_binding.dart';
+import 'package:wanderlust/presentation/pages/trip/trip_detail_page.dart';
+import 'package:wanderlust/presentation/pages/trip/add_private_location_page.dart';
+import 'package:wanderlust/presentation/pages/trip/add_note_page.dart';
+import 'package:wanderlust/presentation/pages/trip/search_location_page.dart';
 import 'package:wanderlust/presentation/pages/community/create_post_page.dart';
 import 'package:wanderlust/presentation/bindings/create_post_binding.dart';
 
@@ -48,6 +52,26 @@ class AppPages {
       name: Routes.TRIP_EDIT,
       page: () => const TripEditPage(),
       binding: TripEditBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.TRIP_DETAIL,
+      page: () => const TripDetailPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.ADD_PRIVATE_LOCATION,
+      page: () => const AddPrivateLocationPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.ADD_NOTE,
+      page: () => const AddNotePage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.SEARCH_LOCATION,
+      page: () => const SearchLocationPage(),
       transition: Transition.rightToLeft,
     ),
     GetPage(
