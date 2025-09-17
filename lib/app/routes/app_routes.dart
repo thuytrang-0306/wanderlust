@@ -48,6 +48,9 @@ abstract class Routes {
   static const SETTINGS = '/settings';
   static const MY_TRIPS = '/my-trips';
   
+  // Bookings
+  static const BOOKING_HISTORY = '/booking-history';
+  
   // Future Implementation
   // static const EXPLORE = '/explore';
   // static const BOOKINGS = '/bookings';

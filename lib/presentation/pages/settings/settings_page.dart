@@ -42,6 +42,12 @@ class SettingsPage extends GetView<SettingsController> {
                 onTap: controller.navigateToEditProfile,
               ),
               _buildSettingItem(
+                icon: Icons.hotel_outlined,
+                title: 'Lịch sử đặt phòng',
+                subtitle: 'Xem các booking đã đặt',
+                onTap: controller.navigateToBookingHistory,
+              ),
+              _buildSettingItem(
                 icon: Icons.lock_outline,
                 title: 'Bảo mật',
                 subtitle: 'Đổi mật khẩu, xác thực 2 bước',

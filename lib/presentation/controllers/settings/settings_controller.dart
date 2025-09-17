@@ -75,6 +75,10 @@ class SettingsController extends BaseController {
     Get.toNamed('/privacy-settings');
   }
   
+  void navigateToBookingHistory() {
+    Get.toNamed('/booking-history');
+  }
+  
   void navigateToNotificationSettings() {
     Get.toNamed('/notification-settings');
   }

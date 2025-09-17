@@ -25,10 +25,12 @@ import 'package:wanderlust/presentation/pages/account/user_profile_page.dart';
 import 'package:wanderlust/presentation/pages/search/search_filter_page.dart';
 import 'package:wanderlust/presentation/pages/settings/settings_page.dart';
 import 'package:wanderlust/presentation/pages/trips/my_trips_page.dart';
+import 'package:wanderlust/presentation/pages/booking/booking_history_page.dart';
 import 'package:wanderlust/presentation/bindings/create_post_binding.dart';
 import 'package:wanderlust/presentation/bindings/search_filter_binding.dart';
 import 'package:wanderlust/presentation/bindings/settings_binding.dart';
 import 'package:wanderlust/presentation/bindings/my_trips_binding.dart';
+import 'package:wanderlust/presentation/bindings/booking_history_binding.dart';
 
 part 'app_routes.dart';
 
@@ -162,6 +164,12 @@ class AppPages {
       name: Routes.MY_TRIPS,
       page: () => const MyTripsPage(),
       binding: MyTripsBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.BOOKING_HISTORY,
+      page: () => const BookingHistoryPage(),
+      binding: BookingHistoryBinding(),
       transition: Transition.rightToLeft,
     ),
   ];
