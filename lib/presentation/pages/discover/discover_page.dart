@@ -50,6 +50,11 @@ class DiscoverPage extends GetView<DiscoverController> {
               
               SizedBox(height: AppSpacing.s6),
               
+              // Combo Tours Section
+              _buildComboToursSection(),
+              
+              SizedBox(height: AppSpacing.s6),
+              
               // Blog Section
               _buildBlogSection(),
               
@@ -703,6 +708,242 @@ class DiscoverPage extends GetView<DiscoverController> {
               ),
             );
           },
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildComboToursSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Combo tour nổi bật',
+                style: AppTypography.h4.copyWith(
+                  color: AppColors.neutral900,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                'Xem tất cả',
+                style: AppTypography.bodyS.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: AppSpacing.s4),
+        SizedBox(
+          height: 280.h,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+            itemCount: 3,
+            itemBuilder: (context, index) {
+              final combos = [
+                {
+                  'title': 'Tour Nha Trang - Chuyên đi chữa lành cảm xúc',
+                  'location': 'Nha Trang, Khánh Hòa',
+                  'duration': '2 ngày 1 đêm',
+                  'price': '3.500.000',
+                  'rating': '4.8',
+                  'creator': 'Hiếu Thù Hại',
+                  'image': 'https://images.unsplash.com/photo-1559628233-100c798642d4?w=400',
+                },
+                {
+                  'title': 'Tour Phú Quốc - Thiên đường nghỉ dưỡng',
+                  'location': 'Phú Quốc, Kiên Giang',
+                  'duration': '3 ngày 2 đêm',
+                  'price': '5.200.000',
+                  'rating': '4.9',
+                  'creator': 'Minh Trang',
+                  'image': 'https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400',
+                },
+                {
+                  'title': 'Tour Đà Lạt - Thành phố ngàn hoa',
+                  'location': 'Đà Lạt, Lâm Đồng',
+                  'duration': '2 ngày 1 đêm',
+                  'price': '2.800.000',
+                  'rating': '4.7',
+                  'creator': 'An Nhiên',
+                  'image': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
+                },
+              ];
+              
+              final combo = combos[index];
+              
+              return GestureDetector(
+                onTap: () => Get.toNamed('/combo-detail', arguments: combo),
+                child: Container(
+                  width: 240.w,
+                  margin: EdgeInsets.only(right: AppSpacing.s3),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Image
+                      Container(
+                        height: 140.h,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(16.r),
+                          ),
+                          image: DecorationImage(
+                            image: CachedNetworkImageProvider(combo['image']!),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        child: Stack(
+                          children: [
+                            // Rating badge
+                            Positioned(
+                              top: 8.h,
+                              right: 8.w,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 4.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      size: 14.sp,
+                                      color: Colors.amber,
+                                    ),
+                                    SizedBox(width: 2.w),
+                                    Text(
+                                      combo['rating']!,
+                                      style: AppTypography.bodyS.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Content
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.all(AppSpacing.s3),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    combo['title']!,
+                                    style: AppTypography.bodyM.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.2,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  SizedBox(height: 6.h),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.location_on_outlined,
+                                        size: 14.sp,
+                                        color: AppColors.neutral500,
+                                      ),
+                                      SizedBox(width: 2.w),
+                                      Expanded(
+                                        child: Text(
+                                          combo['location']!,
+                                          style: AppTypography.bodyXS.copyWith(
+                                            color: AppColors.neutral600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    combo['duration']!,
+                                    style: AppTypography.bodyXS.copyWith(
+                                      color: AppColors.neutral500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${combo['price']} VND',
+                                    style: AppTypography.bodyL.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 6.h),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 24.w,
+                                        height: 24.h,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          image: DecorationImage(
+                                            image: CachedNetworkImageProvider(
+                                              'https://i.pravatar.cc/150?img=${index + 6}',
+                                            ),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Text(
+                                        'Được tạo bởi ${combo['creator']}',
+                                        style: AppTypography.bodyXS.copyWith(
+                                          color: AppColors.neutral600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ],
     );

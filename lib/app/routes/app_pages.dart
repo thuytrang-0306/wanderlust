@@ -19,6 +19,7 @@ import 'package:wanderlust/presentation/pages/accommodation/accommodation_detail
 import 'package:wanderlust/presentation/pages/payment/booking_info_page.dart';
 import 'package:wanderlust/presentation/pages/payment/customer_info_page.dart';
 import 'package:wanderlust/presentation/pages/payment/payment_method_page.dart';
+import 'package:wanderlust/presentation/pages/combo/combo_detail_page.dart';
 import 'package:wanderlust/presentation/bindings/create_post_binding.dart';
 
 part 'app_routes.dart';
@@ -120,6 +121,11 @@ class AppPages {
     GetPage(
       name: Routes.PAYMENT_METHOD,
       page: () => const PaymentMethodPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.COMBO_DETAIL,
+      page: () => const ComboDetailPage(),
       transition: Transition.rightToLeft,
     ),
   ];

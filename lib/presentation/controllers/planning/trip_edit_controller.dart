@@ -23,12 +23,19 @@ class TripEditController extends GetxController {
   void onInit() {
     super.onInit();
     
-    // Check if we're in edit mode
+    // Check arguments
     final arguments = Get.arguments;
-    if (arguments != null && arguments['tripId'] != null) {
-      isEditMode.value = true;
-      tripId = arguments['tripId'];
-      _loadTripData(tripId!);
+    if (arguments != null) {
+      // Check if creating from combo
+      if (arguments['fromCombo'] == true && arguments['comboData'] != null) {
+        _loadFromCombo(arguments['comboData']);
+      }
+      // Check if we're in edit mode
+      else if (arguments['tripId'] != null) {
+        isEditMode.value = true;
+        tripId = arguments['tripId'];
+        _loadTripData(tripId!);
+      }
     }
   }
   
@@ -47,6 +54,42 @@ class TripEditController extends GetxController {
     startDate.value = DateTime(2025, 1, 8);
     endDate.value = DateTime(2025, 1, 12);
     numberOfPeople.value = 2;
+  }
+  
+  void _loadFromCombo(Map<String, dynamic> comboData) {
+    // Extract title without "Tour" prefix
+    String title = comboData['title'] ?? '';
+    if (title.startsWith('Tour ')) {
+      title = title.substring(5);
+    }
+    
+    tripNameController.text = title;
+    destinationController.text = comboData['location'] ?? '';
+    
+    // Parse duration to calculate dates
+    String duration = comboData['duration'] ?? '2 ngày 1 đêm';
+    int days = _parseDaysFromDuration(duration);
+    
+    // Set dates starting from tomorrow
+    startDate.value = DateTime.now().add(const Duration(days: 1));
+    endDate.value = startDate.value?.add(Duration(days: days - 1));
+    
+    numberOfPeople.value = 1;
+    
+    // Show success message
+    AppSnackbar.showInfo(
+      message: 'Đã tải thông tin từ combo tour',
+    );
+  }
+  
+  int _parseDaysFromDuration(String duration) {
+    // Parse "X ngày Y đêm" format
+    final regex = RegExp(r'(\d+)\s*ngày');
+    final match = regex.firstMatch(duration);
+    if (match != null) {
+      return int.tryParse(match.group(1) ?? '2') ?? 2;
+    }
+    return 2; // Default 2 days
   }
   
   void updateField(String field, String value) {
