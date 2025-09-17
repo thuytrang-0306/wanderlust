@@ -29,6 +29,9 @@ abstract class Routes {
   // Accommodation
   static const ACCOMMODATION_DETAIL = '/accommodation-detail';
   
+  // Payment
+  static const BOOKING_INFO = '/booking-info';
+  
   // Future Implementation
   // static const EXPLORE = '/explore';
   // static const BOOKINGS = '/bookings';

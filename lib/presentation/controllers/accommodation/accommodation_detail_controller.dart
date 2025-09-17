@@ -91,14 +91,15 @@ class AccommodationDetailController extends BaseController {
   }
   
   void bookRoom() {
-    // Navigate to payment page
-    Get.toNamed('/payment', arguments: {
+    // Navigate to booking info page
+    Get.toNamed('/booking-info', arguments: {
       'accommodationId': accommodationData['id'],
       'accommodationName': accommodationData['name'],
       'price': accommodationData['price'],
       'dates': selectedDates.value,
       'rooms': roomCount.value,
       'guests': guestCount.value,
+      'nights': 1,
     });
   }
 }

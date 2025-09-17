@@ -284,10 +284,16 @@ class DiscoverPage extends GetView<DiscoverController> {
               
               final dest = destinations[index];
               
-              return Container(
-                width: 150.w,
-                margin: EdgeInsets.only(right: AppSpacing.s3),
-                child: Column(
+              return GestureDetector(
+                onTap: () => Get.toNamed('/accommodation-detail', arguments: {
+                  'accommodationName': dest['name'],
+                  'location': dest['location'],
+                  'price': dest['price'],
+                }),
+                child: Container(
+                  width: 150.w,
+                  margin: EdgeInsets.only(right: AppSpacing.s3),
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Image with badge
@@ -400,6 +406,7 @@ class DiscoverPage extends GetView<DiscoverController> {
                       ),
                     ),
                   ],
+                ),
                 ),
               );
             },

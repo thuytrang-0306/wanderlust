@@ -585,21 +585,24 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                       ),
                       
                       // Book button
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 24.w,
-                          vertical: 10.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
-                        child: Text(
-                          'Đặt phòng',
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
+                      GestureDetector(
+                        onTap: controller.bookRoom,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 10.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Text(
+                            'Đặt phòng',
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
                           ),
                         ),
                       ),
