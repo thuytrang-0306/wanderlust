@@ -76,21 +76,44 @@ class BookingInfoController extends BaseController {
     
     isProcessing.value = true;
     
+    // Show processing dialog
+    Get.dialog(
+      WillPopScope(
+        onWillPop: () async => false,
+        child: const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Đang xử lý thanh toán...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+    
     // Simulate payment processing
     await Future.delayed(const Duration(seconds: 2));
     
     isProcessing.value = false;
+    Get.back(); // Close dialog
     
-    // Navigate to payment success or show result
-    Get.snackbar(
-      'Thanh toán',
-      'Đang xử lý thanh toán...',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.primary.withOpacity(0.9),
-      colorText: Colors.white,
-    );
-    
-    // Navigate to success page
-    // Get.toNamed('/payment-success');
+    // Navigate to success page with booking data
+    Get.offNamed('/payment-success', arguments: {
+      'hotelName': bookingData['accommodationName'],
+      'roomType': bookingData['roomType'],
+      'guestName': bookingData['guestName'],
+      'checkIn': bookingData['checkIn'],
+      'checkOut': bookingData['checkOut'],
+      'nights': bookingData['nights'],
+      'totalAmount': bookingData['total'].toString(),
+    });
   }
 }

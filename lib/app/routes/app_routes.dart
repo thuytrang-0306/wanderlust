@@ -33,6 +33,7 @@ abstract class Routes {
   static const BOOKING_INFO = '/booking-info';
   static const CUSTOMER_INFO = '/customer-info';
   static const PAYMENT_METHOD = '/payment-method';
+  static const PAYMENT_SUCCESS = '/payment-success';
   
   // Combo Tours
   static const COMBO_DETAIL = '/combo-detail';
