@@ -4,7 +4,11 @@ import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/presentation/controllers/planning/planning_controller.dart';
+import 'package:wanderlust/data/models/trip_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wanderlust/core/widgets/shimmer_loading.dart';
+import 'package:wanderlust/core/base/base_controller.dart';
+import 'package:intl/intl.dart';
 
 class PlanningPage extends GetView<PlanningController> {
   const PlanningPage({super.key});
@@ -19,61 +23,41 @@ class PlanningPage extends GetView<PlanningController> {
           Column(
             children: [
               _buildHeader(),
-              _buildSearchBar(),
+              _buildTabBar(),
               Expanded(
                 child: Container(
                   color: const Color(0xFFF5F7F8),
                   child: Obx(() {
-                    if (controller.filteredTrips.isEmpty && controller.trips.isEmpty) {
+                    // Handle loading state
+                    if (controller.isLoadingTrips.value) {
+                      return _buildLoadingState();
+                    }
+
+                    // Handle error state
+                    if (controller.viewState == ViewState.error) {
+                      return _buildErrorState();
+                    }
+                    
+                    // Handle empty state
+                    if (controller.displayedTrips.isEmpty) {
                       return _buildEmptyState();
                     }
                     
-                    if (controller.filteredTrips.isEmpty && controller.trips.isNotEmpty) {
-                      return Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(AppSpacing.s8),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.search_off,
-                                size: 64.sp,
-                                color: Colors.grey[400],
-                              ),
-                              SizedBox(height: AppSpacing.s4),
-                              Text(
-                                'Không tìm thấy chuyến đi',
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
-                              SizedBox(height: AppSpacing.s2),
-                              Text(
-                                'Thử tìm kiếm với từ khóa khác',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
+                    // Show trips list
+                    return RefreshIndicator(
+                      onRefresh: controller.loadTrips,
+                      child: ListView.builder(
+                        padding: EdgeInsets.only(
+                          left: AppSpacing.s4,
+                          right: AppSpacing.s4,
+                          top: AppSpacing.s2,
+                          bottom: 100.h, // Space for FAB
                         ),
-                      );
-                    }
-                    
-                    return ListView.builder(
-                      padding: EdgeInsets.only(
-                        left: AppSpacing.s4,
-                        right: AppSpacing.s4,
-                        top: AppSpacing.s2,
-                        bottom: 100.h, // Space for FAB
+                        itemCount: controller.displayedTrips.length,
+                        itemBuilder: (context, index) {
+                          return _buildTripCard(controller.displayedTrips[index]);
+                        },
                       ),
-                      itemCount: controller.filteredTrips.length,
-                      itemBuilder: (context, index) {
-                        return _buildTripCard(controller.filteredTrips[index]);
-                      },
                     );
                   }),
                 ),
@@ -111,33 +95,39 @@ class PlanningPage extends GetView<PlanningController> {
             horizontal: AppSpacing.s5,
             vertical: AppSpacing.s4,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Tạo chuyến đi',
+                'Kế hoạch du lịch',
                 style: TextStyle(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.primary,
                 ),
               ),
-              Container(
-                width: 32.w,
-                height: 32.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primary,
-                    width: 2,
+              SizedBox(height: AppSpacing.s2),
+              Obx(() => Row(
+                children: [
+                  _buildStatCard(
+                    Icons.luggage,
+                    '${controller.totalTrips}',
+                    'Chuyến đi',
                   ),
-                ),
-                child: Icon(
-                  Icons.add,
-                  color: AppColors.primary,
-                  size: 20.sp,
-                ),
-              ),
+                  SizedBox(width: AppSpacing.s3),
+                  _buildStatCard(
+                    Icons.location_on,
+                    '${controller.totalDestinations}',
+                    'Điểm đến',
+                  ),
+                  SizedBox(width: AppSpacing.s3),
+                  _buildStatCard(
+                    Icons.account_balance_wallet,
+                    '${(controller.totalBudget / 1000000).toStringAsFixed(1)}M',
+                    'Ngân sách',
+                  ),
+                ],
+              )),
             ],
           ),
         ),
@@ -145,56 +135,92 @@ class PlanningPage extends GetView<PlanningController> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildStatCard(IconData icon, String value, String label) {
     return Container(
-      color: const Color(0xFFF5F7F8),
-      padding: EdgeInsets.all(AppSpacing.s4),
-      child: Container(
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: const Color(0xFFE5E7EB),
-            width: 1,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.s3,
+        vertical: AppSpacing.s2,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18.sp,
+            color: AppColors.primary,
           ),
-        ),
-        child: TextField(
-          controller: controller.searchController,
-          onChanged: controller.onSearchChanged,
-          decoration: InputDecoration(
-            hintText: 'Tìm kiếm chuyến đi',
-            hintStyle: TextStyle(
-              fontSize: 15.sp,
-              color: const Color(0xFF9CA3AF),
-            ),
-            prefixIcon: Icon(
-              Icons.search,
-              color: const Color(0xFF9CA3AF),
-              size: 22.sp,
-            ),
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.s4,
-              vertical: AppSpacing.s3,
-            ),
+          SizedBox(width: AppSpacing.s2),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.neutral800,
+                ),
+              ),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColors.neutral500,
+                ),
+              ),
+            ],
           ),
-        ),
+        ],
       ),
     );
   }
 
+  Widget _buildTabBar() {
+    return Container(
+      color: const Color(0xFFF5F7F8),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.s4,
+        vertical: AppSpacing.s3,
+      ),
+      child: Obx(() => Row(
+        children: List.generate(4, (index) {
+          final isSelected = controller.selectedTab.value == index;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => controller.changeTab(index),
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.s2),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Text(
+                  controller.getTabTitle(index),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected ? Colors.white : AppColors.neutral600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          );
+        }),
+      )),
+    );
+  }
+
   Widget _buildTripCard(TripModel trip) {
+    final dateFormat = DateFormat('dd/MM');
+    final startDate = dateFormat.format(trip.startDate);
+    final endDate = dateFormat.format(trip.endDate);
+    
     return GestureDetector(
-      onTap: () {
-        // Navigate to Trip Detail page
-        Get.toNamed('/trip-detail', arguments: {
-          'tripName': trip.name,
-          'dateRange': trip.dateRange,
-          'peopleCount': 2, // Default value, will be updated when TripModel has this field
-          'tripImage': trip.imageUrl,
-        });
-      },
+      onTap: () => controller.viewTripDetail(trip),
       child: Container(
         height: 180.h,
         margin: EdgeInsets.only(bottom: AppSpacing.s3),
@@ -211,128 +237,219 @@ class PlanningPage extends GetView<PlanningController> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16.r),
           child: Stack(
-          children: [
-            // Background Image
-            Positioned.fill(
-              child: CachedNetworkImage(
-                imageUrl: trip.imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: AppColors.neutral200,
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: AppColors.neutral200,
-                  child: const Icon(Icons.image, color: AppColors.neutral400),
-                ),
-              ),
-            ),
-            
-            // Gradient Overlay
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.7),
-                    ],
-                    stops: const [0.3, 1.0],
+            children: [
+              // Background Image
+              Positioned.fill(
+                child: CachedNetworkImage(
+                  imageUrl: trip.coverImage,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: AppColors.neutral200,
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: AppColors.neutral200,
+                    child: const Icon(Icons.image, color: AppColors.neutral400),
                   ),
                 ),
               ),
-            ),
-            
-            // Content
-            Positioned.fill(
-              child: Padding(
-                padding: EdgeInsets.all(AppSpacing.s4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Top Row: Status Badge and More Options
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Status Badge
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: AppSpacing.s3,
-                            vertical: 6.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: trip.status == TripStatus.ongoing
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFFF97316),
-                            borderRadius: BorderRadius.circular(20.r),
-                          ),
-                          child: Text(
-                            trip.statusText,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
+              
+              // Gradient Overlay
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.7),
+                      ],
+                      stops: const [0.3, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+              
+              // Content
+              Positioned.fill(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.s4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Top Row: Status Badge and More Options
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Status Badge
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppSpacing.s3,
+                              vertical: 6.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(trip),
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Text(
+                              trip.statusDisplay,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        ),
-                        // More Options
-                        GestureDetector(
-                          onTap: () => controller.showTripOptions(trip),
-                          child: Container(
-                            padding: EdgeInsets.all(4.w),
-                            child: Icon(
+                          // More Options
+                          PopupMenuButton<String>(
+                            icon: Icon(
                               Icons.more_vert,
                               color: Colors.white,
                               size: 24.sp,
                             ),
+                            onSelected: (value) {
+                              switch (value) {
+                                case 'edit':
+                                  controller.editTrip(trip);
+                                  break;
+                                case 'delete':
+                                  controller.deleteTrip(trip.id);
+                                  break;
+                                case 'share':
+                                  // TODO: Implement share
+                                  break;
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Text('Chỉnh sửa'),
+                              ),
+                              const PopupMenuItem(
+                                value: 'share',
+                                child: Text('Chia sẻ'),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Text(
+                                  'Xóa',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                    
-                    // Bottom Content
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          trip.name,
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            height: 1.2,
+                        ],
+                      ),
+                      
+                      // Bottom Content
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            trip.title,
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              height: 1.2,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          trip.dateRange,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withValues(alpha: 0.9),
+                          SizedBox(height: 6.h),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 14.sp,
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                trip.destination,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          trip.description,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: Colors.white.withValues(alpha: 0.8),
+                          SizedBox(height: 4.h),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_outlined,
+                                size: 14.sp,
+                                color: Colors.white.withValues(alpha: 0.8),
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                '$startDate - $endDate • ${trip.durationText}',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                ),
+                              ),
+                              const Spacer(),
+                              if (trip.travelers.isNotEmpty) ...[
+                                Icon(
+                                  Icons.people_outline,
+                                  size: 14.sp,
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  '${trip.travelers.length}',
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              
+              // Budget Progress Bar (optional)
+              if (trip.budget > 0)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 4.h,
+                    color: Colors.black.withValues(alpha: 0.2),
+                    child: FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: trip.budgetProgress.clamp(0.0, 1.0),
+                      child: Container(
+                        color: trip.isOverBudget 
+                          ? Colors.red 
+                          : const Color(0xFF10B981),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
-      ),
     );
+  }
+
+  Color _getStatusColor(TripModel trip) {
+    if (trip.status == 'cancelled') return Colors.grey;
+    if (trip.isOngoing) return const Color(0xFF10B981);
+    if (trip.isUpcoming) return const Color(0xFFF97316);
+    if (trip.isPast) return AppColors.neutral500;
+    return AppColors.primary;
   }
 
   Widget _buildCreateTripButton() {
@@ -362,7 +479,7 @@ class PlanningPage extends GetView<PlanningController> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.calendar_today_outlined,
+                  Icons.add_circle_outline,
                   color: Colors.white,
                   size: 20.sp,
                 ),
@@ -397,7 +514,9 @@ class PlanningPage extends GetView<PlanningController> {
             ),
             SizedBox(height: AppSpacing.s4),
             Text(
-              'Chưa có chuyến đi nào',
+              controller.selectedTab.value == 0 
+                ? 'Chưa có chuyến đi nào'
+                : _getEmptyMessage(),
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,
@@ -418,27 +537,83 @@ class PlanningPage extends GetView<PlanningController> {
       ),
     );
   }
+
+  String _getEmptyMessage() {
+    switch (controller.selectedTab.value) {
+      case 1:
+        return 'Không có chuyến đi sắp tới';
+      case 2:
+        return 'Không có chuyến đi đang diễn ra';
+      case 3:
+        return 'Chưa có chuyến đi đã hoàn thành';
+      default:
+        return 'Chưa có chuyến đi nào';
+    }
+  }
+
+  Widget _buildLoadingState() {
+    return ListView.builder(
+      padding: EdgeInsets.all(AppSpacing.s4),
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        return ShimmerLoading(
+          child: Container(
+            height: 180.h,
+            margin: EdgeInsets.only(bottom: AppSpacing.s3),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppSpacing.s6),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64.sp,
+              color: AppColors.error,
+            ),
+            SizedBox(height: AppSpacing.s4),
+            Text(
+              'Có lỗi xảy ra',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.neutral700,
+              ),
+            ),
+            SizedBox(height: AppSpacing.s2),
+            Text(
+              controller.errorMessage ?? 'Không thể tải danh sách chuyến đi',
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: AppColors.neutral500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: AppSpacing.s4),
+            ElevatedButton(
+              onPressed: controller.loadTrips,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+              child: const Text('Thử lại'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
-
-// Trip Model
-class TripModel {
-  final String id;
-  final String name;
-  final String imageUrl;
-  final String dateRange;
-  final String description;
-  final TripStatus status;
-  final String statusText;
-
-  TripModel({
-    required this.id,
-    required this.name,
-    required this.imageUrl,
-    required this.dateRange,
-    required this.description,
-    required this.status,
-    required this.statusText,
-  });
-}
-
-enum TripStatus { ongoing, planned, upcoming }

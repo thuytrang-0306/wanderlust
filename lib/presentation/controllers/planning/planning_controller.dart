@@ -1,235 +1,298 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wanderlust/core/base/base_controller.dart';
+import 'package:wanderlust/data/models/trip_model.dart';
 import 'package:wanderlust/data/services/trip_service.dart';
-import 'package:wanderlust/data/models/trip_model.dart' as data_model;
-import 'package:wanderlust/presentation/pages/planning/planning_page.dart';
-import 'package:wanderlust/app/routes/app_pages.dart';
+import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/core/widgets/app_snackbar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class PlanningController extends GetxController {
-  final TripService _tripService = Get.put(TripService());
+class PlanningController extends BaseController {
+  // Services
+  final TripService _tripService = Get.find<TripService>();
   
-  // Search controller
-  final TextEditingController searchController = TextEditingController();
+  // Data
+  final RxList<TripModel> allTrips = <TripModel>[].obs;
+  final RxList<TripModel> upcomingTrips = <TripModel>[].obs;
+  final RxList<TripModel> ongoingTrips = <TripModel>[].obs;
+  final RxList<TripModel> pastTrips = <TripModel>[].obs;
   
-  // Observable list of trips
-  final RxList<TripModel> trips = <TripModel>[].obs;
-  final RxList<TripModel> filteredTrips = <TripModel>[].obs;
-  final RxBool isLoading = false.obs;
+  // UI State
+  final RxInt selectedTab = 0.obs; // 0: All, 1: Upcoming, 2: Ongoing, 3: Past
+  final RxBool isLoadingTrips = true.obs;
   
-  // Stream subscription
-  Stream<List<data_model.TripModel>>? _tripsStream;
+  // Add reactive state getter
+  Rx<ViewState> get state => Rx<ViewState>(viewState);
   
+  // Filtered trips based on selected tab
+  List<TripModel> get displayedTrips {
+    switch (selectedTab.value) {
+      case 1:
+        return upcomingTrips;
+      case 2:
+        return ongoingTrips;
+      case 3:
+        return pastTrips;
+      default:
+        return allTrips;
+    }
+  }
+  
+  // User info
+  final Rx<User?> currentUser = FirebaseAuth.instance.currentUser.obs;
+  
+  // Stats
+  int get totalTrips => allTrips.length;
+  int get totalDestinations => allTrips.map((t) => t.destination).toSet().length;
+  double get totalBudget => allTrips.fold(0, (sum, trip) => sum + trip.budget);
+  double get totalSpent => allTrips.fold(0, (sum, trip) => sum + trip.spentAmount);
+
   @override
   void onInit() {
     super.onInit();
-    _loadTripsFromFirestore();
-  }
-  
-  @override
-  void onClose() {
-    searchController.dispose();
-    super.onClose();
-  }
-  
-  void _loadTripsFromFirestore() {
-    isLoading.value = true;
+    loadTrips();
     
-    // Listen to real-time updates from Firestore
-    _tripsStream = _tripService.getUserTrips();
-    _tripsStream?.listen((firestoreTrips) {
-      // Convert Firestore models to UI models
-      trips.value = firestoreTrips.map((trip) {
-        return TripModel(
-          id: trip.id,
-          name: trip.name,
-          imageUrl: trip.coverImage.isEmpty 
-            ? 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800'
-            : trip.coverImage,
-          dateRange: trip.dateRange,
-          description: trip.description,
-          status: _convertStatus(trip.status),
-          statusText: trip.status.displayName,
-        );
-      }).toList();
-      
-      // If no trips, add some fake data for demo
-      if (trips.isEmpty) {
-        _addDemoTrips();
-      }
-      
-      filteredTrips.value = trips;
-      isLoading.value = false;
+    // Listen to real-time updates
+    _tripService.streamUserTrips().listen((trips) {
+      allTrips.value = trips;
+      _categorizeTrips(trips);
+      LoggerService.i('Stream updated with ${trips.length} trips');
+    }, onError: (error) {
+      LoggerService.e('Error streaming trips', error: error);
+      // Continue with static data if stream fails
     });
   }
-  
-  TripStatus _convertStatus(data_model.TripStatus status) {
-    switch (status) {
-      case data_model.TripStatus.ongoing:
-        return TripStatus.ongoing;
-      case data_model.TripStatus.completed:
-        return TripStatus.upcoming;
-      default:
-        return TripStatus.planned;
-    }
+
+  @override
+  void loadData() {
+    loadTrips();
   }
-  
-  void _addDemoTrips() {
-    // Demo trips for first-time users
-    trips.value = [
-      TripModel(
-        id: 'demo1',
-        name: 'Đà nẵng chào nành',
-        imageUrl: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800',
-        dateRange: 'CN, 9/1 - T3, 11/1',
-        description: '1 địa điểm dã lưu',
-        status: TripStatus.ongoing,
-        statusText: 'Đang diễn ra',
-      ),
-      TripModel(
-        id: '2',
-        name: 'Đà Nạt giông bão',
-        imageUrl: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800',
-        dateRange: 'CN, 12/1 - T3, 14/1',
-        description: '1 địa điểm dã lưu',
-        status: TripStatus.planned,
-        statusText: 'Cần 5 ngày',
-      ),
-      TripModel(
-        id: '3',
-        name: 'Hải Phòng hoa cải và tôi',
-        imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-        dateRange: 'CN, 12/12 - T3, 14/12',
-        description: '1 địa điểm dã lưu',
-        status: TripStatus.upcoming,
-        statusText: 'Sắp tới',
-      ),
-      TripModel(
-        id: '4',
-        name: 'Nha Trang',
-        imageUrl: 'https://images.unsplash.com/photo-1559628233-100c798642d4?w=800',
-        dateRange: 'CN, 12/12 - T3, 14/12',
-        description: '1 địa điểm dã lưu',
-        status: TripStatus.upcoming,
-        statusText: 'Sắp tới',
-      ),
-    ];
-    
-    // Initialize filtered trips
-    filteredTrips.value = trips;
-  }
-  
-  void onSearchChanged(String query) {
-    if (query.isEmpty) {
-      filteredTrips.value = trips;
-    } else {
-      filteredTrips.value = trips.where((trip) {
-        return trip.name.toLowerCase().contains(query.toLowerCase()) ||
-               trip.description.toLowerCase().contains(query.toLowerCase());
-      }).toList();
-    }
-    
-    // Refresh the UI
-    filteredTrips.refresh();
-  }
-  
-  void createNewTrip() async {
-    // Navigate to trip edit page
-    final result = await Get.toNamed(Routes.TRIP_EDIT);
-    
-    if (result != null && result is Map<String, dynamic>) {
-      // Create trip in Firestore
-      isLoading.value = true;
-      final newTrip = await _tripService.createTrip(
-        name: result['name'],
-        description: result['description'],
-        startDate: result['startDate'],
-        endDate: result['endDate'],
-        budget: result['budget'] ?? 0,
-      );
+
+  Future<void> loadTrips() async {
+    try {
+      isLoadingTrips.value = true;
+      setLoading();
       
-      if (newTrip != null) {
-        Get.snackbar(
-          'Thành công',
-          'Đã tạo chuyến đi "${newTrip.name}"',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        
-        // Navigate to trip detail
-        Get.toNamed('/trip-detail', arguments: {
-          'tripId': newTrip.id,
-          'tripName': newTrip.name,
-        });
+      final trips = await _tripService.getUserTrips();
+      
+      // Simply load the trips without creating sample data
+      allTrips.value = trips;
+      _categorizeTrips(trips);
+      
+      LoggerService.i('Loaded ${trips.length} trips from Firestore');
+      
+      if (trips.isEmpty) {
+        setEmpty();
       } else {
-        Get.snackbar(
-          'Lỗi',
-          'Không thể tạo chuyến đi. Vui lòng thử lại.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        setSuccess();
       }
-      isLoading.value = false;
+    } catch (e) {
+      LoggerService.e('Error loading trips', error: e);
+      setError('Không thể tải danh sách chuyến đi');
+    } finally {
+      isLoadingTrips.value = false;
     }
   }
-  
-  void showTripOptions(TripModel trip) {
-    // TODO: Show bottom sheet with options
-    Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+
+  void _categorizeTrips(List<TripModel> trips) {
+    final now = DateTime.now();
+    
+    upcomingTrips.value = trips.where((trip) => 
+      trip.startDate.isAfter(now) && trip.status != 'cancelled'
+    ).toList();
+    
+    ongoingTrips.value = trips.where((trip) => 
+      trip.isOngoing && trip.status != 'cancelled'
+    ).toList();
+    
+    pastTrips.value = trips.where((trip) => 
+      trip.isPast || trip.status == 'cancelled'
+    ).toList();
+  }
+
+  void changeTab(int index) {
+    selectedTab.value = index;
+  }
+
+  void createNewTrip() async {
+    final result = await Get.toNamed('/trip-edit');
+    
+    // Reload trips if a new trip was created
+    if (result == true) {
+      LoggerService.i('Reloading trips after creation');
+      await loadTrips();
+    }
+  }
+
+  void editTrip(TripModel trip) async {
+    final result = await Get.toNamed('/trip-edit', arguments: {'trip': trip});
+    
+    // Reload trips if updated
+    if (result == true) {
+      LoggerService.i('Reloading trips after edit');
+      await loadTrips();
+    }
+  }
+
+  void viewTripDetail(TripModel trip) {
+    Get.toNamed('/trip-detail', arguments: {'trip': trip});
+  }
+
+  Future<void> deleteTrip(String tripId) async {
+    try {
+      // Show confirmation dialog
+      final confirm = await Get.dialog<bool>(
+        AlertDialog(
+          title: const Text('Xóa chuyến đi'),
+          content: const Text('Bạn có chắc muốn xóa chuyến đi này? Tất cả dữ liệu sẽ bị xóa vĩnh viễn.'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () => Get.back(result: true),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Chỉnh sửa'),
-              onTap: () async {
-                Get.back();
-                // Navigate to edit trip page
-                final result = await Get.toNamed(
-                  Routes.TRIP_EDIT,
-                  arguments: {'tripId': trip.id},
-                );
-                
-                if (result != null) {
-                  // Refresh trips list after editing
-                  _loadTripsFromFirestore();
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.share),
-              title: const Text('Chia sẻ'),
-              onTap: () {
-                Get.back();
-                // TODO: Share trip
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Xóa', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Get.back();
-                // TODO: Delete trip
-              },
+              child: const Text('Xóa'),
             ),
           ],
         ),
-      ),
-    );
+      );
+      
+      if (confirm != true) return;
+      
+      setLoading();
+      final success = await _tripService.deleteTrip(tripId);
+      
+      if (success) {
+        AppSnackbar.showSuccess(
+          title: 'Thành công',
+          message: 'Đã xóa chuyến đi',
+        );
+        await loadTrips();
+      } else {
+        AppSnackbar.showError(
+          title: 'Lỗi',
+          message: 'Không thể xóa chuyến đi',
+        );
+      }
+    } catch (e) {
+      LoggerService.e('Error deleting trip', error: e);
+      AppSnackbar.showError(
+        title: 'Lỗi',
+        message: 'Có lỗi xảy ra',
+      );
+    } finally {
+      setIdle();
+    }
+  }
+
+  Future<void> updateTripStatus(String tripId, String status) async {
+    try {
+      final success = await _tripService.updateTrip(tripId, {'status': status});
+      
+      if (success) {
+        AppSnackbar.showSuccess(
+          title: 'Thành công',
+          message: 'Đã cập nhật trạng thái',
+        );
+        await loadTrips();
+      } else {
+        AppSnackbar.showError(
+          title: 'Lỗi',
+          message: 'Không thể cập nhật trạng thái',
+        );
+      }
+    } catch (e) {
+      LoggerService.e('Error updating trip status', error: e);
+    }
+  }
+
+  String getTabTitle(int index) {
+    switch (index) {
+      case 1:
+        return 'Sắp tới (${upcomingTrips.length})';
+      case 2:
+        return 'Đang đi (${ongoingTrips.length})';
+      case 3:
+        return 'Đã đi (${pastTrips.length})';
+      default:
+        return 'Tất cả (${allTrips.length})';
+    }
+  }
+
+  // Quick stats for UI display
+  Map<String, dynamic> getTripStats() {
+    return {
+      'totalTrips': totalTrips,
+      'upcomingCount': upcomingTrips.length,
+      'destinations': totalDestinations,
+      'totalBudget': totalBudget,
+      'totalSpent': totalSpent,
+      'budgetRemaining': totalBudget - totalSpent,
+    };
+  }
+
+  // Clear all trips - USE WITH CAUTION!
+  Future<void> clearAllTrips() async {
+    try {
+      // Show confirmation dialog
+      final confirm = await Get.dialog<bool>(
+        AlertDialog(
+          title: const Text('Xóa tất cả chuyến đi'),
+          content: const Text(
+            'Bạn có chắc muốn xóa TẤT CẢ chuyến đi? \n\n'
+            'Hành động này KHÔNG THỂ hoàn tác!',
+            style: TextStyle(color: Colors.red),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () => Get.back(result: true),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('XÓA TẤT CẢ'),
+            ),
+          ],
+        ),
+      );
+      
+      if (confirm != true) return;
+      
+      setLoading();
+      final success = await _tripService.deleteAllUserTrips();
+      
+      if (success) {
+        AppSnackbar.showSuccess(
+          title: 'Thành công',
+          message: 'Đã xóa tất cả chuyến đi',
+        );
+        // Clear local data
+        allTrips.clear();
+        upcomingTrips.clear();
+        ongoingTrips.clear();
+        pastTrips.clear();
+        setEmpty();
+      } else {
+        AppSnackbar.showError(
+          title: 'Lỗi',
+          message: 'Không thể xóa chuyến đi',
+        );
+      }
+    } catch (e) {
+      LoggerService.e('Error clearing all trips', error: e);
+      AppSnackbar.showError(
+        title: 'Lỗi',
+        message: 'Có lỗi xảy ra',
+      );
+    } finally {
+      setIdle();
+    }
   }
 }

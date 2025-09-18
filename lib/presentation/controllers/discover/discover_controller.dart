@@ -36,31 +36,11 @@ class DiscoverController extends BaseController {
   // Search
   final RxString searchQuery = ''.obs;
   
-  // Banner images
-  final List<String> bannerImages = [
-    'https://images.unsplash.com/photo-1528127269322-539801943592?w=800',
-    'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800',
-    'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800',
-  ];
+  // Banner images will be loaded from service
+  final List<String> bannerImages = [];
 
-  // Regions
-  final List<Map<String, dynamic>> regions = [
-    {
-      'name': 'Miền Bắc',
-      'image': 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=400',
-      'count': 28,
-    },
-    {
-      'name': 'Miền Trung',
-      'image': 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400',
-      'count': 24,
-    },
-    {
-      'name': 'Miền Nam',
-      'image': 'https://images.unsplash.com/photo-1583417267826-64235a0a6c0a?w=400',
-      'count': 18,
-    },
-  ];
+  // Regions will be loaded from service
+  final List<Map<String, dynamic>> regions = [];
 
   @override
   void onInit() {
@@ -94,14 +74,10 @@ class DiscoverController extends BaseController {
       final popular = await _destinationService.getPopularDestinations(limit: 10);
       popularDestinations.value = popular;
       
-      // If no data, create sample data
+      // No longer auto-creating sample data
       if (featured.isEmpty && popular.isEmpty) {
-        LoggerService.i('No destinations found, creating sample data');
-        await _destinationService.createSampleDestinations();
-        
-        // Reload after creating sample data
-        featuredDestinations.value = await _destinationService.getFeaturedDestinations(limit: 5);
-        popularDestinations.value = await _destinationService.getPopularDestinations(limit: 10);
+        LoggerService.i('No destinations found in database');
+        // Sample data creation disabled - data should come from real user content
       }
       
     } catch (e) {
@@ -125,14 +101,10 @@ class DiscoverController extends BaseController {
       final discounted = await _tourService.getDiscountedTours(limit: 10);
       discountedTours.value = discounted;
       
-      // If no data, create sample data
+      // No longer auto-creating sample data
       if (featured.isEmpty && discounted.isEmpty) {
-        LoggerService.i('No tours found, creating sample data');
-        await _tourService.createSampleTours();
-        
-        // Reload after creating sample data
-        featuredTours.value = await _tourService.getFeaturedTours(limit: 5);
-        discountedTours.value = await _tourService.getDiscountedTours(limit: 10);
+        LoggerService.i('No tours found in database');
+        // Sample data creation disabled - data should come from real user content
       }
       
     } catch (e) {
@@ -159,73 +131,15 @@ class DiscoverController extends BaseController {
   }
 
   void _useFallbackDestinationData() {
-    // Fallback data when Firestore fails
-    featuredDestinations.value = [
-      DestinationModel(
-        id: '1',
-        name: 'Hạ Long Bay',
-        description: 'Vịnh Hạ Long tuyệt đẹp',
-        region: 'Miền Bắc',
-        images: ['https://images.unsplash.com/photo-1528127269322-539801943592?w=800'],
-        rating: 4.8,
-        reviewCount: 1234,
-        basePrice: 1500000,
-        highlights: [],
-        bestTimeToVisit: [],
-        activities: [],
-        tags: ['biển', 'di sản'],
-        featured: true,
-        popular: true,
-      ),
-      DestinationModel(
-        id: '2',
-        name: 'Sapa',
-        description: 'Thị trấn mù sương',
-        region: 'Miền Bắc',
-        images: ['https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800'],
-        rating: 4.7,
-        reviewCount: 987,
-        basePrice: 800000,
-        highlights: [],
-        bestTimeToVisit: [],
-        activities: [],
-        tags: ['núi', 'trekking'],
-        featured: true,
-        popular: true,
-      ),
-    ];
-    
-    popularDestinations.value = featuredDestinations;
+    // No fallback data for production
+    featuredDestinations.value = [];
+    popularDestinations.value = [];
   }
 
   void _useFallbackTourData() {
-    // Fallback data when Firestore fails
-    featuredTours.value = [
-      TourModel(
-        id: '1',
-        title: 'Tour Hạ Long 2N1Đ',
-        description: 'Du thuyền 5 sao',
-        destinationId: '1',
-        destinationName: 'Hạ Long Bay',
-        duration: '2N1Đ',
-        price: 3500000,
-        discountPrice: 2900000,
-        images: ['https://images.unsplash.com/photo-1528127269322-539801943592?w=800'],
-        itinerary: [],
-        inclusions: [],
-        exclusions: [],
-        maxGroupSize: 20,
-        availableDates: [],
-        rating: 4.8,
-        reviewCount: 156,
-        hostId: '1',
-        hostName: 'Wanderlust Travel',
-        tags: ['luxury', 'cruise'],
-        featured: true,
-      ),
-    ];
-    
-    discountedTours.value = featuredTours;
+    // No fallback data for production
+    featuredTours.value = [];
+    discountedTours.value = [];
   }
 
   void onBannerChanged(int index) {

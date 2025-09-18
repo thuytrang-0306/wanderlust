@@ -15,7 +15,7 @@ class ConnectivityService extends GetxService {
   bool get isChecking => _isChecking.value;
   
   Timer? _connectivityTimer;
-  static const Duration _checkInterval = Duration(seconds: 5);
+  static const Duration _checkInterval = Duration(seconds: 30); // Reduced frequency
   
   @override
   void onInit() {
@@ -31,6 +31,9 @@ class ConnectivityService extends GetxService {
   }
   
   void _startConnectivityCheck() {
+    // Skip periodic checks on web platform
+    if (kIsWeb) return;
+    
     _connectivityTimer = Timer.periodic(_checkInterval, (_) {
       checkConnectivity();
     });
@@ -45,6 +48,7 @@ class ConnectivityService extends GetxService {
       // For web platform, assume connected (browser handles connectivity)
       if (kIsWeb) {
         _isConnected.value = true;
+        _isChecking.value = false;
         return true;
       }
       
@@ -73,12 +77,13 @@ class ConnectivityService extends GetxService {
       }
       return false;
     } catch (e) {
-      // On web, this will always throw, so assume connected
-      if (kIsWeb) {
-        _isConnected.value = true;
-        return true;
+      // On web, InternetAddress.lookup will always fail
+      // Don't log error for web platform
+      if (!kIsWeb) {
+        LoggerService.e('Connectivity check error', error: e);
       }
-      LoggerService.e('Connectivity check error', error: e);
+      // Assume connected for web
+      _isConnected.value = kIsWeb ? true : _isConnected.value;
       return _isConnected.value;
     } finally {
       _isChecking.value = false;

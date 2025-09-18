@@ -17,6 +17,7 @@ import 'package:wanderlust/firebase_options.dart';
 import 'package:wanderlust/data/services/blog_service.dart';
 import 'package:wanderlust/data/services/destination_service.dart';
 import 'package:wanderlust/data/services/tour_service.dart';
+import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/data/services/image_upload_service.dart';
 
 Future<void> _registerDataServices() async {
@@ -24,6 +25,7 @@ Future<void> _registerDataServices() async {
   final blogService = Get.put(BlogService());
   final destinationService = Get.put(DestinationService());
   final tourService = Get.put(TourService());
+  final tripService = Get.put(TripService());
   final imageUploadService = Get.put(ImageUploadService());
   
   LoggerService.i('Data services registered');
