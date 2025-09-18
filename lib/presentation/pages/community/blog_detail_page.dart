@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
-import 'package:wanderlust/core/constants/app_typography.dart';
+import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/presentation/controllers/community/blog_detail_controller.dart';
+import 'package:wanderlust/data/models/blog_post_model.dart';
 
 class BlogDetailPage extends StatelessWidget {
   const BlogDetailPage({super.key});
@@ -51,73 +51,143 @@ class BlogDetailPage extends StatelessWidget {
           )),
         ],
       ),
-      body: Column(
-        children: [
-          // Scrollable content
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Image gallery
-                  _buildImageGallery(controller),
-                  
-                  // Author info
-                  _buildAuthorSection(controller),
-                  
-                  // Article content
-                  _buildArticleContent(controller),
-                  
-                  // Suggestions section
-                  _buildSuggestionsSection(controller),
-                  
-                  // Comments section
-                  _buildCommentsSection(controller),
-                  
-                  SizedBox(height: 80.h), // Space for bottom bar
-                ],
+      body: Obx(() {
+        // Show loading state
+        if (controller.isLoadingData.value) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        
+        // Show error state
+        if (controller.blogPost.value == null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64.sp,
+                  color: AppColors.neutral400,
+                ),
+                SizedBox(height: AppSpacing.s4),
+                Text(
+                  'Không thể tải bài viết',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                SizedBox(height: AppSpacing.s4),
+                TextButton(
+                  onPressed: controller.loadBlogData,
+                  child: const Text('Thử lại'),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        final post = controller.blogPost.value!;
+        
+        return Column(
+          children: [
+            // Scrollable content
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Image gallery
+                    _buildImageGallery(post),
+                    
+                    // Author info
+                    _buildAuthorSection(post),
+                    
+                    // Article content
+                    _buildArticleContent(post),
+                    
+                    // Suggestions section
+                    _buildSuggestionsSection(controller),
+                    
+                    // Comments section
+                    _buildCommentsSection(controller),
+                    
+                    SizedBox(height: 80.h), // Space for bottom bar
+                  ],
+                ),
               ),
             ),
-          ),
-          
-          // Bottom engagement bar
-          _buildBottomBar(controller),
-        ],
-      ),
+            
+            // Bottom engagement bar
+            _buildBottomBar(controller),
+          ],
+        );
+      }),
     );
   }
   
-  Widget _buildImageGallery(BlogDetailController controller) {
+  Widget _buildImageGallery(BlogPostModel post) {
+    final images = [
+      if (post.coverImage.isNotEmpty) post.coverImage,
+      ...post.images.take(3),
+    ].where((img) => img.isNotEmpty).toList();
+    
+    if (images.isEmpty) {
+      return Container(
+        height: 200.h,
+        margin: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: AppColors.neutral100,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Center(
+          child: Icon(
+            Icons.image_not_supported,
+            size: 48.sp,
+            color: AppColors.neutral400,
+          ),
+        ),
+      );
+    }
+    
+    if (images.length == 1) {
+      return Padding(
+        padding: EdgeInsets.all(16.w),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12.r),
+          child: AppImage(
+            imageData: images[0],
+            height: 200.h,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    }
+    
     return Padding(
       padding: EdgeInsets.all(16.w),
       child: Row(
         children: [
           Expanded(
-            child: Container(
-              height: 140.h,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.r),
-                image: DecorationImage(
-                  image: CachedNetworkImageProvider(
-                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-                  ),
-                  fit: BoxFit.cover,
-                ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12.r),
+              child: AppImage(
+                imageData: images[0],
+                height: 140.h,
+                fit: BoxFit.cover,
               ),
             ),
           ),
           SizedBox(width: 8.w),
           Expanded(
-            child: Container(
-              height: 140.h,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.r),
-                image: DecorationImage(
-                  image: CachedNetworkImageProvider(
-                    'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=400',
-                  ),
-                  fit: BoxFit.cover,
-                ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12.r),
+              child: AppImage(
+                imageData: images.length > 1 ? images[1] : images[0],
+                height: 140.h,
+                fit: BoxFit.cover,
               ),
             ),
           ),
@@ -126,21 +196,20 @@ class BlogDetailPage extends StatelessWidget {
     );
   }
   
-  Widget _buildAuthorSection(BlogDetailController controller) {
+  Widget _buildAuthorSection(BlogPostModel post) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 20.r,
-            backgroundImage: CachedNetworkImageProvider(
-              'https://i.pravatar.cc/150?img=3',
-            ),
+          // Use AppImage widget for avatar - handles both base64 and URLs
+          AppImage.avatar(
+            imageData: post.authorAvatar,
+            size: 40,
           ),
           SizedBox(width: 12.w),
           Expanded(
             child: Text(
-              'Hiếu Thứ Hai',
+              post.authorName,
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
@@ -149,32 +218,34 @@ class BlogDetailPage extends StatelessWidget {
             ),
           ),
           Text(
-            '2 giờ trước',
+            post.formattedDate,
             style: TextStyle(
               fontSize: 13.sp,
               color: AppColors.textTertiary,
             ),
           ),
-          Text(
-            ' • ',
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: AppColors.textTertiary,
+          if (post.destinations.isNotEmpty) ...[
+            Text(
+              ' • ',
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: AppColors.textTertiary,
+              ),
             ),
-          ),
-          Text(
-            'Hà Giang',
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: AppColors.textTertiary,
+            Text(
+              post.destinations.first,
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: AppColors.textTertiary,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
   
-  Widget _buildArticleContent(BlogDetailController controller) {
+  Widget _buildArticleContent(BlogPostModel post) {
     return Padding(
       padding: EdgeInsets.all(16.w),
       child: Column(
@@ -182,7 +253,7 @@ class BlogDetailPage extends StatelessWidget {
         children: [
           // Title
           Text(
-            'Chia sẻ kinh nghiệm du lịch thú vị',
+            post.title,
             style: TextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.w700,
@@ -190,34 +261,110 @@ class BlogDetailPage extends StatelessWidget {
               height: 1.3,
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 8.h),
           
-          // Body paragraphs
+          // Category and Tags
+          Wrap(
+            spacing: 8.w,
+            runSpacing: 8.h,
+            children: [
+              if (post.category.isNotEmpty)
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 4.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Text(
+                    post.category,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ...post.tags.map((tag) => Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12.w,
+                  vertical: 4.h,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.neutral100,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Text(
+                  '#$tag',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              )),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          
+          // Excerpt
+          if (post.excerpt.isNotEmpty) ...[
+            Text(
+              post.excerpt,
+              style: TextStyle(
+                fontSize: 16.sp,
+                color: AppColors.textSecondary,
+                height: 1.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: 16.h),
+          ],
+          
+          // Content
           Text(
-            'Nội dung bài viết đang được tải. Hãy khám phá những chia sẻ kinh nghiệm du lịch thú vị và hữu ích từ cộng đồng. Mỗi bài viết là một hành trình khám phá đầy thú vị.',
+            post.content,
             style: TextStyle(
               fontSize: 15.sp,
               color: AppColors.textSecondary,
               height: 1.6,
             ),
           ),
-          SizedBox(height: 16.h),
-          Text(
-            'Tiếp tục khám phá những điều thú vị và trải nghiệm tuyệt vời trong hành trình du lịch này.',
-            style: TextStyle(
-              fontSize: 15.sp,
-              color: AppColors.textSecondary,
-              height: 1.6,
-            ),
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            'Fermentum et eget libero lectus. Amet, tellus aliquam, dignissim enim placerat purus nunc, ac ipsum. Ac pretium.',
-            style: TextStyle(
-              fontSize: 15.sp,
-              color: AppColors.textSecondary,
-              height: 1.6,
-            ),
+          
+          SizedBox(height: 24.h),
+          
+          // Stats row
+          Row(
+            children: [
+              Icon(
+                Icons.remove_red_eye_outlined,
+                size: 16.sp,
+                color: AppColors.textTertiary,
+              ),
+              SizedBox(width: 4.w),
+              Text(
+                '${post.formattedViews} lượt xem',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+              SizedBox(width: 16.w),
+              Icon(
+                Icons.share_outlined,
+                size: 16.sp,
+                color: AppColors.textTertiary,
+              ),
+              SizedBox(width: 4.w),
+              Text(
+                '${post.shares} lượt chia sẻ',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -225,44 +372,49 @@ class BlogDetailPage extends StatelessWidget {
   }
   
   Widget _buildSuggestionsSection(BlogDetailController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: Text(
-            'Gợi ý cho bạn',
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+    return Obx(() {
+      if (controller.suggestions.isEmpty) {
+        return const SizedBox();
+      }
+      
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Text(
+              'Gợi ý cho bạn',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
-        ),
-        SizedBox(height: 16.h),
-        SizedBox(
-          height: 200.h,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            itemCount: 2,
-            itemBuilder: (context, index) {
-              return _buildSuggestionCard(
-                title: index == 0 ? 'Homestay Sơn Thủy' : 'Khách sạn GG',
-                location: 'Hà Giang',
-                price: index == 0 ? '400.000' : '600.000',
-                rating: 4.4,
-                duration: '4N/5D',
-                imageUrl: index == 0
-                  ? 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=400'
-                  : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-              );
-            },
+          SizedBox(height: 16.h),
+          SizedBox(
+            height: 200.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              itemCount: controller.suggestions.length,
+              itemBuilder: (context, index) {
+                final suggestion = controller.suggestions[index];
+                return _buildSuggestionCard(
+                  title: suggestion['title'] ?? '',
+                  location: suggestion['location'] ?? '',
+                  price: suggestion['price'] ?? '',
+                  rating: suggestion['rating'] ?? 0.0,
+                  duration: suggestion['duration'] ?? '',
+                  imageUrl: suggestion['image'] ?? '',
+                );
+              },
+            ),
           ),
-        ),
-        SizedBox(height: 24.h),
-      ],
-    );
+          SizedBox(height: 24.h),
+        ],
+      );
+    });
   }
   
   Widget _buildSuggestionCard({
@@ -279,217 +431,301 @@ class BlogDetailPage extends StatelessWidget {
         'location': location,
       }),
       child: Container(
-      width: 180.w,
-      margin: EdgeInsets.only(right: 12.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image with badge
-          Stack(
-            children: [
-              Container(
-                height: 120.h,
-                decoration: BoxDecoration(
+        width: 180.w,
+        margin: EdgeInsets.only(right: 12.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image with badge
+            Stack(
+              children: [
+                ClipRRect(
                   borderRadius: BorderRadius.vertical(
                     top: Radius.circular(12.r),
                   ),
-                  image: DecorationImage(
-                    image: CachedNetworkImageProvider(imageUrl),
+                  child: AppImage(
+                    imageData: imageUrl,
+                    height: 120.h,
+                    width: double.infinity,
                     fit: BoxFit.cover,
                   ),
                 ),
-              ),
-              Positioned(
-                top: 8.h,
-                left: 8.w,
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 8.w,
-                    vertical: 4.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF812C),
-                    borderRadius: BorderRadius.circular(4.r),
-                  ),
-                  child: Text(
-                    duration,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                if (duration.isNotEmpty)
+                  Positioned(
+                    top: 8.h,
+                    left: 8.w,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF812C),
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Text(
+                        duration,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
-          ),
-          
-          // Content with flexible layout
-          Flexible(
-            child: Padding(
-              padding: EdgeInsets.all(8.w),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+              ],
+            ),
+            
+            // Content
+            Flexible(
+              child: Padding(
+                padding: EdgeInsets.all(8.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 2.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          location,
+                    SizedBox(height: 2.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            location,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.textTertiary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        SizedBox(width: 4.w),
+                        Icon(
+                          Icons.star,
+                          size: 12.sp,
+                          color: const Color(0xFFFBBF24),
+                        ),
+                        SizedBox(width: 2.w),
+                        Text(
+                          rating.toString(),
                           style: TextStyle(
                             fontSize: 12.sp,
-                            color: AppColors.textTertiary,
+                            color: AppColors.textSecondary,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      SizedBox(width: 4.w),
-                      Icon(
-                        Icons.star,
-                        size: 12.sp,
-                        color: const Color(0xFFFBBF24),
-                      ),
-                      SizedBox(width: 2.w),
-                      Text(
-                        rating.toString(),
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    '$price VND',
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                      ],
                     ),
-                  ),
-                ],
+                    SizedBox(height: 2.h),
+                    Text(
+                      '$price VND',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
   
   Widget _buildCommentsSection(BlogDetailController controller) {
+    return Obx(() {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Bình luận (${controller.commentCount.value})',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => _showAddCommentDialog(controller),
+                  child: Text(
+                    'Thêm bình luận',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            
+            // Comments list
+            if (controller.comments.isEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.h),
+                child: Center(
+                  child: Text(
+                    'Chưa có bình luận nào',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ),
+              )
+            else
+              ...controller.comments.take(5).map((comment) => 
+                _buildCommentItem(comment)
+              ),
+          ],
+        ),
+      );
+    });
+  }
+  
+  Widget _buildCommentItem(BlogComment comment) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Column(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Bình luận',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+          AppImage.avatar(
+            imageData: comment.userAvatar,
+            size: 32,
           ),
-          SizedBox(height: 12.h),
-          
-          // Comment item
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 16.r,
-                backgroundImage: CachedNetworkImageProvider(
-                  'https://i.pravatar.cc/150?img=5',
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Jake',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          ' • 5 phút',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppColors.textTertiary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 4.h),
                     Text(
-                      'Nội dung bài viết đang được tải...',
+                      comment.userName,
                       style: TextStyle(
                         fontSize: 14.sp,
-                        color: AppColors.textSecondary,
-                        height: 1.4,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                    SizedBox(height: 8.h),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.thumb_up_outlined,
-                          size: 16.sp,
-                          color: AppColors.textTertiary,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          '5,000',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppColors.textTertiary,
-                          ),
-                        ),
-                        SizedBox(width: 16.w),
-                        Icon(
-                          Icons.comment_outlined,
-                          size: 16.sp,
-                          color: AppColors.textTertiary,
-                        ),
-                      ],
+                    Text(
+                      ' • ${_getTimeAgo(comment.createdAt)}',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: AppColors.textTertiary,
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                SizedBox(height: 4.h),
+                Text(
+                  comment.content,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+                if (comment.likes > 0) ...[
+                  SizedBox(height: 8.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.thumb_up_outlined,
+                        size: 16.sp,
+                        color: AppColors.textTertiary,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        comment.likes.toString(),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  String _getTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+    
+    if (difference.inDays > 7) {
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} ngày trước';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} giờ trước';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} phút trước';
+    } else {
+      return 'Vừa xong';
+    }
+  }
+  
+  void _showAddCommentDialog(BlogDetailController controller) {
+    final textController = TextEditingController();
+    
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Thêm bình luận'),
+        content: TextField(
+          controller: textController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Nhập bình luận của bạn...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (textController.text.trim().isNotEmpty) {
+                controller.addComment(textController.text);
+                Get.back();
+              }
+            },
+            child: const Text('Gửi'),
           ),
         ],
       ),
@@ -552,15 +788,27 @@ class BlogDetailPage extends StatelessWidget {
                 color: AppColors.textTertiary,
               ),
               SizedBox(width: 6.w),
-              Text(
-                '700',
+              Obx(() => Text(
+                controller.commentCount.value.toString(),
                 style: TextStyle(
                   fontSize: 14.sp,
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
-              ),
+              )),
             ],
+          ),
+          
+          SizedBox(width: 24.w),
+          
+          // Share button
+          GestureDetector(
+            onTap: controller.shareArticle,
+            child: Icon(
+              Icons.share_outlined,
+              size: 20.sp,
+              color: AppColors.textTertiary,
+            ),
           ),
           
           const Spacer(),

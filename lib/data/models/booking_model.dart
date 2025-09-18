@@ -1,287 +1,351 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Main Booking Model (for both Tours and Accommodations)
 class BookingModel {
   final String id;
   final String userId;
-  final BookingType type;
-  final String referenceId; // accommodationId or tourId
-  final String bookingCode;
-  final BookingStatus status;
+  final String userName;
+  final String userEmail;
+  final String userPhone;
+  final String bookingType; // tour, accommodation
+  final String itemId; // tourId or accommodationId
+  final String itemName;
+  final String itemImage;
   final DateTime checkIn;
-  final DateTime checkOut;
-  final int nights;
-  final GuestData guests;
-  final PricingData pricing;
-  final CustomerData customer;
-  final String? qrCode;
+  final DateTime? checkOut; // null for single day tours
+  final int quantity; // number of people for tours, rooms for accommodations
+  final int adults;
+  final int children;
+  final double unitPrice;
+  final double totalPrice;
+  final double discount;
+  final String discountCode;
+  final String currency;
+  final String status; // pending, confirmed, cancelled, completed
+  final String paymentStatus; // pending, paid, refunded
+  final String paymentMethod; // credit_card, bank_transfer, cash, e_wallet
+  final String? paymentId;
+  final CustomerInfo customerInfo;
+  final Map<String, dynamic> metadata; // Additional booking-specific data
+  final String? specialRequests;
+  final String? cancellationReason;
+  final DateTime? cancellationDate;
+  final double refundAmount;
   final DateTime createdAt;
-  final DateTime? confirmedAt;
-  final DateTime? cancelledAt;
-  final DateTime? completedAt;
-
+  final DateTime updatedAt;
+  
   BookingModel({
     required this.id,
     required this.userId,
-    required this.type,
-    required this.referenceId,
-    required this.bookingCode,
-    required this.status,
+    required this.userName,
+    required this.userEmail,
+    required this.userPhone,
+    required this.bookingType,
+    required this.itemId,
+    required this.itemName,
+    required this.itemImage,
     required this.checkIn,
-    required this.checkOut,
-    required this.nights,
-    required this.guests,
-    required this.pricing,
-    required this.customer,
-    this.qrCode,
+    this.checkOut,
+    required this.quantity,
+    required this.adults,
+    required this.children,
+    required this.unitPrice,
+    required this.totalPrice,
+    required this.discount,
+    required this.discountCode,
+    required this.currency,
+    required this.status,
+    required this.paymentStatus,
+    required this.paymentMethod,
+    this.paymentId,
+    required this.customerInfo,
+    required this.metadata,
+    this.specialRequests,
+    this.cancellationReason,
+    this.cancellationDate,
+    required this.refundAmount,
     required this.createdAt,
-    this.confirmedAt,
-    this.cancelledAt,
-    this.completedAt,
+    required this.updatedAt,
   });
-
-  factory BookingModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  
+  // Display helpers
+  String get displayPrice {
+    final formatter = totalPrice.toStringAsFixed(0);
+    return '$formatter $currency';
+  }
+  
+  String get displayStatus {
+    switch (status) {
+      case 'pending': return 'Chờ xác nhận';
+      case 'confirmed': return 'Đã xác nhận';
+      case 'cancelled': return 'Đã hủy';
+      case 'completed': return 'Hoàn thành';
+      default: return status;
+    }
+  }
+  
+  String get displayPaymentStatus {
+    switch (paymentStatus) {
+      case 'pending': return 'Chờ thanh toán';
+      case 'paid': return 'Đã thanh toán';
+      case 'refunded': return 'Đã hoàn tiền';
+      default: return paymentStatus;
+    }
+  }
+  
+  String get displayPaymentMethod {
+    switch (paymentMethod) {
+      case 'credit_card': return 'Thẻ tín dụng';
+      case 'bank_transfer': return 'Chuyển khoản';
+      case 'cash': return 'Tiền mặt';
+      case 'e_wallet': return 'Ví điện tử';
+      default: return paymentMethod;
+    }
+  }
+  
+  int get nights {
+    if (checkOut != null) {
+      return checkOut!.difference(checkIn).inDays;
+    }
+    return 0;
+  }
+  
+  bool get canCancel {
+    return status == 'pending' || status == 'confirmed';
+  }
+  
+  bool get canRefund {
+    return paymentStatus == 'paid' && status == 'cancelled';
+  }
+  
+  // From Firestore
+  factory BookingModel.fromFirestore(Map<String, dynamic> data, String docId) {
     return BookingModel(
-      id: doc.id,
+      id: docId,
       userId: data['userId'] ?? '',
-      type: BookingType.fromString(data['type'] ?? 'accommodation'),
-      referenceId: data['referenceId'] ?? '',
-      bookingCode: data['bookingCode'] ?? '',
-      status: BookingStatus.fromString(data['status'] ?? 'pending'),
+      userName: data['userName'] ?? '',
+      userEmail: data['userEmail'] ?? '',
+      userPhone: data['userPhone'] ?? '',
+      bookingType: data['bookingType'] ?? 'tour',
+      itemId: data['itemId'] ?? '',
+      itemName: data['itemName'] ?? '',
+      itemImage: data['itemImage'] ?? '',
       checkIn: (data['checkIn'] as Timestamp).toDate(),
-      checkOut: (data['checkOut'] as Timestamp).toDate(),
-      nights: data['nights'] ?? 1,
-      guests: GuestData.fromMap(data['guests'] ?? {}),
-      pricing: PricingData.fromMap(data['pricing'] ?? {}),
-      customer: CustomerData.fromMap(data['customer'] ?? {}),
-      qrCode: data['qrCode'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      confirmedAt: data['confirmedAt'] != null 
-          ? (data['confirmedAt'] as Timestamp).toDate() 
+      checkOut: data['checkOut'] != null 
+          ? (data['checkOut'] as Timestamp).toDate()
           : null,
-      cancelledAt: data['cancelledAt'] != null 
-          ? (data['cancelledAt'] as Timestamp).toDate() 
+      quantity: data['quantity'] ?? 1,
+      adults: data['adults'] ?? 1,
+      children: data['children'] ?? 0,
+      unitPrice: (data['unitPrice'] ?? 0).toDouble(),
+      totalPrice: (data['totalPrice'] ?? 0).toDouble(),
+      discount: (data['discount'] ?? 0).toDouble(),
+      discountCode: data['discountCode'] ?? '',
+      currency: data['currency'] ?? 'VND',
+      status: data['status'] ?? 'pending',
+      paymentStatus: data['paymentStatus'] ?? 'pending',
+      paymentMethod: data['paymentMethod'] ?? 'cash',
+      paymentId: data['paymentId'],
+      customerInfo: CustomerInfo.fromMap(
+        data['customerInfo'] ?? CustomerInfo.empty().toMap()
+      ),
+      metadata: data['metadata'] ?? {},
+      specialRequests: data['specialRequests'],
+      cancellationReason: data['cancellationReason'],
+      cancellationDate: data['cancellationDate'] != null 
+          ? (data['cancellationDate'] as Timestamp).toDate()
           : null,
-      completedAt: data['completedAt'] != null 
-          ? (data['completedAt'] as Timestamp).toDate() 
-          : null,
+      refundAmount: (data['refundAmount'] ?? 0).toDouble(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
-
+  
+  // To Firestore
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
-      'type': type.value,
-      'referenceId': referenceId,
-      'bookingCode': bookingCode,
-      'status': status.value,
+      'userName': userName,
+      'userEmail': userEmail,
+      'userPhone': userPhone,
+      'bookingType': bookingType,
+      'itemId': itemId,
+      'itemName': itemName,
+      'itemImage': itemImage,
       'checkIn': Timestamp.fromDate(checkIn),
-      'checkOut': Timestamp.fromDate(checkOut),
-      'nights': nights,
-      'guests': guests.toMap(),
-      'pricing': pricing.toMap(),
-      'customer': customer.toMap(),
-      'qrCode': qrCode,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'confirmedAt': confirmedAt != null 
-          ? Timestamp.fromDate(confirmedAt!) 
-          : null,
-      'cancelledAt': cancelledAt != null 
-          ? Timestamp.fromDate(cancelledAt!) 
-          : null,
-      'completedAt': completedAt != null 
-          ? Timestamp.fromDate(completedAt!) 
-          : null,
-    };
-  }
-
-  // Generate unique booking code
-  static String generateBookingCode() {
-    final now = DateTime.now();
-    final timestamp = now.millisecondsSinceEpoch.toString().substring(7);
-    final random = (now.microsecond % 1000).toString().padLeft(3, '0');
-    return 'BK$timestamp$random';
-  }
-
-  // Format date range
-  String get dateRange {
-    final checkInStr = '${checkIn.day}/${checkIn.month}/${checkIn.year}';
-    final checkOutStr = '${checkOut.day}/${checkOut.month}/${checkOut.year}';
-    return '$checkInStr - $checkOutStr';
-  }
-
-  // Format price
-  String get formattedPrice {
-    final price = pricing.total.toStringAsFixed(0);
-    final formattedPrice = price.replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
-    );
-    return '$formattedPriceđ';
-  }
-}
-
-enum BookingType {
-  accommodation('accommodation', 'Khách sạn'),
-  tour('tour', 'Tour'),
-  combo('combo', 'Combo');
-
-  final String value;
-  final String displayName;
-  
-  const BookingType(this.value, this.displayName);
-
-  static BookingType fromString(String value) {
-    return BookingType.values.firstWhere(
-      (e) => e.value == value,
-      orElse: () => BookingType.accommodation,
-    );
-  }
-}
-
-enum BookingStatus {
-  pending('pending', 'Chờ xác nhận'),
-  confirmed('confirmed', 'Đã xác nhận'),
-  cancelled('cancelled', 'Đã hủy'),
-  completed('completed', 'Hoàn thành');
-
-  final String value;
-  final String displayName;
-  
-  const BookingStatus(this.value, this.displayName);
-
-  static BookingStatus fromString(String value) {
-    return BookingStatus.values.firstWhere(
-      (e) => e.value == value,
-      orElse: () => BookingStatus.pending,
-    );
-  }
-}
-
-class GuestData {
-  final int adults;
-  final int children;
-  final int infants;
-
-  GuestData({
-    required this.adults,
-    this.children = 0,
-    this.infants = 0,
-  });
-
-  factory GuestData.fromMap(Map<String, dynamic> map) {
-    return GuestData(
-      adults: map['adults'] ?? 1,
-      children: map['children'] ?? 0,
-      infants: map['infants'] ?? 0,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
+      'checkOut': checkOut != null ? Timestamp.fromDate(checkOut!) : null,
+      'quantity': quantity,
       'adults': adults,
       'children': children,
-      'infants': infants,
-    };
-  }
-
-  int get total => adults + children + infants;
-}
-
-class PricingData {
-  final double subtotal;
-  final double taxes;
-  final double fees;
-  final double discount;
-  final double total;
-  final String currency;
-  final String paymentMethod;
-  final PaymentStatus paymentStatus;
-
-  PricingData({
-    required this.subtotal,
-    required this.taxes,
-    required this.fees,
-    required this.discount,
-    required this.total,
-    this.currency = 'VND',
-    required this.paymentMethod,
-    required this.paymentStatus,
-  });
-
-  factory PricingData.fromMap(Map<String, dynamic> map) {
-    return PricingData(
-      subtotal: (map['subtotal'] ?? 0).toDouble(),
-      taxes: (map['taxes'] ?? 0).toDouble(),
-      fees: (map['fees'] ?? 0).toDouble(),
-      discount: (map['discount'] ?? 0).toDouble(),
-      total: (map['total'] ?? 0).toDouble(),
-      currency: map['currency'] ?? 'VND',
-      paymentMethod: map['paymentMethod'] ?? 'cash',
-      paymentStatus: PaymentStatus.fromString(map['paymentStatus'] ?? 'pending'),
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'subtotal': subtotal,
-      'taxes': taxes,
-      'fees': fees,
+      'unitPrice': unitPrice,
+      'totalPrice': totalPrice,
       'discount': discount,
-      'total': total,
+      'discountCode': discountCode,
       'currency': currency,
+      'status': status,
+      'paymentStatus': paymentStatus,
       'paymentMethod': paymentMethod,
-      'paymentStatus': paymentStatus.value,
+      'paymentId': paymentId,
+      'customerInfo': customerInfo.toMap(),
+      'metadata': metadata,
+      'specialRequests': specialRequests,
+      'cancellationReason': cancellationReason,
+      'cancellationDate': cancellationDate != null 
+          ? Timestamp.fromDate(cancellationDate!)
+          : null,
+      'refundAmount': refundAmount,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     };
   }
 }
 
-enum PaymentStatus {
-  pending('pending', 'Chờ thanh toán'),
-  paid('paid', 'Đã thanh toán'),
-  refunded('refunded', 'Đã hoàn tiền');
-
-  final String value;
-  final String displayName;
-  
-  const PaymentStatus(this.value, this.displayName);
-
-  static PaymentStatus fromString(String value) {
-    return PaymentStatus.values.firstWhere(
-      (e) => e.value == value,
-      orElse: () => PaymentStatus.pending,
-    );
-  }
-}
-
-class CustomerData {
-  final String name;
+// Customer Information
+class CustomerInfo {
+  final String fullName;
   final String email;
   final String phone;
-  final String? specialRequests;
-
-  CustomerData({
-    required this.name,
+  final String address;
+  final String city;
+  final String country;
+  final String postalCode;
+  final String idNumber; // CCCD/Passport
+  final String idType; // cccd, passport, driver_license
+  final DateTime? dateOfBirth;
+  final String gender;
+  final String nationality;
+  
+  CustomerInfo({
+    required this.fullName,
     required this.email,
     required this.phone,
-    this.specialRequests,
+    required this.address,
+    required this.city,
+    required this.country,
+    required this.postalCode,
+    required this.idNumber,
+    required this.idType,
+    this.dateOfBirth,
+    required this.gender,
+    required this.nationality,
   });
-
-  factory CustomerData.fromMap(Map<String, dynamic> map) {
-    return CustomerData(
-      name: map['name'] ?? '',
+  
+  factory CustomerInfo.fromMap(Map<String, dynamic> map) {
+    return CustomerInfo(
+      fullName: map['fullName'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'] ?? '',
-      specialRequests: map['specialRequests'],
+      address: map['address'] ?? '',
+      city: map['city'] ?? '',
+      country: map['country'] ?? 'Vietnam',
+      postalCode: map['postalCode'] ?? '',
+      idNumber: map['idNumber'] ?? '',
+      idType: map['idType'] ?? 'cccd',
+      dateOfBirth: map['dateOfBirth'] != null 
+          ? (map['dateOfBirth'] as Timestamp).toDate()
+          : null,
+      gender: map['gender'] ?? '',
+      nationality: map['nationality'] ?? 'Vietnamese',
     );
   }
-
+  
   Map<String, dynamic> toMap() {
     return {
-      'name': name,
+      'fullName': fullName,
       'email': email,
       'phone': phone,
-      'specialRequests': specialRequests,
+      'address': address,
+      'city': city,
+      'country': country,
+      'postalCode': postalCode,
+      'idNumber': idNumber,
+      'idType': idType,
+      'dateOfBirth': dateOfBirth != null 
+          ? Timestamp.fromDate(dateOfBirth!)
+          : null,
+      'gender': gender,
+      'nationality': nationality,
+    };
+  }
+  
+  static CustomerInfo empty() {
+    return CustomerInfo(
+      fullName: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      country: 'Vietnam',
+      postalCode: '',
+      idNumber: '',
+      idType: 'cccd',
+      gender: '',
+      nationality: 'Vietnamese',
+    );
+  }
+}
+
+// Payment Information
+class PaymentInfo {
+  final String method; // credit_card, bank_transfer, cash, e_wallet
+  final String? transactionId;
+  final String? cardNumber; // Last 4 digits only
+  final String? cardHolder;
+  final String? bankName;
+  final String? bankAccount;
+  final String? eWalletType; // momo, zalopay, vnpay
+  final String? eWalletPhone;
+  final DateTime? paymentDate;
+  final String status; // pending, processing, success, failed
+  final String? failureReason;
+  
+  PaymentInfo({
+    required this.method,
+    this.transactionId,
+    this.cardNumber,
+    this.cardHolder,
+    this.bankName,
+    this.bankAccount,
+    this.eWalletType,
+    this.eWalletPhone,
+    this.paymentDate,
+    required this.status,
+    this.failureReason,
+  });
+  
+  factory PaymentInfo.fromMap(Map<String, dynamic> map) {
+    return PaymentInfo(
+      method: map['method'] ?? 'cash',
+      transactionId: map['transactionId'],
+      cardNumber: map['cardNumber'],
+      cardHolder: map['cardHolder'],
+      bankName: map['bankName'],
+      bankAccount: map['bankAccount'],
+      eWalletType: map['eWalletType'],
+      eWalletPhone: map['eWalletPhone'],
+      paymentDate: map['paymentDate'] != null 
+          ? (map['paymentDate'] as Timestamp).toDate()
+          : null,
+      status: map['status'] ?? 'pending',
+      failureReason: map['failureReason'],
+    );
+  }
+  
+  Map<String, dynamic> toMap() {
+    return {
+      'method': method,
+      'transactionId': transactionId,
+      'cardNumber': cardNumber,
+      'cardHolder': cardHolder,
+      'bankName': bankName,
+      'bankAccount': bankAccount,
+      'eWalletType': eWalletType,
+      'eWalletPhone': eWalletPhone,
+      'paymentDate': paymentDate != null 
+          ? Timestamp.fromDate(paymentDate!)
+          : null,
+      'status': status,
+      'failureReason': failureReason,
     };
   }
 }

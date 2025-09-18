@@ -27,21 +27,27 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                     Container(
                       height: 280.h,
                       width: double.infinity,
-                      child: CachedNetworkImage(
-                        imageUrl: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800',
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: AppColors.neutral200,
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: AppColors.neutral200,
-                          child: Icon(
-                            Icons.image,
-                            size: 50.sp,
-                            color: AppColors.neutral400,
+                      child: Obx(() {
+                        final imageUrl = controller.accommodation.value?.images.isNotEmpty == true
+                            ? controller.accommodation.value!.images.first
+                            : 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800';
+                        
+                        return CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: AppColors.neutral200,
                           ),
-                        ),
-                      ),
+                          errorWidget: (context, url, error) => Container(
+                            color: AppColors.neutral200,
+                            child: Icon(
+                              Icons.image,
+                              size: 50.sp,
+                              color: AppColors.neutral400,
+                            ),
+                          ),
+                        );
+                      }),
                     ),
                     
                     // Header buttons overlay
@@ -132,12 +138,16 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                   color: const Color(0xFF9CA3AF),
                                 ),
                                 SizedBox(width: 4.w),
-                                Text(
-                                  'Mèo Vạc, Hà Giang',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: const Color(0xFF9CA3AF),
-                                  ),
+                                Expanded(
+                                  child: Obx(() => Text(
+                                    controller.accommodation.value?.fullAddress ?? 'Đang tải...',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: const Color(0xFF9CA3AF),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
                                 ),
                                 SizedBox(width: 12.w),
                                 Icon(
@@ -146,28 +156,28 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                   color: const Color(0xFFFBBF24),
                                 ),
                                 SizedBox(width: 4.w),
-                                Text(
-                                  '4.8',
+                                Obx(() => Text(
+                                  controller.accommodation.value?.rating.toString() ?? '0.0',
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     color: const Color(0xFF374151),
                                     fontWeight: FontWeight.w600,
                                   ),
-                                ),
+                                )),
                               ],
                             ),
                             
                             SizedBox(height: 8.h),
                             
                             // Name
-                            Text(
-                              'Homestay Sơn Thủy',
+                            Obx(() => Text(
+                              controller.accommodation.value?.name ?? 'Đang tải...',
                               style: TextStyle(
                                 fontSize: 24.sp,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF111827),
                               ),
-                            ),
+                            )),
                           ],
                         ),
                       ),
@@ -187,14 +197,16 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                               ),
                             ),
                             SizedBox(height: 12.h),
-                            Text(
-                              'Mô tả chi tiết đang được cập nhật. Chỗ ơ nghỉ lý tưởng với đầy đủ tiện nghi và dịch vụ chất lượng cao.',
+                            Obx(() => Text(
+                              controller.accommodation.value?.description ?? 'Đang tải...',
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 color: const Color(0xFF6B7280),
                                 height: 1.5,
                               ),
-                            ),
+                              maxLines: controller.isDescriptionExpanded.value ? null : 3,
+                              overflow: controller.isDescriptionExpanded.value ? TextOverflow.visible : TextOverflow.ellipsis,
+                            )),
                             SizedBox(height: 8.h),
                             GestureDetector(
                               onTap: controller.toggleDescription,
@@ -227,26 +239,41 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                             ),
                             SizedBox(height: 16.h),
                             
-                            // Amenities grid - 3 columns
-                            Row(
-                              children: [
-                                _buildAmenityItem(Icons.wifi, 'Wifi miễn phí'),
-                                SizedBox(width: 24.w),
-                                _buildAmenityItem(Icons.tv, 'Ti vi'),
-                                SizedBox(width: 24.w),
-                                _buildAmenityItem(Icons.pool, 'Bể bơi'),
-                              ],
-                            ),
-                            SizedBox(height: 20.h),
-                            Row(
-                              children: [
-                                _buildAmenityItem(Icons.ac_unit, 'Điều hòa'),
-                                SizedBox(width: 24.w),
-                                _buildAmenityItem(Icons.restaurant, 'Bữa sáng'),
-                                SizedBox(width: 24.w),
-                                _buildAmenityItem(Icons.local_parking, 'Bãi đỗ xe'),
-                              ],
-                            ),
+                            // Amenities grid - dynamic
+                            Obx(() {
+                              final amenities = controller.accommodation.value?.amenities ?? [];
+                              if (amenities.isEmpty) {
+                                return Text(
+                                  'Đang tải...',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                );
+                              }
+                              
+                              return Wrap(
+                                spacing: 24.w,
+                                runSpacing: 20.h,
+                                children: amenities.take(6).map((amenity) {
+                                  IconData icon = Icons.check_circle_outline;
+                                  if (amenity.toLowerCase().contains('wifi')) icon = Icons.wifi;
+                                  else if (amenity.toLowerCase().contains('ti vi') || amenity.toLowerCase().contains('tv')) icon = Icons.tv;
+                                  else if (amenity.toLowerCase().contains('bể bơi') || amenity.toLowerCase().contains('hồ bơi')) icon = Icons.pool;
+                                  else if (amenity.toLowerCase().contains('điều hòa') || amenity.toLowerCase().contains('ac')) icon = Icons.ac_unit;
+                                  else if (amenity.toLowerCase().contains('nhà hàng') || amenity.toLowerCase().contains('bữa')) icon = Icons.restaurant;
+                                  else if (amenity.toLowerCase().contains('đỗ xe') || amenity.toLowerCase().contains('parking')) icon = Icons.local_parking;
+                                  else if (amenity.toLowerCase().contains('gym')) icon = Icons.fitness_center;
+                                  else if (amenity.toLowerCase().contains('spa')) icon = Icons.spa;
+                                  else if (amenity.toLowerCase().contains('bar')) icon = Icons.local_bar;
+                                  
+                                  return SizedBox(
+                                    width: 100.w,
+                                    child: _buildAmenityItem(icon, amenity),
+                                  );
+                                }).toList(),
+                              );
+                            }),
                           ],
                         ),
                       ),
@@ -273,71 +300,78 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                             // Gallery horizontal scroll
                             SizedBox(
                               height: 80.h,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                padding: EdgeInsets.only(right: 20.w),
-                                itemCount: 5,
-                                itemBuilder: (context, index) {
-                                  final images = [
-                                    'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=400',
-                                    'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=400',  
-                                    'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400',
-                                    'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400',
-                                    'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400',
-                                  ];
-                                  
-                                  if (index == 4) {
-                                    // Last item with +14 overlay
-                                    return GestureDetector(
-                                      onTap: controller.openGallery,
-                                      child: Container(
-                                        width: 80.w,
-                                        margin: EdgeInsets.only(right: 8.w),
-                                        child: Stack(
-                                          fit: StackFit.expand,
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(8.r),
-                                              child: CachedNetworkImage(
-                                                imageUrl: images[index],
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(8.r),
-                                                color: Colors.black.withOpacity(0.5),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  '+14',
-                                                  style: TextStyle(
-                                                    fontSize: 18.sp,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  
-                                  return Container(
-                                    width: 80.w,
-                                    margin: EdgeInsets.only(right: 8.w),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8.r),
-                                      child: CachedNetworkImage(
-                                        imageUrl: images[index],
-                                        fit: BoxFit.cover,
+                              child: Obx(() {
+                                final images = controller.accommodation.value?.images ?? [];
+                                if (images.isEmpty) {
+                                  return Center(
+                                    child: Text(
+                                      'Không có hình ảnh',
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: const Color(0xFF6B7280),
                                       ),
                                     ),
                                   );
-                                },
-                              ),
+                                }
+                                
+                                return ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: EdgeInsets.only(right: 20.w),
+                                  itemCount: images.length,
+                                  itemBuilder: (context, index) {
+                                    if (index == 4 && images.length > 5) {
+                                      // Last item with +X overlay
+                                      return GestureDetector(
+                                        onTap: controller.openGallery,
+                                        child: Container(
+                                          width: 80.w,
+                                          margin: EdgeInsets.only(right: 8.w),
+                                          child: Stack(
+                                            fit: StackFit.expand,
+                                            children: [
+                                              ClipRRect(
+                                                borderRadius: BorderRadius.circular(8.r),
+                                                child: CachedNetworkImage(
+                                                  imageUrl: images[index],
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                              Container(
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(8.r),
+                                                  color: Colors.black.withOpacity(0.5),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    '+${images.length - 5}',
+                                                    style: TextStyle(
+                                                      fontSize: 18.sp,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    
+                                    return Container(
+                                      width: 80.w,
+                                      margin: EdgeInsets.only(right: 8.w),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8.r),
+                                        child: CachedNetworkImage(
+                                          imageUrl: images[index],
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              }),
                             ),
                           ],
                         ),
@@ -564,14 +598,14 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                             crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
                             children: [
-                              Text(
-                                '480.000 VND',
+                              Obx(() => Text(
+                                controller.accommodation.value?.displayPrice ?? '0 VND',
                                 style: TextStyle(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
-                              ),
+                              )),
                               Text(
                                 '/đêm',
                                 style: TextStyle(
@@ -618,25 +652,25 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
   }
   
   Widget _buildAmenityItem(IconData icon, String label) {
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            size: 24.sp,
-            color: AppColors.primary,
+    return Column(
+      children: [
+        Icon(
+          icon,
+          size: 24.sp,
+          color: AppColors.primary,
+        ),
+        SizedBox(height: 8.h),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: const Color(0xFF6B7280),
           ),
-          SizedBox(height: 8.h),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: const Color(0xFF6B7280),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }

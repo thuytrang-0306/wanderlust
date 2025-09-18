@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/data/models/booking_model.dart';
-import 'package:wanderlust/data/models/accommodation_model.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 
 class BookingService extends GetxService {
@@ -12,92 +11,52 @@ class BookingService extends GetxService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   
   // Collection reference
-  CollectionReference get _bookingsCollection => _firestore.collection('bookings');
+  final String _collection = 'bookings';
   
-  // Get current user ID
-  String? get currentUserId => _auth.currentUser?.uid;
+  // Get current user
+  User? get currentUser => _auth.currentUser;
+  String? get currentUserId => currentUser?.uid;
   
   // Create new booking
-  Future<BookingModel?> createBooking({
-    required String accommodationId,
-    required DateTime checkIn,
-    required DateTime checkOut,
-    required GuestData guests,
-    required CustomerData customer,
-    required double basePrice,
-    required String paymentMethod,
-  }) async {
+  Future<String?> createBooking(BookingModel booking) async {
     try {
       if (currentUserId == null) {
         throw Exception('User not authenticated');
       }
       
-      // Calculate nights
-      final nights = checkOut.difference(checkIn).inDays;
-      
-      // Calculate pricing
-      final subtotal = basePrice * nights;
-      final taxes = subtotal * 0.1; // 10% tax
-      final fees = 50000; // Service fee
-      final discount = 0.0; // Can add promo codes later
-      final total = subtotal + taxes + fees - discount;
-      
-      // Generate booking code
-      final bookingCode = BookingModel.generateBookingCode();
-      
-      // Generate QR code data
-      final qrCode = 'wanderlust:booking:$bookingCode';
-      
-      final bookingData = {
-        'userId': currentUserId,
-        'type': 'accommodation',
-        'referenceId': accommodationId,
-        'bookingCode': bookingCode,
-        'status': 'pending',
-        'checkIn': Timestamp.fromDate(checkIn),
-        'checkOut': Timestamp.fromDate(checkOut),
-        'nights': nights,
-        'guests': guests.toMap(),
-        'pricing': {
-          'subtotal': subtotal,
-          'taxes': taxes,
-          'fees': fees,
-          'discount': discount,
-          'total': total,
-          'currency': 'VND',
-          'paymentMethod': paymentMethod,
-          'paymentStatus': 'pending',
-        },
-        'customer': customer.toMap(),
-        'qrCode': qrCode,
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-      
-      final docRef = await _bookingsCollection.add(bookingData);
-      final doc = await docRef.get();
+      final docRef = await _firestore.collection(_collection).add(
+        booking.toFirestore()
+      );
       
       LoggerService.i('Booking created successfully: ${docRef.id}');
-      
-      // Auto-confirm after 5 seconds (for demo)
-      Future.delayed(const Duration(seconds: 5), () {
-        confirmBooking(docRef.id);
-      });
-      
-      return BookingModel.fromFirestore(doc);
-      
+      return docRef.id;
     } catch (e) {
       LoggerService.e('Error creating booking', error: e);
       return null;
     }
   }
   
+  // Update booking
+  Future<bool> updateBooking(String bookingId, Map<String, dynamic> data) async {
+    try {
+      data['updatedAt'] = FieldValue.serverTimestamp();
+      
+      await _firestore.collection(_collection).doc(bookingId).update(data);
+      
+      LoggerService.i('Booking updated successfully: $bookingId');
+      return true;
+    } catch (e) {
+      LoggerService.e('Error updating booking', error: e);
+      return false;
+    }
+  }
+  
   // Confirm booking
   Future<bool> confirmBooking(String bookingId) async {
     try {
-      await _bookingsCollection.doc(bookingId).update({
+      await _firestore.collection(_collection).doc(bookingId).update({
         'status': 'confirmed',
-        'confirmedAt': FieldValue.serverTimestamp(),
-        'pricing.paymentStatus': 'paid',
+        'updatedAt': FieldValue.serverTimestamp(),
       });
       
       LoggerService.i('Booking confirmed: $bookingId');
@@ -109,11 +68,13 @@ class BookingService extends GetxService {
   }
   
   // Cancel booking
-  Future<bool> cancelBooking(String bookingId) async {
+  Future<bool> cancelBooking(String bookingId, String reason) async {
     try {
-      await _bookingsCollection.doc(bookingId).update({
+      await _firestore.collection(_collection).doc(bookingId).update({
         'status': 'cancelled',
-        'cancelledAt': FieldValue.serverTimestamp(),
+        'cancellationReason': reason,
+        'cancellationDate': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
       
       LoggerService.i('Booking cancelled: $bookingId');
@@ -127,9 +88,9 @@ class BookingService extends GetxService {
   // Complete booking
   Future<bool> completeBooking(String bookingId) async {
     try {
-      await _bookingsCollection.doc(bookingId).update({
+      await _firestore.collection(_collection).doc(bookingId).update({
         'status': 'completed',
-        'completedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
       
       LoggerService.i('Booking completed: $bookingId');
@@ -140,37 +101,71 @@ class BookingService extends GetxService {
     }
   }
   
+  // Process payment
+  Future<bool> processPayment(String bookingId, String paymentId) async {
+    try {
+      await _firestore.collection(_collection).doc(bookingId).update({
+        'paymentStatus': 'paid',
+        'paymentId': paymentId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      LoggerService.i('Payment processed for booking: $bookingId');
+      return true;
+    } catch (e) {
+      LoggerService.e('Error processing payment', error: e);
+      return false;
+    }
+  }
+  
+  // Get single booking
+  Future<BookingModel?> getBooking(String bookingId) async {
+    try {
+      final doc = await _firestore.collection(_collection).doc(bookingId).get();
+      
+      if (doc.exists && doc.data() != null) {
+        return BookingModel.fromFirestore(doc.data()!, doc.id);
+      }
+      return null;
+    } catch (e) {
+      LoggerService.e('Error getting booking', error: e);
+      return null;
+    }
+  }
+  
   // Get user's bookings
   Stream<List<BookingModel>> getUserBookings() {
     if (currentUserId == null) {
       return Stream.value([]);
     }
     
-    return _bookingsCollection
+    return _firestore
+        .collection(_collection)
         .where('userId', isEqualTo: currentUserId)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
-              .map((doc) => BookingModel.fromFirestore(doc))
+              .map((doc) => BookingModel.fromFirestore(doc.data(), doc.id))
               .toList();
         });
   }
   
   // Get bookings by status
-  Stream<List<BookingModel>> getBookingsByStatus(BookingStatus status) {
+  Stream<List<BookingModel>> getBookingsByStatus(String status) {
     if (currentUserId == null) {
       return Stream.value([]);
     }
     
-    return _bookingsCollection
+    return _firestore
+        .collection(_collection)
         .where('userId', isEqualTo: currentUserId)
-        .where('status', isEqualTo: status.value)
+        .where('status', isEqualTo: status)
         .orderBy('checkIn', descending: false)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
-              .map((doc) => BookingModel.fromFirestore(doc))
+              .map((doc) => BookingModel.fromFirestore(doc.data(), doc.id))
               .toList();
         });
   }
@@ -183,7 +178,8 @@ class BookingService extends GetxService {
     
     final now = DateTime.now();
     
-    return _bookingsCollection
+    return _firestore
+        .collection(_collection)
         .where('userId', isEqualTo: currentUserId)
         .where('status', isEqualTo: 'confirmed')
         .where('checkIn', isGreaterThan: Timestamp.fromDate(now))
@@ -191,34 +187,172 @@ class BookingService extends GetxService {
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
-              .map((doc) => BookingModel.fromFirestore(doc))
+              .map((doc) => BookingModel.fromFirestore(doc.data(), doc.id))
               .toList();
         });
   }
   
-  // Get single booking
-  Future<BookingModel?> getBooking(String bookingId) async {
-    try {
-      final doc = await _bookingsCollection.doc(bookingId).get();
-      
-      if (doc.exists) {
-        return BookingModel.fromFirestore(doc);
-      }
-      return null;
-    } catch (e) {
-      LoggerService.e('Error getting booking', error: e);
-      return null;
+  // Get past bookings
+  Stream<List<BookingModel>> getPastBookings() {
+    if (currentUserId == null) {
+      return Stream.value([]);
     }
+    
+    final now = DateTime.now();
+    
+    return _firestore
+        .collection(_collection)
+        .where('userId', isEqualTo: currentUserId)
+        .where('status', whereIn: ['completed', 'cancelled'])
+        .orderBy('checkIn', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => BookingModel.fromFirestore(doc.data(), doc.id))
+              .toList();
+        });
   }
   
   // Stream single booking (for real-time updates)
   Stream<BookingModel?> streamBooking(String bookingId) {
-    return _bookingsCollection.doc(bookingId).snapshots().map((doc) {
-      if (doc.exists) {
-        return BookingModel.fromFirestore(doc);
+    return _firestore
+        .collection(_collection)
+        .doc(bookingId)
+        .snapshots()
+        .map((doc) {
+      if (doc.exists && doc.data() != null) {
+        return BookingModel.fromFirestore(doc.data()!, doc.id);
       }
       return null;
     });
+  }
+  
+  // Create tour booking
+  Future<String?> createTourBooking({
+    required String tourId,
+    required String tourName,
+    required String tourImage,
+    required DateTime departureDate,
+    required int adults,
+    required int children,
+    required double unitPrice,
+    required double totalPrice,
+    required CustomerInfo customerInfo,
+    required String paymentMethod,
+    String? specialRequests,
+  }) async {
+    try {
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+      
+      final booking = BookingModel(
+        id: '',
+        userId: currentUserId!,
+        userName: currentUser!.displayName ?? customerInfo.fullName,
+        userEmail: currentUser!.email ?? customerInfo.email,
+        userPhone: customerInfo.phone,
+        bookingType: 'tour',
+        itemId: tourId,
+        itemName: tourName,
+        itemImage: tourImage,
+        checkIn: departureDate,
+        checkOut: null, // Tours may not have checkout
+        quantity: adults + children,
+        adults: adults,
+        children: children,
+        unitPrice: unitPrice,
+        totalPrice: totalPrice,
+        discount: 0,
+        discountCode: '',
+        currency: 'VND',
+        status: 'pending',
+        paymentStatus: 'pending',
+        paymentMethod: paymentMethod,
+        paymentId: null,
+        customerInfo: customerInfo,
+        metadata: {
+          'tourId': tourId,
+          'departureDate': departureDate.toIso8601String(),
+        },
+        specialRequests: specialRequests,
+        cancellationReason: null,
+        cancellationDate: null,
+        refundAmount: 0,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      
+      return await createBooking(booking);
+    } catch (e) {
+      LoggerService.e('Error creating tour booking', error: e);
+      return null;
+    }
+  }
+  
+  // Create accommodation booking
+  Future<String?> createAccommodationBooking({
+    required String accommodationId,
+    required String accommodationName,
+    required String accommodationImage,
+    required DateTime checkIn,
+    required DateTime checkOut,
+    required int rooms,
+    required int adults,
+    required int children,
+    required double unitPrice,
+    required double totalPrice,
+    required CustomerInfo customerInfo,
+    required String paymentMethod,
+    String? specialRequests,
+  }) async {
+    try {
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+      
+      final booking = BookingModel(
+        id: '',
+        userId: currentUserId!,
+        userName: currentUser!.displayName ?? customerInfo.fullName,
+        userEmail: currentUser!.email ?? customerInfo.email,
+        userPhone: customerInfo.phone,
+        bookingType: 'accommodation',
+        itemId: accommodationId,
+        itemName: accommodationName,
+        itemImage: accommodationImage,
+        checkIn: checkIn,
+        checkOut: checkOut,
+        quantity: rooms,
+        adults: adults,
+        children: children,
+        unitPrice: unitPrice,
+        totalPrice: totalPrice,
+        discount: 0,
+        discountCode: '',
+        currency: 'VND',
+        status: 'pending',
+        paymentStatus: 'pending',
+        paymentMethod: paymentMethod,
+        paymentId: null,
+        customerInfo: customerInfo,
+        metadata: {
+          'accommodationId': accommodationId,
+          'nights': checkOut.difference(checkIn).inDays,
+        },
+        specialRequests: specialRequests,
+        cancellationReason: null,
+        cancellationDate: null,
+        refundAmount: 0,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      
+      return await createBooking(booking);
+    } catch (e) {
+      LoggerService.e('Error creating accommodation booking', error: e);
+      return null;
+    }
   }
   
   // Auto-complete old bookings
@@ -226,7 +360,8 @@ class BookingService extends GetxService {
     try {
       final yesterday = DateTime.now().subtract(const Duration(days: 1));
       
-      final snapshot = await _bookingsCollection
+      final snapshot = await _firestore
+          .collection(_collection)
           .where('status', isEqualTo: 'confirmed')
           .where('checkOut', isLessThan: Timestamp.fromDate(yesterday))
           .get();
@@ -238,6 +373,23 @@ class BookingService extends GetxService {
       LoggerService.i('Auto-completed ${snapshot.docs.length} old bookings');
     } catch (e) {
       LoggerService.e('Error auto-completing bookings', error: e);
+    }
+  }
+  
+  // Calculate refund amount based on cancellation policy
+  double calculateRefundAmount(BookingModel booking) {
+    if (booking.paymentStatus != 'paid') return 0;
+    
+    final now = DateTime.now();
+    final daysUntilCheckIn = booking.checkIn.difference(now).inDays;
+    
+    // Example refund policy
+    if (daysUntilCheckIn >= 7) {
+      return booking.totalPrice; // 100% refund
+    } else if (daysUntilCheckIn >= 3) {
+      return booking.totalPrice * 0.5; // 50% refund
+    } else {
+      return 0; // No refund
     }
   }
 }

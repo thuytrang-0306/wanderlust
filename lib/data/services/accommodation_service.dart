@@ -1,93 +1,153 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wanderlust/data/models/accommodation_model.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'dart:math' as math;
 
 class AccommodationService extends GetxService {
-  static AccommodationService get to => Get.find();
-  
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   
-  // Collection reference
-  CollectionReference get _accommodationsCollection => 
-      _firestore.collection('accommodations');
+  static const String _collection = 'accommodations';
+  static const String _favoritesCollection = 'favorites';
+  static const String _reviewsCollection = 'reviews';
+  
+  // Get current user ID
+  String? get currentUserId => _auth.currentUser?.uid;
+  
+  // Get all accommodations
+  Future<List<AccommodationModel>> getAllAccommodations() async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(_collection)
+          .orderBy('rating', descending: true)
+          .limit(50)
+          .get();
+      
+      return querySnapshot.docs
+          .map((doc) => AccommodationModel.fromFirestore(
+              doc.data(), 
+              doc.id
+          ))
+          .toList();
+    } catch (e) {
+      LoggerService.e('Error getting accommodations', error: e);
+      return [];
+    }
+  }
   
   // Get featured accommodations
-  Stream<List<AccommodationModel>> getFeaturedAccommodations({int limit = 10}) {
-    return _accommodationsCollection
-        .where('isFeatured', isEqualTo: true)
-        .where('isActive', isEqualTo: true)
-        .limit(limit)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => AccommodationModel.fromFirestore(doc))
-              .toList();
-        });
-  }
-  
-  // Get all active accommodations
-  Stream<List<AccommodationModel>> getAccommodations({
-    int limit = 20,
-    AccommodationType? type,
-    String? city,
-  }) {
-    Query query = _accommodationsCollection
-        .where('isActive', isEqualTo: true);
-    
-    if (type != null) {
-      query = query.where('type', isEqualTo: type.value);
-    }
-    
-    if (city != null && city.isNotEmpty) {
-      query = query.where('location.city', isEqualTo: city);
-    }
-    
-    return query
-        .limit(limit)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => AccommodationModel.fromFirestore(doc))
-              .toList();
-        });
-  }
-  
-  // Get single accommodation
-  Future<AccommodationModel?> getAccommodation(String id) async {
+  Future<List<AccommodationModel>> getFeaturedAccommodations() async {
     try {
-      final doc = await _accommodationsCollection.doc(id).get();
+      // Simplified query to avoid index requirement
+      final querySnapshot = await _firestore
+          .collection(_collection)
+          .where('isFeatured', isEqualTo: true)
+          .limit(10)
+          .get();
       
-      if (doc.exists) {
-        return AccommodationModel.fromFirestore(doc);
-      }
-      return null;
+      // Sort in memory instead of using orderBy to avoid index requirement
+      final accommodations = querySnapshot.docs
+          .map((doc) => AccommodationModel.fromFirestore(
+              doc.data(), 
+              doc.id
+          ))
+          .toList();
+      
+      // Sort by rating descending
+      accommodations.sort((a, b) => b.rating.compareTo(a.rating));
+      
+      return accommodations;
     } catch (e) {
-      LoggerService.e('Error getting accommodation', error: e);
-      return null;
+      LoggerService.e('Error getting featured accommodations', error: e);
+      return [];
+    }
+  }
+  
+  // Get accommodations by city
+  Future<List<AccommodationModel>> getAccommodationsByCity(String city) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(_collection)
+          .where('city', isEqualTo: city)
+          .orderBy('rating', descending: true)
+          .get();
+      
+      return querySnapshot.docs
+          .map((doc) => AccommodationModel.fromFirestore(
+              doc.data(), 
+              doc.id
+          ))
+          .toList();
+    } catch (e) {
+      LoggerService.e('Error getting accommodations by city', error: e);
+      return [];
     }
   }
   
   // Search accommodations
-  Future<List<AccommodationModel>> searchAccommodations(String query) async {
+  Future<List<AccommodationModel>> searchAccommodations({
+    String? query,
+    String? city,
+    String? type,
+    double? minPrice,
+    double? maxPrice,
+    double? minRating,
+    List<String>? amenities,
+  }) async {
     try {
-      if (query.isEmpty) return [];
+      Query<Map<String, dynamic>> firestoreQuery = _firestore.collection(_collection);
       
-      // Note: Firestore doesn't support full-text search
-      // For production, use Algolia or Elasticsearch
-      // This is a simple implementation
+      // Apply filters
+      if (city != null && city.isNotEmpty) {
+        firestoreQuery = firestoreQuery.where('city', isEqualTo: city);
+      }
       
-      final snapshot = await _accommodationsCollection
-          .where('isActive', isEqualTo: true)
-          .get();
+      if (type != null && type.isNotEmpty) {
+        firestoreQuery = firestoreQuery.where('type', isEqualTo: type);
+      }
       
-      final accommodations = snapshot.docs
-          .map((doc) => AccommodationModel.fromFirestore(doc))
-          .where((acc) => 
-              acc.name.toLowerCase().contains(query.toLowerCase()) ||
-              acc.location.city.toLowerCase().contains(query.toLowerCase()) ||
-              acc.description.toLowerCase().contains(query.toLowerCase()))
+      if (minPrice != null) {
+        firestoreQuery = firestoreQuery.where('pricePerNight', isGreaterThanOrEqualTo: minPrice);
+      }
+      
+      if (maxPrice != null) {
+        firestoreQuery = firestoreQuery.where('pricePerNight', isLessThanOrEqualTo: maxPrice);
+      }
+      
+      if (minRating != null) {
+        firestoreQuery = firestoreQuery.where('rating', isGreaterThanOrEqualTo: minRating);
+      }
+      
+      // Execute query
+      final querySnapshot = await firestoreQuery.limit(100).get();
+      
+      var accommodations = querySnapshot.docs
+          .map((doc) => AccommodationModel.fromFirestore(
+              doc.data(), 
+              doc.id
+          ))
           .toList();
+      
+      // Client-side filtering for complex queries
+      if (query != null && query.isNotEmpty) {
+        final searchQuery = query.toLowerCase();
+        accommodations = accommodations.where((acc) =>
+            acc.name.toLowerCase().contains(searchQuery) ||
+            acc.description.toLowerCase().contains(searchQuery) ||
+            acc.city.toLowerCase().contains(searchQuery)
+        ).toList();
+      }
+      
+      if (amenities != null && amenities.isNotEmpty) {
+        accommodations = accommodations.where((acc) =>
+            amenities.every((amenity) => acc.amenities.contains(amenity))
+        ).toList();
+      }
+      
+      // Sort by rating
+      accommodations.sort((a, b) => b.rating.compareTo(a.rating));
       
       return accommodations;
     } catch (e) {
@@ -96,203 +156,234 @@ class AccommodationService extends GetxService {
     }
   }
   
-  // Filter accommodations
-  Future<List<AccommodationModel>> filterAccommodations({
-    AccommodationType? type,
-    double? minPrice,
-    double? maxPrice,
-    double? minRating,
-    String? city,
-    List<String>? amenities,
-  }) async {
+  // Get single accommodation
+  Future<AccommodationModel?> getAccommodation(String accommodationId) async {
     try {
-      Query query = _accommodationsCollection.where('isActive', isEqualTo: true);
+      final doc = await _firestore
+          .collection(_collection)
+          .doc(accommodationId)
+          .get();
       
-      if (type != null) {
-        query = query.where('type', isEqualTo: type.value);
+      if (doc.exists && doc.data() != null) {
+        return AccommodationModel.fromFirestore(doc.data()!, doc.id);
+      }
+      return null;
+    } catch (e) {
+      LoggerService.e('Error getting accommodation', error: e);
+      return null;
+    }
+  }
+  
+  // Stream single accommodation
+  Stream<AccommodationModel?> streamAccommodation(String accommodationId) {
+    return _firestore
+        .collection(_collection)
+        .doc(accommodationId)
+        .snapshots()
+        .map((doc) {
+          if (doc.exists && doc.data() != null) {
+            return AccommodationModel.fromFirestore(doc.data()!, doc.id);
+          }
+          return null;
+        });
+  }
+  
+  // Create accommodation (for hosts)
+  Future<String?> createAccommodation(AccommodationModel accommodation) async {
+    try {
+      if (currentUserId == null) {
+        throw Exception('User not authenticated');
       }
       
-      if (city != null && city.isNotEmpty) {
-        query = query.where('location.city', isEqualTo: city);
+      final docRef = await _firestore.collection(_collection).add(
+        accommodation.copyWith(
+          hostId: currentUserId!,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ).toFirestore(),
+      );
+      
+      LoggerService.i('Accommodation created: ${docRef.id}');
+      return docRef.id;
+    } catch (e) {
+      LoggerService.e('Error creating accommodation', error: e);
+      return null;
+    }
+  }
+  
+  // Update accommodation
+  Future<bool> updateAccommodation(String accommodationId, Map<String, dynamic> updates) async {
+    try {
+      updates['updatedAt'] = Timestamp.fromDate(DateTime.now());
+      
+      await _firestore
+          .collection(_collection)
+          .doc(accommodationId)
+          .update(updates);
+      
+      LoggerService.i('Accommodation updated: $accommodationId');
+      return true;
+    } catch (e) {
+      LoggerService.e('Error updating accommodation', error: e);
+      return false;
+    }
+  }
+  
+  // Delete accommodation
+  Future<bool> deleteAccommodation(String accommodationId) async {
+    try {
+      await _firestore
+          .collection(_collection)
+          .doc(accommodationId)
+          .delete();
+      
+      LoggerService.i('Accommodation deleted: $accommodationId');
+      return true;
+    } catch (e) {
+      LoggerService.e('Error deleting accommodation', error: e);
+      return false;
+    }
+  }
+  
+  // Favorite operations
+  Future<bool> toggleFavorite(String accommodationId) async {
+    try {
+      if (currentUserId == null) {
+        throw Exception('User not authenticated');
       }
       
-      if (minRating != null) {
-        query = query.where('rating', isGreaterThanOrEqualTo: minRating);
+      final favoriteDoc = _firestore
+          .collection(_favoritesCollection)
+          .doc('${currentUserId}_$accommodationId');
+      
+      final doc = await favoriteDoc.get();
+      
+      if (doc.exists) {
+        // Remove favorite
+        await favoriteDoc.delete();
+        LoggerService.i('Removed favorite: $accommodationId');
+        return false;
+      } else {
+        // Add favorite
+        await favoriteDoc.set({
+          'userId': currentUserId,
+          'accommodationId': accommodationId,
+          'createdAt': Timestamp.fromDate(DateTime.now()),
+        });
+        LoggerService.i('Added favorite: $accommodationId');
+        return true;
       }
+    } catch (e) {
+      LoggerService.e('Error toggling favorite', error: e);
+      return false;
+    }
+  }
+  
+  // Check if favorited
+  Future<bool> isFavorited(String accommodationId) async {
+    try {
+      if (currentUserId == null) return false;
       
-      final snapshot = await query.get();
+      final doc = await _firestore
+          .collection(_favoritesCollection)
+          .doc('${currentUserId}_$accommodationId')
+          .get();
       
-      var accommodations = snapshot.docs
-          .map((doc) => AccommodationModel.fromFirestore(doc))
+      return doc.exists;
+    } catch (e) {
+      LoggerService.e('Error checking favorite', error: e);
+      return false;
+    }
+  }
+  
+  // Get user favorites
+  Future<List<AccommodationModel>> getUserFavorites() async {
+    try {
+      if (currentUserId == null) return [];
+      
+      final favoritesSnapshot = await _firestore
+          .collection(_favoritesCollection)
+          .where('userId', isEqualTo: currentUserId)
+          .orderBy('createdAt', descending: true)
+          .get();
+      
+      final accommodationIds = favoritesSnapshot.docs
+          .map((doc) => doc.data()['accommodationId'] as String)
           .toList();
       
-      // Client-side filtering for complex queries
-      if (minPrice != null) {
-        accommodations = accommodations
-            .where((acc) => acc.pricing.finalPrice >= minPrice)
-            .toList();
-      }
+      if (accommodationIds.isEmpty) return [];
       
-      if (maxPrice != null) {
-        accommodations = accommodations
-            .where((acc) => acc.pricing.finalPrice <= maxPrice)
-            .toList();
-      }
+      // Get accommodations
+      final accommodations = await Future.wait(
+        accommodationIds.map((id) => getAccommodation(id))
+      );
       
-      if (amenities != null && amenities.isNotEmpty) {
-        accommodations = accommodations
-            .where((acc) => amenities.every((amenity) => 
-                acc.amenities.contains(amenity)))
-            .toList();
-      }
-      
-      return accommodations;
+      return accommodations
+          .where((acc) => acc != null)
+          .cast<AccommodationModel>()
+          .toList();
     } catch (e) {
-      LoggerService.e('Error filtering accommodations', error: e);
+      LoggerService.e('Error getting user favorites', error: e);
       return [];
     }
   }
   
   // Get nearby accommodations
-  Future<List<AccommodationModel>> getNearbyAccommodations({
-    required double latitude,
-    required double longitude,
-    double radiusInKm = 10,
-  }) async {
+  Future<List<AccommodationModel>> getNearbyAccommodations(
+    double latitude, 
+    double longitude, 
+    double radiusInKm,
+  ) async {
     try {
-      // Simple implementation - get all and filter by distance
-      // For production, use GeoFirestore or similar
+      // For simplicity, we'll get all accommodations and filter by distance
+      // In production, use geohashing or Firebase GeoFire
       
-      final snapshot = await _accommodationsCollection
-          .where('isActive', isEqualTo: true)
-          .get();
+      final allAccommodations = await getAllAccommodations();
       
-      final accommodations = snapshot.docs
-          .map((doc) => AccommodationModel.fromFirestore(doc))
-          .toList();
-      
-      // Filter by distance (simplified)
-      // You'd need to implement proper distance calculation
-      
-      return accommodations;
+      return allAccommodations.where((acc) {
+        final distance = _calculateDistance(
+          latitude, 
+          longitude,
+          acc.location.latitude,
+          acc.location.longitude,
+        );
+        return distance <= radiusInKm;
+      }).toList()
+        ..sort((a, b) {
+          final distA = _calculateDistance(
+            latitude, longitude,
+            a.location.latitude, a.location.longitude,
+          );
+          final distB = _calculateDistance(
+            latitude, longitude,
+            b.location.latitude, b.location.longitude,
+          );
+          return distA.compareTo(distB);
+        });
     } catch (e) {
       LoggerService.e('Error getting nearby accommodations', error: e);
       return [];
     }
   }
   
-  // Add demo data (for testing)
-  Future<void> addDemoAccommodations() async {
-    try {
-      final demoData = [
-        {
-          'providerId': 'demo_provider_1',
-          'name': 'Melia Vinpearl Nha Trang Empire',
-          'description': 'Khách sạn 5 sao sang trọng với view biển tuyệt đẹp',
-          'type': 'hotel',
-          'location': {
-            'geoPoint': const GeoPoint(12.2388, 109.1967),
-            'address': '44 - 46 Lê Thánh Tôn, Lộc Thọ',
-            'city': 'Nha Trang',
-            'country': 'Vietnam',
-          },
-          'images': [
-            'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800',
-            'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800',
-          ],
-          'thumbnail': 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800',
-          'pricing': {
-            'basePrice': 2500000,
-            'currency': 'VND',
-            'discountPercentage': 20,
-            'taxes': 250000,
-          },
-          'amenities': ['WiFi', 'Pool', 'Spa', 'Gym', 'Restaurant', 'Bar'],
-          'roomTypes': [
-            {
-              'id': 'deluxe',
-              'name': 'Deluxe Room',
-              'capacity': 2,
-              'price': 2500000,
-              'availability': 5,
-            },
-            {
-              'id': 'suite',
-              'name': 'Suite',
-              'capacity': 4,
-              'price': 4500000,
-              'availability': 2,
-            },
-          ],
-          'rating': 4.8,
-          'totalReviews': 256,
-          'policies': {
-            'checkIn': '14:00',
-            'checkOut': '12:00',
-            'cancellation': 'Hủy miễn phí trước 24h',
-            'paymentMethods': ['cash', 'card', 'transfer'],
-          },
-          'tags': ['luxury', 'beach', 'family'],
-          'isActive': true,
-          'isFeatured': true,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        {
-          'providerId': 'demo_provider_2',
-          'name': 'The Anam Cam Ranh',
-          'description': 'Resort cao cấp phong cách colonial Pháp',
-          'type': 'resort',
-          'location': {
-            'geoPoint': const GeoPoint(12.0167, 109.2167),
-            'address': 'Bãi Dài, Cam Hải Đông',
-            'city': 'Cam Ranh',
-            'country': 'Vietnam',
-          },
-          'images': [
-            'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800',
-            'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800',
-          ],
-          'thumbnail': 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800',
-          'pricing': {
-            'basePrice': 3800000,
-            'currency': 'VND',
-            'discountPercentage': 15,
-            'taxes': 380000,
-          },
-          'amenities': ['WiFi', 'Pool', 'Spa', 'Beach', 'Restaurant', 'Tennis'],
-          'roomTypes': [
-            {
-              'id': 'villa',
-              'name': 'Beach Villa',
-              'capacity': 2,
-              'price': 3800000,
-              'availability': 3,
-            },
-          ],
-          'rating': 4.9,
-          'totalReviews': 189,
-          'policies': {
-            'checkIn': '15:00',
-            'checkOut': '12:00',
-            'cancellation': 'Hủy miễn phí trước 48h',
-            'paymentMethods': ['card', 'transfer'],
-          },
-          'tags': ['luxury', 'beach', 'romantic'],
-          'isActive': true,
-          'isFeatured': true,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-      ];
-      
-      for (final data in demoData) {
-        await _accommodationsCollection.add(data);
-      }
-      
-      LoggerService.i('Demo accommodations added successfully');
-    } catch (e) {
-      LoggerService.e('Error adding demo accommodations', error: e);
-    }
+  // Calculate distance between two points (Haversine formula)
+  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double earthRadius = 6371; // km
+    
+    double dLat = _toRadians(lat2 - lat1);
+    double dLon = _toRadians(lon2 - lon1);
+    
+    double a = 
+      math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(_toRadians(lat1)) * math.cos(_toRadians(lat2)) * 
+      math.sin(dLon / 2) * math.sin(dLon / 2);
+    
+    double c = 2 * math.asin(math.sqrt(a));
+    
+    return earthRadius * c;
+  }
+  
+  double _toRadians(double degrees) {
+    return degrees * math.pi / 180;
   }
 }

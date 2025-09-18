@@ -58,7 +58,8 @@ class BlogDetailController extends BaseController {
         blogPost.value = post;
         likeCount.value = post.likes;
         commentCount.value = post.commentsCount;
-        // TODO: Check if user has liked/bookmarked this post
+        // Check if user has liked/bookmarked this post
+        await checkUserInteractions();
       } else {
         AppSnackbar.showError(
           title: 'Lỗi',
@@ -89,74 +90,83 @@ class BlogDetailController extends BaseController {
   }
   
   void loadSuggestions() {
-    // Mock suggestions data
-    suggestions.value = [
-      {
-        'id': '1',
-        'title': 'Homestay Sơn Thủy',
-        'location': 'Hà Giang',
-        'price': '400.000',
-        'rating': 4.4,
-        'duration': '4N/5D',
-        'image': 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=400',
-      },
-      {
-        'id': '2', 
-        'title': 'Khách sạn GG',
-        'location': 'Hà Giang',
-        'price': '600.000',
-        'rating': 4.4,
-        'duration': '4N/5D',
-        'image': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-      },
-    ];
+    // TODO: Load real suggestions from AccommodationService or TourService
+    // For now, leave empty - no mock data
+    suggestions.value = [];
   }
   
-  void toggleBookmark() {
+  Future<void> toggleBookmark() async {
+    if (postId == null) return;
+    
+    // Optimistic update
     isBookmarked.value = !isBookmarked.value;
-    // TODO: Save bookmark state
+    
+    // Update in backend
+    final success = await _blogService.toggleBookmark(postId!);
+    
+    if (success != isBookmarked.value) {
+      // Backend returned different state
+      isBookmarked.value = success;
+    }
+    
+    AppSnackbar.showSuccess(
+      message: isBookmarked.value ? 'Đã lưu bài viết' : 'Đã bỏ lưu bài viết',
+    );
   }
   
   Future<void> toggleLike() async {
     if (postId == null) return;
     
-    final newLikeStatus = !isLiked.value;
-    
     // Optimistic update
-    isLiked.value = newLikeStatus;
-    likeCount.value += newLikeStatus ? 1 : -1;
+    final previousState = isLiked.value;
+    isLiked.value = !previousState;
+    likeCount.value += isLiked.value ? 1 : -1;
     
     // Update in backend
-    final success = await _blogService.toggleLike(postId!, newLikeStatus);
+    final newLikeStatus = await _blogService.toggleLike(postId!);
     
-    if (!success) {
-      // Revert if failed
-      isLiked.value = !newLikeStatus;
-      likeCount.value += newLikeStatus ? -1 : 1;
-      
-      AppSnackbar.showError(
-        title: 'Lỗi',
-        message: 'Không thể thực hiện',
-      );
+    if (newLikeStatus != isLiked.value) {
+      // Backend returned different state, update UI
+      isLiked.value = newLikeStatus;
+      // Recalculate like count based on actual state change
+      if (previousState != newLikeStatus) {
+        likeCount.value = blogPost.value?.likes ?? 0;
+        // Re-fetch post to get accurate count
+        loadBlogData();
+      }
     }
   }
   
   Future<void> addComment(String comment) async {
     if (postId == null || comment.trim().isEmpty) return;
     
-    final success = await _blogService.addComment(postId!, comment.trim());
+    final commentId = await _blogService.addCommentToPost(postId!, comment.trim());
     
-    if (success) {
+    if (commentId != null) {
       // Comment will appear via stream listener
+      commentCount.value++;
       AppSnackbar.showSuccess(
-        title: 'Thành công',
         message: 'Đã thêm bình luận',
       );
     } else {
       AppSnackbar.showError(
-        title: 'Lỗi',
         message: 'Không thể thêm bình luận',
       );
+    }
+  }
+  
+  // Check user interactions
+  Future<void> checkUserInteractions() async {
+    if (postId == null) return;
+    
+    try {
+      // Check if liked
+      isLiked.value = await _blogService.isPostLiked(postId!);
+      
+      // Check if bookmarked
+      isBookmarked.value = await _blogService.isPostBookmarked(postId!);
+    } catch (e) {
+      LoggerService.e('Error checking user interactions', error: e);
     }
   }
   

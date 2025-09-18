@@ -39,10 +39,21 @@ class BlogService extends GetxService {
       final userDoc = await _usersCollection.doc(currentUserId).get();
       final userData = userDoc.data() as Map<String, dynamic>?;
       
+      // Get avatar - prioritize base64 avatar from user profile
+      String authorAvatar = '';
+      final user = currentUser; // Store in local variable for null safety
+      if (userData?['avatar'] != null && userData!['avatar'].isNotEmpty) {
+        authorAvatar = userData['avatar']; // Base64 avatar from UserProfileService
+      } else if (userData?['photoURL'] != null && userData!['photoURL'].isNotEmpty) {
+        authorAvatar = userData['photoURL']; // URL from social login
+      } else if (user != null && user.photoURL != null && user.photoURL!.isNotEmpty) {
+        authorAvatar = user.photoURL!;
+      }
+      
       final postData = {
         'userId': currentUserId,
         'authorName': userData?['displayName'] ?? currentUser?.displayName ?? 'Anonymous',
-        'authorAvatar': userData?['photoURL'] ?? currentUser?.photoURL ?? '',
+        'authorAvatar': authorAvatar,
         'title': title,
         'content': content,
         'excerpt': excerpt,
@@ -218,18 +229,90 @@ class BlogService extends GetxService {
     }
   }
   
-  // Like/Unlike post
-  Future<bool> toggleLike(String postId, bool isLiked) async {
+  // Like/Unlike post (with user tracking)
+  Future<bool> toggleLike(String postId) async {
     try {
-      await _postsCollection.doc(postId).update({
-        'likes': FieldValue.increment(isLiked ? 1 : -1),
+      if (currentUserId == null) {
+        LoggerService.w('User not authenticated');
+        return false;
+      }
+      
+      final postRef = _postsCollection.doc(postId);
+      final userLikesRef = _usersCollection
+          .doc(currentUserId)
+          .collection('likedPosts')
+          .doc(postId);
+      
+      // Check if already liked
+      final likeDoc = await userLikesRef.get();
+      final isCurrentlyLiked = likeDoc.exists;
+      
+      // Use transaction for atomic update
+      await _firestore.runTransaction((transaction) async {
+        final postDoc = await transaction.get(postRef);
+        if (!postDoc.exists) {
+          throw Exception('Post not found');
+        }
+        
+        final data = postDoc.data() as Map<String, dynamic>?;
+        final currentLikes = data?['likes'] ?? 0;
+        
+        if (isCurrentlyLiked) {
+          // Unlike
+          transaction.update(postRef, {
+            'likes': currentLikes - 1,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          transaction.delete(userLikesRef);
+        } else {
+          // Like  
+          transaction.update(postRef, {
+            'likes': currentLikes + 1,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          transaction.set(userLikesRef, {
+            'postId': postId,
+            'likedAt': FieldValue.serverTimestamp(),
+          });
+        }
       });
       
-      return true;
+      return !isCurrentlyLiked; // Return new like status
     } catch (e) {
       LoggerService.e('Error toggling like', error: e);
       return false;
     }
+  }
+  
+  // Check if user has liked a post
+  Future<bool> isPostLiked(String postId) async {
+    try {
+      if (currentUserId == null) return false;
+      
+      final likeDoc = await _usersCollection
+          .doc(currentUserId)
+          .collection('likedPosts')
+          .doc(postId)
+          .get();
+      
+      return likeDoc.exists;
+    } catch (e) {
+      LoggerService.e('Error checking like status', error: e);
+      return false;
+    }
+  }
+  
+  // Get user's liked post IDs
+  Stream<Set<String>> getUserLikedPosts() {
+    if (currentUserId == null) {
+      return Stream.value(<String>{});
+    }
+    
+    return _usersCollection
+        .doc(currentUserId!)
+        .collection('likedPosts')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.id).toSet());
   }
   
   // Increment views
@@ -256,26 +339,37 @@ class BlogService extends GetxService {
     }
   }
   
-  // Add comment
-  Future<bool> addComment(String postId, String content) async {
+  // Add comment to post
+  Future<String?> addCommentToPost(String postId, String content) async {
     try {
-      if (currentUserId == null) return false;
+      if (currentUserId == null) return null;
       
       // Get user data
       final userDoc = await _usersCollection.doc(currentUserId).get();
       final userData = userDoc.data() as Map<String, dynamic>?;
       
+      // Get avatar - prioritize base64 avatar from user profile
+      String userAvatar = '';
+      final user = currentUser; // Store in local variable for null safety
+      if (userData?['avatar'] != null && userData!['avatar'].isNotEmpty) {
+        userAvatar = userData['avatar']; // Base64 avatar from UserProfileService
+      } else if (userData?['photoURL'] != null && userData!['photoURL'].isNotEmpty) {
+        userAvatar = userData['photoURL']; // URL from social login
+      } else if (user != null && user.photoURL != null && user.photoURL!.isNotEmpty) {
+        userAvatar = user.photoURL!;
+      }
+      
       final comment = BlogComment(
         id: '',
         postId: postId,
         userId: currentUserId!,
-        userName: userData?['displayName'] ?? 'Anonymous',
-        userAvatar: userData?['photoURL'] ?? '',
+        userName: userData?['displayName'] ?? currentUser?.displayName ?? 'Anonymous',
+        userAvatar: userAvatar,
         content: content,
         createdAt: DateTime.now(),
       );
       
-      await _postsCollection
+      final commentRef = await _postsCollection
           .doc(postId)
           .collection('comments')
           .add(comment.toMap());
@@ -283,12 +377,13 @@ class BlogService extends GetxService {
       // Increment comment count
       await _postsCollection.doc(postId).update({
         'commentsCount': FieldValue.increment(1),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
       
-      return true;
+      return commentRef.id;
     } catch (e) {
       LoggerService.e('Error adding comment', error: e);
-      return false;
+      return null;
     }
   }
   
@@ -316,6 +411,67 @@ class BlogService extends GetxService {
     }
   }
   
+  // Toggle bookmark/save post
+  Future<bool> toggleBookmark(String postId) async {
+    try {
+      if (currentUserId == null) return false;
+      
+      final bookmarkRef = _usersCollection
+          .doc(currentUserId)
+          .collection('bookmarkedPosts')
+          .doc(postId);
+      
+      final bookmarkDoc = await bookmarkRef.get();
+      
+      if (bookmarkDoc.exists) {
+        // Remove bookmark
+        await bookmarkRef.delete();
+        return false;
+      } else {
+        // Add bookmark
+        await bookmarkRef.set({
+          'postId': postId,
+          'savedAt': FieldValue.serverTimestamp(),
+        });
+        return true;
+      }
+    } catch (e) {
+      LoggerService.e('Error toggling bookmark', error: e);
+      return false;
+    }
+  }
+  
+  // Check if post is bookmarked
+  Future<bool> isPostBookmarked(String postId) async {
+    try {
+      if (currentUserId == null) return false;
+      
+      final bookmarkDoc = await _usersCollection
+          .doc(currentUserId)
+          .collection('bookmarkedPosts')
+          .doc(postId)
+          .get();
+      
+      return bookmarkDoc.exists;
+    } catch (e) {
+      LoggerService.e('Error checking bookmark status', error: e);
+      return false;
+    }
+  }
+  
+  // Get user's bookmarked post IDs  
+  Stream<Set<String>> getUserBookmarkedPosts() {
+    if (currentUserId == null) {
+      return Stream.value(<String>{});
+    }
+    
+    return _usersCollection
+        .doc(currentUserId!)
+        .collection('bookmarkedPosts')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.id).toSet());
+  }
+  
   // Search posts
   Future<List<BlogPostModel>> searchPosts(String query) async {
     try {
@@ -341,46 +497,5 @@ class BlogService extends GetxService {
     }
   }
   
-  // Add demo posts (for testing)
-  Future<void> addDemoPosts() async {
-    try {
-      final demoPosts = [
-        {
-          'title': 'Khám phá vẻ đẹp hoang sơ của Phú Quốc',
-          'excerpt': 'Hòn đảo ngọc Phú Quốc với những bãi biển tuyệt đẹp và thiên nhiên hoang sơ',
-          'content': 'Phú Quốc được mệnh danh là hòn đảo ngọc của Việt Nam...',
-          'coverImage': 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800',
-          'category': 'Du lịch biển',
-          'tags': ['phú quốc', 'biển', 'island'],
-          'destinations': ['Phú Quốc'],
-        },
-        {
-          'title': 'Sapa - Thiên đường trong mây',
-          'excerpt': 'Khám phá vẻ đẹp hùng vĩ của Sapa với những thửa ruộng bậc thang',
-          'content': 'Sapa nằm ở độ cao 1600m so với mực nước biển...',
-          'coverImage': 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800',
-          'category': 'Du lịch núi',
-          'tags': ['sapa', 'núi', 'trekking'],
-          'destinations': ['Sapa'],
-        },
-      ];
-      
-      for (final postData in demoPosts) {
-        await createPost(
-          title: postData['title'] as String,
-          content: postData['content'] as String,
-          excerpt: postData['excerpt'] as String,
-          coverImage: postData['coverImage'] as String,
-          category: postData['category'] as String,
-          tags: postData['tags'] as List<String>,
-          destinations: postData['destinations'] as List<String>,
-          publish: true,
-        );
-      }
-      
-      LoggerService.i('Demo posts added successfully');
-    } catch (e) {
-      LoggerService.e('Error adding demo posts', error: e);
-    }
-  }
+  // REMOVED: addDemoPosts() - No automatic demo data creation
 }

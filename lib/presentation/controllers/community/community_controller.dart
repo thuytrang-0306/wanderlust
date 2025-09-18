@@ -17,11 +17,74 @@ class CommunityController extends GetxController {
   final RxList<ReviewModel> reviews = <ReviewModel>[].obs;
   final RxBool isLoading = false.obs;
   
+  // User interaction tracking
+  final RxSet<String> likedPostIds = <String>{}.obs;
+  final RxSet<String> bookmarkedPostIds = <String>{}.obs;
+  
   @override
   void onInit() {
     super.onInit();
     _loadRealPosts();
     _loadRealReviews();
+    _trackUserInteractions();
+  }
+  
+  void _trackUserInteractions() {
+    // Track liked posts
+    _blogService.getUserLikedPosts().listen((likedIds) {
+      likedPostIds.value = likedIds;
+      // Update post models with like status
+      _updatePostLikeStatus();
+    });
+    
+    // Track bookmarked posts
+    _blogService.getUserBookmarkedPosts().listen((bookmarkedIds) {
+      bookmarkedPostIds.value = bookmarkedIds;
+      // Update post models with bookmark status
+      _updatePostBookmarkStatus();
+    });
+  }
+  
+  void _updatePostLikeStatus() {
+    for (int i = 0; i < posts.length; i++) {
+      final post = posts[i];
+      final isLiked = likedPostIds.contains(post.id);
+      if (post.isLiked != isLiked) {
+        posts[i] = PostModel(
+          id: post.id,
+          userName: post.userName,
+          userAvatar: post.userAvatar,
+          timeAndLocation: post.timeAndLocation,
+          content: post.content,
+          images: post.images,
+          likeCount: post.likeCount,
+          commentCount: post.commentCount,
+          isLiked: isLiked,
+          isBookmarked: post.isBookmarked,
+        );
+      }
+    }
+  }
+  
+  void _updatePostBookmarkStatus() {
+    for (int i = 0; i < posts.length; i++) {
+      final post = posts[i];
+      final isBookmarked = bookmarkedPostIds.contains(post.id);
+      if (post.isBookmarked != isBookmarked) {
+        posts[i] = PostModel(
+          id: post.id,
+          userName: post.userName,
+          userAvatar: post.userAvatar,
+          timeAndLocation: post.timeAndLocation,
+          content: post.content,
+          images: post.images,
+          likeCount: post.likeCount,
+          commentCount: post.commentCount,
+          isLiked: post.isLiked,
+          isBookmarked: isBookmarked,
+        );
+      }
+    }
   }
   
   void _loadRealPosts() {
@@ -49,8 +112,8 @@ class CommunityController extends GetxController {
             images: [blog.coverImage, ...blog.images].where((img) => img.isNotEmpty).toList(),
             likeCount: blog.likes,
             commentCount: blog.commentsCount,
-            isLiked: false, // TODO: Track user's liked posts
-            isBookmarked: false, // TODO: Track user's bookmarked posts
+            isLiked: likedPostIds.contains(blog.id),
+            isBookmarked: bookmarkedPostIds.contains(blog.id)
           );
         }).toList();
         
@@ -58,67 +121,18 @@ class CommunityController extends GetxController {
       }, onError: (error) {
         LoggerService.e('Error loading posts', error: error);
         isLoading.value = false;
-        // Fallback to demo posts if error
-        _loadDemoPosts();
+        // No fallback - show empty state
       });
-      
-      // Add demo posts if collection is empty
-      _checkAndAddDemoPosts();
       
     } catch (e) {
       LoggerService.e('Error in _loadRealPosts', error: e);
       isLoading.value = false;
-      _loadDemoPosts();
+      // No fallback - show empty state
     }
   }
   
-  void _loadDemoPosts() {
-    // Fallback demo posts for development/testing
-    posts.value = [
-      PostModel(
-        id: 'demo1',
-        userName: 'Nguyễn Văn Du Lịch',
-        userAvatar: 'https://i.pravatar.cc/150?img=1',
-        timeAndLocation: '2 giờ trước · Hà Giang',
-        content: 'Khám phá vẻ đẹp hoang sơ của Hà Giang\nNhững con đường đèo uốn lượn, ruộng bậc thang tuyệt đẹp và văn hóa độc đáo của người dân tộc...',
-        images: [
-          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-          'https://images.unsplash.com/photo-1454391304352-2bf4678b1a7a?w=800',
-        ],
-        likeCount: 234,
-        commentCount: 45,
-        isLiked: false,
-        isBookmarked: false,
-      ),
-      PostModel(
-        id: 'demo2',
-        userName: 'Trần Thị Phượt',
-        userAvatar: 'https://i.pravatar.cc/150?img=2',
-        timeAndLocation: 'Hôm qua · Ninh Bình',
-        content: 'Ninh Bình - Hạ Long trên cạn\nTràng An với hệ thống hang động kỳ vĩ, Tam Cốc với cảnh quan sông nước hữu tình...',
-        images: [
-          'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800',
-        ],
-        likeCount: 567,
-        commentCount: 89,
-        isLiked: true,
-        isBookmarked: true,
-      ),
-    ];
-  }
-  
-  Future<void> _checkAndAddDemoPosts() async {
-    try {
-      // Check if there are any posts
-      final snapshot = await _blogService.getPublishedPosts(limit: 1).first;
-      if (snapshot.isEmpty) {
-        // Add demo posts if collection is empty
-        await _blogService.addDemoPosts();
-      }
-    } catch (e) {
-      LoggerService.e('Error checking posts', error: e);
-    }
-  }
+  // REMOVED: _loadDemoPosts() - No more demo data
+  // REMOVED: _checkAndAddDemoPosts() - No automatic demo creation
   
   String _getRelativeTime(DateTime dateTime) {
     final now = DateTime.now();
@@ -139,82 +153,41 @@ class CommunityController extends GetxController {
     }
   }
   
-  void _loadRealReviews() {
+  void _loadRealReviews() async {
     try {
       // Load featured accommodations as reviews
-      _accommodationService.getFeaturedAccommodations(limit: 10).listen((accommodations) {
-        reviews.value = accommodations.map((acc) {
-          // Format price
-          String priceText = '${(acc.pricing.basePrice / 1000).toStringAsFixed(0)}.000 VND';
-          
-          return ReviewModel(
-            id: acc.id,
-            name: acc.name,
-            location: acc.location.city,
-            imageUrl: acc.images.isNotEmpty 
-                ? acc.images.first 
-                : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
-            rating: acc.rating,
-            price: priceText,
-            duration: null, // Accommodations don't have duration
-          );
-        }).toList();
-      }, onError: (error) {
-        LoggerService.e('Error loading reviews', error: error);
-        // Fallback to demo reviews
-        _loadDemoReviews();
-      });
-      
-      // Add demo accommodations if collection is empty
-      _checkAndAddDemoAccommodations();
+      final accommodations = await _accommodationService.getFeaturedAccommodations();
+      reviews.value = accommodations.map((acc) {
+        // Format price
+        String priceText = '${(acc.pricePerNight / 1000).toStringAsFixed(0)}.000 VND';
+        
+        return ReviewModel(
+          id: acc.id,
+          name: acc.name,
+          location: acc.city,
+          imageUrl: acc.images.isNotEmpty 
+              ? acc.images.first 
+              : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+          rating: acc.rating,
+          price: priceText,
+          duration: null, // Accommodations don't have duration
+        );
+      }).toList();
       
     } catch (e) {
       LoggerService.e('Error in _loadRealReviews', error: e);
-      _loadDemoReviews();
+      // No fallback - show empty state
     }
   }
   
-  void _loadDemoReviews() {
-    // Fallback demo reviews
-    reviews.value = [
-      ReviewModel(
-        id: 'demo1',
-        name: 'Homestay Son Thuy',
-        location: 'Hà Giang',
-        imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800',
-        rating: 4.4,
-        price: '600.000 VND',
-        duration: '4N/5D',
-      ),
-      ReviewModel(
-        id: 'demo2',
-        name: 'Khách sạn Mường Thanh',
-        location: 'Đà Nẵng',
-        imageUrl: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800',
-        rating: 4.6,
-        price: '800.000 VND',
-        duration: null,
-      ),
-    ];
-  }
+  // REMOVED: _loadDemoReviews() - No more demo data
+  // REMOVED: _checkAndAddDemoAccommodations() - No automatic demo creation
   
-  Future<void> _checkAndAddDemoAccommodations() async {
-    try {
-      // Check if there are any accommodations
-      final snapshot = await _accommodationService.getFeaturedAccommodations(limit: 1).first;
-      if (snapshot.isEmpty) {
-        // Add demo accommodations if collection is empty
-        await _accommodationService.addDemoAccommodations();
-      }
-    } catch (e) {
-      LoggerService.e('Error checking accommodations', error: e);
-    }
-  }
-  
-  void toggleLike(String postId) {
+  Future<void> toggleLike(String postId) async {
     final index = posts.indexWhere((p) => p.id == postId);
     if (index != -1) {
       final post = posts[index];
+      // Optimistic update
       posts[index] = PostModel(
         id: post.id,
         userName: post.userName,
@@ -227,13 +200,24 @@ class CommunityController extends GetxController {
         isLiked: !post.isLiked,
         isBookmarked: post.isBookmarked,
       );
+      
+      // Update backend
+      final newStatus = await _blogService.toggleLike(postId);
+      
+      // Update local tracking
+      if (newStatus) {
+        likedPostIds.add(postId);
+      } else {
+        likedPostIds.remove(postId);
+      }
     }
   }
   
-  void toggleBookmark(String postId) {
+  Future<void> toggleBookmark(String postId) async {
     final index = posts.indexWhere((p) => p.id == postId);
     if (index != -1) {
       final post = posts[index];
+      // Optimistic update
       posts[index] = PostModel(
         id: post.id,
         userName: post.userName,
@@ -246,17 +230,22 @@ class CommunityController extends GetxController {
         isLiked: post.isLiked,
         isBookmarked: !post.isBookmarked,
       );
+      
+      // Update backend
+      final newStatus = await _blogService.toggleBookmark(postId);
+      
+      // Update local tracking
+      if (newStatus) {
+        bookmarkedPostIds.add(postId);
+      } else {
+        bookmarkedPostIds.remove(postId);
+      }
     }
   }
   
   void openComments(String postId) {
-    // TODO: Navigate to comments page
-    Get.snackbar(
-      'Comments',
-      'Opening comments for post $postId',
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 2),
-    );
+    // Navigate to blog detail page
+    Get.toNamed(Routes.BLOG_DETAIL, arguments: {'postId': postId});
   }
   
   void createPost() async {

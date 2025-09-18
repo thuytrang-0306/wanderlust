@@ -21,6 +21,8 @@ import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/data/services/image_upload_service.dart';
 import 'package:wanderlust/core/services/unified_image_service.dart';
 import 'package:wanderlust/data/services/user_profile_service.dart';
+import 'package:wanderlust/data/services/accommodation_service.dart';
+import 'package:wanderlust/data/services/booking_service.dart';
 
 Future<void> _registerDataServices() async {
   // Core services
@@ -33,6 +35,8 @@ Future<void> _registerDataServices() async {
   final tripService = Get.put(TripService());
   final imageUploadService = Get.put(ImageUploadService());
   final userProfileService = Get.put(UserProfileService());
+  final accommodationService = Get.put(AccommodationService());
+  final bookingService = Get.put(BookingService());
   
   LoggerService.i('Data services registered');
 }

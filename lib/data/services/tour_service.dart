@@ -17,7 +17,7 @@ class TourService extends GetxService {
           .get();
 
       return snapshot.docs
-          .map((doc) => TourModel.fromJson(doc.data(), doc.id))
+          .map((doc) => TourModel.fromFirestore(doc.data(), doc.id))
           .toList();
     } catch (e) {
       LoggerService.e('Error getting tours', error: e);
@@ -36,8 +36,8 @@ class TourService extends GetxService {
 
       // Filter for featured and active tours
       return snapshot.docs
-          .map((doc) => TourModel.fromJson(doc.data(), doc.id))
-          .where((tour) => tour.featured && tour.status == 'active')
+          .map((doc) => TourModel.fromFirestore(doc.data(), doc.id))
+          .where((tour) => tour.isFeatured && tour.status == 'active')
           .take(limit)
           .toList();
     } catch (e) {
@@ -56,7 +56,7 @@ class TourService extends GetxService {
           .get();
 
       return snapshot.docs
-          .map((doc) => TourModel.fromJson(doc.data(), doc.id))
+          .map((doc) => TourModel.fromFirestore(doc.data(), doc.id))
           .where((tour) => tour.hasDiscount && tour.status == 'active')
           .take(limit)
           .toList();
@@ -77,7 +77,7 @@ class TourService extends GetxService {
           .get();
 
       return snapshot.docs
-          .map((doc) => TourModel.fromJson(doc.data(), doc.id))
+          .map((doc) => TourModel.fromFirestore(doc.data(), doc.id))
           .toList();
     } catch (e) {
       LoggerService.e('Error getting tours by destination', error: e);
@@ -91,7 +91,7 @@ class TourService extends GetxService {
       final doc = await _firestore.collection(_collection).doc(id).get();
       
       if (doc.exists && doc.data() != null) {
-        return TourModel.fromJson(doc.data()!, doc.id);
+        return TourModel.fromFirestore(doc.data()!, doc.id);
       }
       return null;
     } catch (e) {
@@ -115,21 +115,22 @@ class TourService extends GetxService {
           .get();
 
       final results = snapshot.docs
-          .map((doc) => TourModel.fromJson(doc.data(), doc.id))
+          .map((doc) => TourModel.fromFirestore(doc.data(), doc.id))
           .toList();
 
       // Additional client-side filtering
       final allTours = await getAllTours();
       final additionalResults = allTours.where((tour) {
         final matchesDesc = tour.description.toLowerCase().contains(lowercaseQuery);
-        final matchesDest = tour.destinationName.toLowerCase().contains(lowercaseQuery);
-        final matchesTag = tour.tags.any((tag) => 
-            tag.toLowerCase().contains(lowercaseQuery));
+        final matchesDest = tour.destinations.any((dest) => 
+            dest.toLowerCase().contains(lowercaseQuery));
+        final matchesHighlight = tour.highlights.any((highlight) => 
+            highlight.toLowerCase().contains(lowercaseQuery));
         
         // Avoid duplicates
         final alreadyInResults = results.any((r) => r.id == tour.id);
         
-        return !alreadyInResults && (matchesDesc || matchesDest || matchesTag);
+        return !alreadyInResults && (matchesDesc || matchesDest || matchesHighlight);
       }).toList();
 
       return [...results, ...additionalResults];
@@ -154,7 +155,7 @@ class TourService extends GetxService {
           .get();
 
       return snapshot.docs
-          .map((doc) => TourModel.fromJson(doc.data(), doc.id))
+          .map((doc) => TourModel.fromFirestore(doc.data(), doc.id))
           .toList();
     } catch (e) {
       LoggerService.e('Error filtering tours by price', error: e);
@@ -170,7 +171,7 @@ class TourService extends GetxService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => TourModel.fromJson(doc.data(), doc.id))
+            .map((doc) => TourModel.fromFirestore(doc.data(), doc.id))
             .toList());
   }
 
