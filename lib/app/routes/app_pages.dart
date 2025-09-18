@@ -33,6 +33,8 @@ import 'package:wanderlust/presentation/bindings/my_trips_binding.dart';
 import 'package:wanderlust/presentation/bindings/booking_history_binding.dart';
 import 'package:wanderlust/presentation/bindings/add_private_location_binding.dart';
 import 'package:wanderlust/presentation/bindings/combo_detail_binding.dart';
+import 'package:wanderlust/presentation/pages/ai/ai_chat_page.dart';
+import 'package:wanderlust/presentation/bindings/ai_chat_binding.dart';
 
 part 'app_routes.dart';
 
@@ -164,6 +166,12 @@ class AppPages {
       name: Routes.BOOKING_HISTORY,
       page: () => const BookingHistoryPage(),
       binding: BookingHistoryBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.AI_CHAT,
+      page: () => const AIChatPage(),
+      binding: AIChatBinding(),
       transition: Transition.rightToLeft,
     ),
   ];

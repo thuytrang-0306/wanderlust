@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:wanderlust/app/routes/app_pages.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/presentation/controllers/main_navigation_controller.dart';
@@ -30,6 +31,8 @@ class MainNavigationPage extends StatelessWidget {
     return Obx(
       () => Scaffold(
         body: IndexedStack(index: controller.currentIndex.value, children: pages),
+        floatingActionButton: _buildAIAssistantFAB(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: AppColors.white,
@@ -139,6 +142,44 @@ class MainNavigationPage extends StatelessWidget {
         ),
       ),
       label: label,
+    );
+  }
+
+  Widget _buildAIAssistantFAB() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 10.h),
+      child: FloatingActionButton(
+        onPressed: () => Get.toNamed(Routes.AI_CHAT),
+        backgroundColor: AppColors.primary,
+        elevation: 8,
+        child: Container(
+          width: 56.w,
+          height: 56.h,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary,
+                AppColors.primary.withOpacity(0.8),
+              ],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.smart_toy,
+            color: Colors.white,
+            size: 28.sp,
+          ),
+        ),
+      ),
     );
   }
 }
