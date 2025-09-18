@@ -37,11 +37,11 @@ class AccountPage extends GetView<AccountController> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(30.r),
-                          child: Obx(() => controller.userPhotoUrl.value != null
-                              ? CachedNetworkImage(
-                                  imageUrl: controller.userPhotoUrl.value!,
+                          child: Obx(() => controller.hasAvatar
+                              ? Image.memory(
+                                  controller.avatarBytes.value!,
                                   fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
+                                  errorBuilder: (context, error, stackTrace) => Container(
                                     color: AppColors.neutral100,
                                     child: Icon(
                                       Icons.person,
@@ -92,7 +92,7 @@ class AccountPage extends GetView<AccountController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Obx(() => Text(
-                          controller.userName.value,
+                          controller.userName,
                           style: AppTypography.bodyL.copyWith(
                             color: AppColors.neutral900,
                             fontWeight: FontWeight.w600,
@@ -100,7 +100,7 @@ class AccountPage extends GetView<AccountController> {
                         )),
                         SizedBox(height: 2.h),
                         Obx(() => Text(
-                          controller.userEmail.value,
+                          controller.userEmail,
                           style: AppTypography.bodyS.copyWith(
                             color: AppColors.neutral600,
                           ),

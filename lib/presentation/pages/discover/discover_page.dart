@@ -5,6 +5,7 @@ import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/presentation/controllers/discover/discover_controller.dart';
+import 'package:wanderlust/presentation/controllers/account/user_profile_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -67,12 +68,14 @@ class DiscoverPage extends GetView<DiscoverController> {
   }
 
   Widget _buildHeader() {
+    final userController = Get.find<UserProfileController>();
+    
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
       child: Row(
         children: [
           // Avatar
-          Container(
+          Obx(() => Container(
             width: 36.w,
             height: 36.h,
             decoration: BoxDecoration(
@@ -84,38 +87,52 @@ class DiscoverPage extends GetView<DiscoverController> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(18.r),
-              child: CachedNetworkImage(
-                imageUrl: 'https://i.pravatar.cc/150?img=5',
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: AppColors.neutral100,
-                ),
-              ),
+              child: userController.avatarBytes.value != null
+                ? Image.memory(
+                    userController.avatarBytes.value!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: AppColors.neutral100,
+                      child: Icon(
+                        Icons.person,
+                        size: 20.sp,
+                        color: AppColors.neutral500,
+                      ),
+                    ),
+                  )
+                : Container(
+                    color: AppColors.neutral100,
+                    child: Icon(
+                      Icons.person,
+                      size: 20.sp,
+                      color: AppColors.neutral500,
+                    ),
+                  ),
             ),
-          ),
+          )),
           
           SizedBox(width: AppSpacing.s3),
           
           // Greeting
           Expanded(
-            child: Column(
+            child: Obx(() => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome, Naomi!',
+                  '${controller.greeting}, ${userController.userName}!',
                   style: AppTypography.bodyS.copyWith(
                     color: AppColors.neutral500,
                   ),
                 ),
                 Text(
-                  'Explore beautiful world',
+                  'Khám phá thế giới tuyệt vời',
                   style: AppTypography.bodyL.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
-            ),
+            )),
           ),
         ],
       ),

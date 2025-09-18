@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/presentation/controllers/account/account_controller.dart';
+import 'package:wanderlust/presentation/controllers/account/user_profile_controller.dart';
 import 'package:wanderlust/presentation/controllers/discover/discover_controller.dart';
 
 class MainNavigationController extends BaseController {
@@ -22,6 +23,12 @@ class MainNavigationController extends BaseController {
     // Initialize controllers for tabs when main navigation loads
     Get.lazyPut(() => DiscoverController());
     Get.lazyPut(() => AccountController());
+    
+    // Put UserProfileController immediately and permanently
+    // This ensures it's available for all pages that need user data
+    if (!Get.isRegistered<UserProfileController>()) {
+      Get.put(UserProfileController(), permanent: true);
+    }
   }
   
   // Change tab

@@ -50,22 +50,42 @@ class PlanningController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    loadTrips();
     
-    // Listen to real-time updates
+    // Listen to real-time updates only - no need to call loadTrips separately
     _tripService.streamUserTrips().listen((trips) {
       allTrips.value = trips;
       _categorizeTrips(trips);
+      
+      // Update loading state
+      if (isLoadingTrips.value) {
+        isLoadingTrips.value = false;
+        if (trips.isEmpty) {
+          setEmpty();
+        } else {
+          setSuccess();
+        }
+      }
+      
       LoggerService.i('Stream updated with ${trips.length} trips');
     }, onError: (error) {
       LoggerService.e('Error streaming trips', error: error);
-      // Continue with static data if stream fails
+      setError('Không thể tải danh sách chuyến đi');
+      isLoadingTrips.value = false;
+      // Fallback to loading static data if stream fails
+      loadTrips();
     });
+    
+    // Set initial loading state
+    isLoadingTrips.value = true;
+    setLoading();
   }
 
   @override
   void loadData() {
-    loadTrips();
+    // Only reload if not streaming
+    if (!isLoadingTrips.value) {
+      loadTrips();
+    }
   }
 
   Future<void> loadTrips() async {

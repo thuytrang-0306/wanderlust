@@ -1,124 +1,271 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:wanderlust/data/services/image_upload_service.dart';
+import 'package:wanderlust/data/services/user_profile_service.dart';
+import 'package:wanderlust/data/models/user_profile_model.dart';
+import 'package:wanderlust/core/services/unified_image_service.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/core/widgets/app_dialogs.dart';
 import 'package:wanderlust/core/services/storage_service.dart';
+import 'package:wanderlust/core/utils/logger_service.dart';
 
 class UserProfileController extends BaseController {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final ImageUploadService _imageUpload = Get.put(ImageUploadService());
+  final UserProfileService _profileService = Get.find<UserProfileService>();
+  final UnifiedImageService _imageService = Get.find<UnifiedImageService>();
   
-  // User data
-  final userName = 'Nguyen Thuy Trang'.obs;
-  final userEmail = 'thuytrang@gmail.com'.obs;
-  final userAvatar = ''.obs;
+  // User profile
+  final Rxn<UserProfileModel> userProfile = Rxn<UserProfileModel>();
+  final Rxn<Uint8List> avatarBytes = Rxn<Uint8List>();
+  final Rxn<Uint8List> coverPhotoBytes = Rxn<Uint8List>();
+  final RxBool isLoadingAvatar = false.obs;
+  final RxBool isLoadingCover = false.obs;
   
   // Stats
-  final totalTrips = 12.obs;
-  final totalBookings = 28.obs;
-  final totalReviews = 45.obs;
-  final totalPoints = 2850.obs;
-  final activeTripsCount = 2.obs;
+  final totalTrips = 0.obs;
+  final totalBookings = 0.obs;
+  final totalReviews = 0.obs;
+  final totalPoints = 0.obs;
+  final activeTripsCount = 0.obs;
   
   // Settings
   final notificationsEnabled = true.obs;
   final currentLanguage = 'Tiếng Việt'.obs;
   final appVersion = '1.0.0'.obs;
   
-  final ImagePicker _imagePicker = ImagePicker();
+  // Getters for easy access
+  String get userName => userProfile.value?.displayName ?? 'User';
+  String get userEmail => userProfile.value?.email ?? '';
+  String get userBio => userProfile.value?.bio ?? '';
+  String get userLocation => userProfile.value?.location ?? '';
+  bool get hasAvatar => avatarBytes.value != null;
+  bool get hasCoverPhoto => coverPhotoBytes.value != null;
   
   @override
   void onInit() {
     super.onInit();
     loadUserData();
-    loadStats();
+    
+    // Stream profile changes
+    _profileService.streamCurrentUserProfile().listen((profile) {
+      if (profile != null) {
+        userProfile.value = profile;
+        _loadAvatarBytes(profile);
+        _loadCoverBytes(profile);
+        loadStats();
+      }
+    });
   }
   
-  void loadUserData() {
-    // Load from Firebase Auth
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      userName.value = user.displayName ?? 'User';
-      userEmail.value = user.email ?? '';
-      userAvatar.value = user.photoURL ?? '';
+  void loadUserData() async {
+    try {
+      setLoading();
+      
+      // Load profile from Firestore
+      final profile = await _profileService.getCurrentUserProfile();
+      
+      if (profile != null) {
+        userProfile.value = profile;
+        _loadAvatarBytes(profile);
+        _loadCoverBytes(profile);
+        loadStats();
+        setSuccess();
+      } else {
+        // Initialize profile for new user
+        final success = await _profileService.initializeNewUserProfile();
+        if (success) {
+          loadUserData(); // Reload after initialization
+        } else {
+          setError('Could not initialize profile');
+        }
+      }
+      
+      // Load settings from local storage
+      _loadLocalSettings();
+    } catch (e) {
+      LoggerService.e('Error loading user data', error: e);
+      setError('Error loading profile');
     }
-    
-    // Load from local storage
+  }
+  
+  void _loadAvatarBytes(UserProfileModel profile) {
+    // Load avatar bytes if exists (prefer thumbnail for performance)
+    if (profile.avatarThumbnail != null) {
+      avatarBytes.value = _imageService.base64ToImage(profile.avatarThumbnail);
+    } else if (profile.avatar != null) {
+      avatarBytes.value = _imageService.base64ToImage(profile.avatar);
+    } else {
+      avatarBytes.value = null;
+    }
+    update(); // Notify GetBuilder listeners
+  }
+  
+  void _loadCoverBytes(UserProfileModel profile) {
+    if (profile.coverPhoto != null) {
+      coverPhotoBytes.value = _imageService.base64ToImage(profile.coverPhoto);
+    }
+  }
+  
+  void _loadLocalSettings() {
+    // Load notification settings with default true
     final savedNotifications = StorageService.to.read('notifications_enabled');
     if (savedNotifications != null) {
       notificationsEnabled.value = savedNotifications;
+    } else {
+      // Initialize default value on first use
+      notificationsEnabled.value = true;
+      StorageService.to.write('notifications_enabled', true);
     }
     
+    // Load language settings with default Vietnamese
     final savedLanguage = StorageService.to.read('app_language');
     if (savedLanguage != null) {
       currentLanguage.value = savedLanguage == 'vi' ? 'Tiếng Việt' : 'English';
+    } else {
+      // Initialize default language on first use
+      currentLanguage.value = 'Tiếng Việt';
+      StorageService.to.write('app_language', 'vi');
     }
   }
   
   void loadStats() {
-    // TODO: Load actual stats from API
-    // For now using mock data
-    totalTrips.value = 12;
-    totalBookings.value = 28;
-    totalReviews.value = 45;
-    totalPoints.value = 2850;
-    activeTripsCount.value = 2;
+    // Load stats from user profile
+    if (userProfile.value != null) {
+      final stats = userProfile.value!.stats;
+      totalTrips.value = stats.tripsCount;
+      totalReviews.value = stats.reviewsCount;
+      // Other stats will be loaded from respective services
+      totalBookings.value = 0; // TODO: Load from BookingService
+      totalPoints.value = 0; // TODO: Load from PointsService
+      activeTripsCount.value = 0; // TODO: Calculate from TripService
+    }
   }
   
   void changeAvatar() async {
     try {
-      final XFile? image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 80,
-      );
+      // Show source selection dialog
+      final source = await _showImageSourceDialog();
+      if (source == null) return;
       
-      if (image != null) {
-        AppSnackbar.showInfo(
-          message: 'Đang tải ảnh lên...',
+      isLoadingAvatar.value = true;
+      AppSnackbar.showInfo(message: 'Đang xử lý ảnh...');
+      
+      // Update avatar using UserProfileService
+      final success = await _profileService.updateAvatar(source);
+      
+      if (success) {
+        // Profile will be updated via stream
+        AppSnackbar.showSuccess(
+          message: 'Cập nhật ảnh đại diện thành công!',
         );
-        
-        // Upload image using ImageUploadService (Cloudinary/ImgBB)
-        final imageUrl = await _imageUpload.uploadAvatar(File(image.path));
-        
-        if (imageUrl != null) {
-          // Update Firestore
-          final user = _auth.currentUser;
-          if (user != null) {
-            await _firestore.collection('users').doc(user.uid).update({
-              'photoURL': imageUrl,
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
-            
-            // Update Firebase Auth profile
-            await user.updatePhotoURL(imageUrl);
-          }
-          
-          // Update local state
-          userAvatar.value = imageUrl;
-          
-          AppSnackbar.showSuccess(
-            message: 'Cập nhật ảnh đại diện thành công',
-          );
-        } else {
-          AppSnackbar.showError(
-            message: 'Không thể tải ảnh lên',
-          );
-        }
+      } else {
+        AppSnackbar.showError(
+          message: 'Không thể cập nhật ảnh đại diện',
+        );
       }
     } catch (e) {
+      LoggerService.e('Error changing avatar', error: e);
       AppSnackbar.showError(
-        message: 'Không thể cập nhật ảnh: $e',
+        message: 'Có lỗi xảy ra',
       );
+    } finally {
+      isLoadingAvatar.value = false;
     }
+  }
+  
+  void changeCoverPhoto() async {
+    try {
+      final source = await _showImageSourceDialog();
+      if (source == null) return;
+      
+      isLoadingCover.value = true;
+      AppSnackbar.showInfo(message: 'Đang xử lý ảnh...');
+      
+      // Update cover photo using UserProfileService
+      final success = await _profileService.updateCoverPhoto(source);
+      
+      if (success) {
+        AppSnackbar.showSuccess(
+          message: 'Cập nhật ảnh bìa thành công!',
+        );
+      } else {
+        AppSnackbar.showError(
+          message: 'Không thể cập nhật ảnh bìa',
+        );
+      }
+    } catch (e) {
+      LoggerService.e('Error changing cover photo', error: e);
+      AppSnackbar.showError(
+        message: 'Có lỗi xảy ra',
+      );
+    } finally {
+      isLoadingCover.value = false;
+    }
+  }
+  
+  void removeAvatar() async {
+    final confirm = await AppDialogs.showConfirm(
+      title: 'Xóa ảnh đại diện',
+      message: 'Bạn có chắc chắn muốn xóa ảnh đại diện?',
+      confirmText: 'Xóa',
+      cancelText: 'Hủy',
+    );
+    
+    if (!confirm) return;
+    
+    try {
+      isLoadingAvatar.value = true;
+      final success = await _profileService.removeAvatar();
+      
+      if (success) {
+        avatarBytes.value = null;
+        AppSnackbar.showSuccess(message: 'Đã xóa ảnh đại diện');
+      } else {
+        AppSnackbar.showError(message: 'Không thể xóa ảnh đại diện');
+      }
+    } catch (e) {
+      LoggerService.e('Error removing avatar', error: e);
+      AppSnackbar.showError(message: 'Có lỗi xảy ra');
+    } finally {
+      isLoadingAvatar.value = false;
+    }
+  }
+  
+  Future<ImageSource?> _showImageSourceDialog() async {
+    return await Get.bottomSheet<ImageSource>(
+      Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Chọn nguồn ảnh',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            ListTile(
+              leading: Icon(Icons.camera_alt),
+              title: Text('Chụp ảnh'),
+              onTap: () => Get.back(result: ImageSource.camera),
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library),
+              title: Text('Chọn từ thư viện'),
+              onTap: () => Get.back(result: ImageSource.gallery),
+            ),
+            SizedBox(height: 10),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+    );
   }
   
   void navigateToMyTrips() {
@@ -232,6 +379,9 @@ class UserProfileController extends BaseController {
         
         // Clear local storage
         await StorageService.to.clearAll();
+        
+        // Clear image cache
+        _imageService.clearCache();
         
         AppDialogs.hideLoading();
         

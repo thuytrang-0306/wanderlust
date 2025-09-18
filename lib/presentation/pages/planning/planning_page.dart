@@ -366,12 +366,16 @@ class PlanningPage extends GetView<PlanningController> {
                                 color: Colors.white.withValues(alpha: 0.9),
                               ),
                               SizedBox(width: 4.w),
-                              Text(
-                                trip.destination,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white.withValues(alpha: 0.9),
+                              Expanded(
+                                child: Text(
+                                  trip.destination,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -385,15 +389,19 @@ class PlanningPage extends GetView<PlanningController> {
                                 color: Colors.white.withValues(alpha: 0.8),
                               ),
                               SizedBox(width: 4.w),
-                              Text(
-                                '$startDate - $endDate • ${trip.durationText}',
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: Colors.white.withValues(alpha: 0.8),
+                              Expanded(
+                                child: Text(
+                                  '$startDate - $endDate • ${trip.durationText}',
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const Spacer(),
                               if (trip.travelers.isNotEmpty) ...[
+                                SizedBox(width: 8.w),
                                 Icon(
                                   Icons.people_outline,
                                   size: 14.sp,

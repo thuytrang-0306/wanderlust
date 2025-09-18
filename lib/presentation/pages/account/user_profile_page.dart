@@ -187,19 +187,11 @@ class UserProfilePage extends GetView<UserProfileController> {
                       ],
                     ),
                     child: ClipOval(
-                      child: controller.userAvatar.value.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: controller.userAvatar.value,
+                      child: controller.hasAvatar
+                        ? Image.memory(
+                            controller.avatarBytes.value!,
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: AppColors.neutral200,
-                              child: Icon(
-                                Icons.person,
-                                size: 40.sp,
-                                color: AppColors.neutral500,
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
+                            errorBuilder: (context, error, stackTrace) => Container(
                               color: AppColors.neutral200,
                               child: Icon(
                                 Icons.person,
@@ -224,7 +216,7 @@ class UserProfilePage extends GetView<UserProfileController> {
                 
                 // Name
                 Obx(() => Text(
-                  controller.userName.value,
+                  controller.userName,
                   style: AppTypography.h3.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -235,7 +227,7 @@ class UserProfilePage extends GetView<UserProfileController> {
                 
                 // Email
                 Obx(() => Text(
-                  controller.userEmail.value,
+                  controller.userEmail,
                   style: AppTypography.bodyS.copyWith(
                     color: Colors.white.withOpacity(0.9),
                   ),
