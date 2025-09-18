@@ -63,11 +63,7 @@ class AppMap extends StatefulWidget {
     BorderRadius? borderRadius,
   }) {
     if (waypoints.isEmpty) {
-      return AppMap(
-        height: height,
-        borderRadius: borderRadius,
-        interactive: false,
-      );
+      return AppMap(height: height, borderRadius: borderRadius, interactive: false);
     }
 
     // Calculate center point
@@ -131,28 +127,28 @@ class _AppMapState extends State<AppMap> {
         initialZoom: widget.initialZoom,
         interactionOptions: InteractionOptions(
           enableMultiFingerGestureRace: true,
-          flags: widget.interactive
-              ? InteractiveFlag.all
-              : InteractiveFlag.none,
+          flags: widget.interactive ? InteractiveFlag.all : InteractiveFlag.none,
         ),
-        onTap: widget.interactive && widget.onTap != null
-            ? (tapPosition, latLng) {
-                setState(() {
-                  _selectedLocation = LocationPoint(
-                    id: 'selected',
-                    name: 'Selected Location',
-                    latitude: latLng.latitude,
-                    longitude: latLng.longitude,
-                  );
-                });
-                widget.onTap!(latLng);
-              }
-            : null,
+        onTap:
+            widget.interactive && widget.onTap != null
+                ? (tapPosition, latLng) {
+                  setState(() {
+                    _selectedLocation = LocationPoint(
+                      id: 'selected',
+                      name: 'Selected Location',
+                      latitude: latLng.latitude,
+                      longitude: latLng.longitude,
+                    );
+                  });
+                  widget.onTap!(latLng);
+                }
+                : null,
       ),
       children: [
         // Tile Layer - Using CartoDB Light with error handling
         TileLayer(
-          urlTemplate: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+          urlTemplate:
+              'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
           subdomains: const ['a', 'b', 'c', 'd'],
           userAgentPackageName: 'com.wanderlust.app',
           maxZoom: 19,
@@ -165,21 +161,18 @@ class _AppMapState extends State<AppMap> {
         // Draw routes if provided
         if (widget.routes != null && widget.routes!.isNotEmpty)
           PolylineLayer(
-            polylines: widget.routes!.map((route) {
-              return Polyline(
-                points: route
-                    .map((p) => LatLng(p.latitude, p.longitude))
-                    .toList(),
-                color: AppColors.primary.withValues(alpha: 0.8),
-                strokeWidth: 4.0,
-              );
-            }).toList(),
+            polylines:
+                widget.routes!.map((route) {
+                  return Polyline(
+                    points: route.map((p) => LatLng(p.latitude, p.longitude)).toList(),
+                    color: AppColors.primary.withValues(alpha: 0.8),
+                    strokeWidth: 4.0,
+                  );
+                }).toList(),
           ),
 
         // Marker Layer
-        MarkerLayer(
-          markers: _buildMarkers(),
-        ),
+        MarkerLayer(markers: _buildMarkers()),
 
         // Selected location marker
         if (_selectedLocation != null)
@@ -189,11 +182,7 @@ class _AppMapState extends State<AppMap> {
                 point: LatLng(_selectedLocation!.latitude, _selectedLocation!.longitude),
                 width: 50.w,
                 height: 50.w,
-                child: Icon(
-                  Icons.location_on,
-                  color: AppColors.error,
-                  size: 40.sp,
-                ),
+                child: Icon(Icons.location_on, color: AppColors.error, size: 40.sp),
               ),
             ],
           ),
@@ -204,13 +193,8 @@ class _AppMapState extends State<AppMap> {
     if (widget.height != null || widget.borderRadius != null) {
       return Container(
         height: widget.height,
-        decoration: BoxDecoration(
-          borderRadius: widget.borderRadius,
-        ),
-        child: ClipRRect(
-          borderRadius: widget.borderRadius ?? BorderRadius.zero,
-          child: mapWidget,
-        ),
+        decoration: BoxDecoration(borderRadius: widget.borderRadius),
+        child: ClipRRect(borderRadius: widget.borderRadius ?? BorderRadius.zero, child: mapWidget),
       );
     }
 
@@ -226,7 +210,7 @@ class _AppMapState extends State<AppMap> {
       // Calculate dynamic height based on whether name is shown
       final bool showName = location.name.isNotEmpty;
       final double markerHeight = showName ? 70.w : 50.w;
-      
+
       return Marker(
         point: LatLng(location.latitude, location.longitude),
         width: showName ? 80.w : 50.w,
@@ -255,11 +239,7 @@ class _AppMapState extends State<AppMap> {
                     ),
                   ],
                 ),
-                child: Icon(
-                  _getIconForType(location.type),
-                  color: Colors.white,
-                  size: 20.sp,
-                ),
+                child: Icon(_getIconForType(location.type), color: Colors.white, size: 20.sp),
               ),
               if (showName)
                 Positioned(
@@ -270,10 +250,7 @@ class _AppMapState extends State<AppMap> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(4.r),
                       boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                        ),
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4),
                       ],
                     ),
                     child: Text(
@@ -329,35 +306,20 @@ class AppMapLoading extends StatelessWidget {
   final double? height;
   final BorderRadius? borderRadius;
 
-  const AppMapLoading({
-    super.key,
-    this.height,
-    this.borderRadius,
-  });
+  const AppMapLoading({super.key, this.height, this.borderRadius});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: height ?? 200.h,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: borderRadius,
-      ),
+      decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: borderRadius),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
-              color: AppColors.primary,
-            ),
+            CircularProgressIndicator(color: AppColors.primary),
             SizedBox(height: 16.h),
-            Text(
-              'Loading map...',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.neutral600,
-              ),
-            ),
+            Text('Loading map...', style: TextStyle(fontSize: 14.sp, color: AppColors.neutral600)),
           ],
         ),
       ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
@@ -23,40 +22,18 @@ class DividerWithText extends StatelessWidget {
   });
 
   // Factory constructor for common "Or" divider
-  factory DividerWithText.or({
-    String? text,
-    Color? lineColor,
-    Color? textColor,
-  }) {
-    return DividerWithText(
-      text: text ?? 'Hoặc',
-      lineColor: lineColor,
-      textColor: textColor,
-    );
+  factory DividerWithText.or({String? text, Color? lineColor, Color? textColor}) {
+    return DividerWithText(text: text ?? 'Hoặc', lineColor: lineColor, textColor: textColor);
   }
 
   // Factory constructor for "Or login with" divider
-  factory DividerWithText.orLoginWith({
-    Color? lineColor,
-    Color? textColor,
-  }) {
-    return DividerWithText(
-      text: 'Hoặc đăng nhập với',
-      lineColor: lineColor,
-      textColor: textColor,
-    );
+  factory DividerWithText.orLoginWith({Color? lineColor, Color? textColor}) {
+    return DividerWithText(text: 'Hoặc đăng nhập với', lineColor: lineColor, textColor: textColor);
   }
 
   // Factory constructor for "Or register with" divider
-  factory DividerWithText.orRegisterWith({
-    Color? lineColor,
-    Color? textColor,
-  }) {
-    return DividerWithText(
-      text: 'Hoặc đăng ký với',
-      lineColor: lineColor,
-      textColor: textColor,
-    );
+  factory DividerWithText.orRegisterWith({Color? lineColor, Color? textColor}) {
+    return DividerWithText(text: 'Hoặc đăng ký với', lineColor: lineColor, textColor: textColor);
   }
 
   @override
@@ -64,31 +41,20 @@ class DividerWithText extends StatelessWidget {
     final dividerColor = lineColor ?? AppColors.neutral200;
     final dividerThickness = lineThickness ?? 1.0;
     final textPadding = padding ?? EdgeInsets.symmetric(horizontal: AppSpacing.s4);
-    
+
     return Row(
       children: [
-        Expanded(
-          child: Container(
-            height: dividerThickness,
-            color: dividerColor,
-          ),
-        ),
+        Expanded(child: Container(height: dividerThickness, color: dividerColor)),
         Padding(
           padding: textPadding,
           child: Text(
             text,
-            style: textStyle ??
-                AppTypography.bodyM.copyWith(
-                  color: textColor ?? AppColors.textSecondary,
-                ),
+            style:
+                textStyle ??
+                AppTypography.bodyM.copyWith(color: textColor ?? AppColors.textSecondary),
           ),
         ),
-        Expanded(
-          child: Container(
-            height: dividerThickness,
-            color: dividerColor,
-          ),
-        ),
+        Expanded(child: Container(height: dividerThickness, color: dividerColor)),
       ],
     );
   }
@@ -126,20 +92,18 @@ class CustomDivider extends StatelessWidget {
     if (child == null) {
       // Simple divider without text
       return Container(
-        margin: EdgeInsets.only(
-          left: indent ?? 0,
-          right: endIndent ?? 0,
-        ),
+        margin: EdgeInsets.only(left: indent ?? 0, right: endIndent ?? 0),
         padding: padding,
-        child: dashed
-            ? _buildDashedLine()
-            : Container(
-                height: lineThickness ?? 1,
-                decoration: BoxDecoration(
-                  color: lineGradient == null ? (lineColor ?? AppColors.neutral200) : null,
-                  gradient: lineGradient,
+        child:
+            dashed
+                ? _buildDashedLine()
+                : Container(
+                  height: lineThickness ?? 1,
+                  decoration: BoxDecoration(
+                    color: lineGradient == null ? (lineColor ?? AppColors.neutral200) : null,
+                    gradient: lineGradient,
+                  ),
                 ),
-              ),
       );
     }
 
@@ -150,30 +114,29 @@ class CustomDivider extends StatelessWidget {
         children: [
           if (indent != null) SizedBox(width: indent),
           Expanded(
-            child: dashed
-                ? _buildDashedLine()
-                : Container(
-                    height: lineThickness ?? 1,
-                    decoration: BoxDecoration(
-                      color: lineGradient == null ? (lineColor ?? AppColors.neutral200) : null,
-                      gradient: lineGradient,
+            child:
+                dashed
+                    ? _buildDashedLine()
+                    : Container(
+                      height: lineThickness ?? 1,
+                      decoration: BoxDecoration(
+                        color: lineGradient == null ? (lineColor ?? AppColors.neutral200) : null,
+                        gradient: lineGradient,
+                      ),
                     ),
-                  ),
           ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s3),
-            child: child!,
-          ),
+          Padding(padding: EdgeInsets.symmetric(horizontal: AppSpacing.s3), child: child!),
           Expanded(
-            child: dashed
-                ? _buildDashedLine()
-                : Container(
-                    height: lineThickness ?? 1,
-                    decoration: BoxDecoration(
-                      color: lineGradient == null ? (lineColor ?? AppColors.neutral200) : null,
-                      gradient: lineGradient,
+            child:
+                dashed
+                    ? _buildDashedLine()
+                    : Container(
+                      height: lineThickness ?? 1,
+                      decoration: BoxDecoration(
+                        color: lineGradient == null ? (lineColor ?? AppColors.neutral200) : null,
+                        gradient: lineGradient,
+                      ),
                     ),
-                  ),
           ),
           if (endIndent != null) SizedBox(width: endIndent),
         ],
@@ -187,19 +150,17 @@ class CustomDivider extends StatelessWidget {
         final boxWidth = constraints.constrainWidth();
         final dashCount = (boxWidth / (dashWidth + dashSpace)).floor();
         return Flex(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          direction: Axis.horizontal,
           children: List.generate(dashCount, (_) {
             return SizedBox(
               width: dashWidth,
               height: lineThickness ?? 1,
               child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: lineColor ?? AppColors.neutral200,
-                ),
+                decoration: BoxDecoration(color: lineColor ?? AppColors.neutral200),
               ),
             );
           }),
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          direction: Axis.horizontal,
         );
       },
     );

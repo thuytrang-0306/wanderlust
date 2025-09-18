@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
-import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/widgets/app_map.dart';
 import 'package:wanderlust/data/models/location_point.dart';
 import 'package:wanderlust/presentation/controllers/combo/combo_detail_controller.dart';
@@ -14,7 +13,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
   @override
   Widget build(BuildContext context) {
     Get.lazyPut(() => ComboDetailController());
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -23,7 +22,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
             slivers: [
               // Header image with app bar
               _buildSliverAppBar(),
-              
+
               // Content
               SliverToBoxAdapter(
                 child: Column(
@@ -31,22 +30,22 @@ class ComboDetailPage extends GetView<ComboDetailController> {
                   children: [
                     // Tour title and info
                     _buildTourInfo(),
-                    
+
                     // Tour description
                     _buildTourDescription(),
-                    
+
                     // Creator info
                     _buildCreatorInfo(),
-                    
+
                     // Itinerary header
                     _buildItineraryHeader(),
-                    
+
                     // Map
                     _buildMap(),
-                    
+
                     // Daily schedule
                     _buildDailySchedule(),
-                    
+
                     // Bottom spacing
                     SizedBox(height: 100.h),
                   ],
@@ -54,14 +53,14 @@ class ComboDetailPage extends GetView<ComboDetailController> {
               ),
             ],
           ),
-          
+
           // Bottom button
           _buildBottomButton(),
         ],
       ),
     );
   }
-  
+
   Widget _buildSliverAppBar() {
     return SliverAppBar(
       expandedHeight: 300.h,
@@ -76,11 +75,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
             color: Colors.white.withValues(alpha: 0.9),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            Icons.chevron_left,
-            color: AppColors.primary,
-            size: 28.sp,
-          ),
+          child: Icon(Icons.chevron_left, color: AppColors.primary, size: 28.sp),
         ),
       ),
       actions: [
@@ -93,33 +88,32 @@ class ComboDetailPage extends GetView<ComboDetailController> {
               color: Colors.white.withValues(alpha: 0.9),
               shape: BoxShape.circle,
             ),
-            child: Obx(() => Icon(
-              controller.isBookmarked.value
-                ? Icons.bookmark
-                : Icons.bookmark_border,
-              color: AppColors.primary,
-              size: 24.sp,
-            )),
+            child: Obx(
+              () => Icon(
+                controller.isBookmarked.value ? Icons.bookmark : Icons.bookmark_border,
+                color: AppColors.primary,
+                size: 24.sp,
+              ),
+            ),
           ),
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: CachedNetworkImage(
-          imageUrl: controller.comboData['image'] ?? 'https://images.unsplash.com/photo-1559628233-100c798642d4?w=800',
+          imageUrl:
+              controller.comboData['image'] ??
+              'https://images.unsplash.com/photo-1559628233-100c798642d4?w=800',
           fit: BoxFit.cover,
-          errorWidget: (context, url, error) => Container(
-            color: AppColors.neutral100,
-            child: Icon(
-              Icons.image,
-              size: 50.sp,
-              color: AppColors.neutral400,
-            ),
-          ),
+          errorWidget:
+              (context, url, error) => Container(
+                color: AppColors.neutral100,
+                child: Icon(Icons.image, size: 50.sp, color: AppColors.neutral400),
+              ),
         ),
       ),
     );
   }
-  
+
   Widget _buildTourInfo() {
     return Padding(
       padding: EdgeInsets.all(20.w),
@@ -129,25 +123,14 @@ class ComboDetailPage extends GetView<ComboDetailController> {
           // Location and rating
           Row(
             children: [
-              Icon(
-                Icons.location_on_outlined,
-                size: 18.sp,
-                color: AppColors.neutral500,
-              ),
+              Icon(Icons.location_on_outlined, size: 18.sp, color: AppColors.neutral500),
               SizedBox(width: 4.w),
               Text(
                 controller.comboData['location'] ?? 'Nha Trang, Khánh Hòa',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppColors.neutral600,
-                ),
+                style: TextStyle(fontSize: 14.sp, color: AppColors.neutral600),
               ),
               SizedBox(width: 12.w),
-              Icon(
-                Icons.star,
-                size: 18.sp,
-                color: Colors.amber,
-              ),
+              Icon(Icons.star, size: 18.sp, color: Colors.amber),
               SizedBox(width: 4.w),
               Text(
                 controller.comboData['rating'] ?? '4.8',
@@ -159,9 +142,9 @@ class ComboDetailPage extends GetView<ComboDetailController> {
               ),
             ],
           ),
-          
+
           SizedBox(height: 12.h),
-          
+
           // Tour title
           Text(
             controller.comboData['title'] ?? 'Tour Nha Trang - Chuyên đi chữa lành cảm xúc',
@@ -176,7 +159,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
       ),
     );
   }
-  
+
   Widget _buildTourDescription() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -192,14 +175,12 @@ class ComboDetailPage extends GetView<ComboDetailController> {
             ),
           ),
           SizedBox(height: 8.h),
-          Obx(() => Text(
-            'Mô tả chi tiết đang được cập nhật. Hãy khám phá combo du lịch tuyệt vời này. ${controller.showFullDescription.value ? "Combo này bao gồm nhiều hoạt động thú vị và trải nghiệm đáng nhớ, được thiết kế dành cho những người yêu thích khám phá và tham gia các hoạt động nước ngoài." : ""}',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.neutral600,
-              height: 1.5,
+          Obx(
+            () => Text(
+              'Mô tả chi tiết đang được cập nhật. Hãy khám phá combo du lịch tuyệt vời này. ${controller.showFullDescription.value ? "Combo này bao gồm nhiều hoạt động thú vị và trải nghiệm đáng nhớ, được thiết kế dành cho những người yêu thích khám phá và tham gia các hoạt động nước ngoài." : ""}',
+              style: TextStyle(fontSize: 14.sp, color: AppColors.neutral600, height: 1.5),
             ),
-          )),
+          ),
           GestureDetector(
             onTap: controller.toggleDescription,
             child: Padding(
@@ -215,20 +196,17 @@ class ComboDetailPage extends GetView<ComboDetailController> {
             ),
           ),
           SizedBox(height: 8.h),
-          
+
           // Trip info
           Text(
             'Cập nhật cuối: 9/1/2024',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: AppColors.neutral500,
-            ),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.neutral500),
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildCreatorInfo() {
     return Container(
       margin: EdgeInsets.all(20.w),
@@ -246,15 +224,13 @@ class ComboDetailPage extends GetView<ComboDetailController> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               image: DecorationImage(
-                image: CachedNetworkImageProvider(
-                  'https://i.pravatar.cc/150?img=6',
-                ),
+                image: CachedNetworkImageProvider('https://i.pravatar.cc/150?img=6'),
                 fit: BoxFit.cover,
               ),
             ),
           ),
           SizedBox(width: 12.w),
-          
+
           // Info
           Expanded(
             child: Column(
@@ -262,10 +238,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
               children: [
                 Text(
                   'Được tạo bởi',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.neutral500,
-                  ),
+                  style: TextStyle(fontSize: 12.sp, color: AppColors.neutral500),
                 ),
                 SizedBox(height: 2.h),
                 Text(
@@ -279,55 +252,39 @@ class ComboDetailPage extends GetView<ComboDetailController> {
               ],
             ),
           ),
-          
+
           // Duration
           Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 12.w,
-              vertical: 6.h,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20.r),
             ),
             child: Text(
               '2 giờ trước',
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: AppColors.neutral600,
-              ),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.neutral600),
             ),
           ),
-          
+
           SizedBox(width: 12.w),
-          
+
           // Location
-          Text(
-            'Nha Trang',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.neutral600,
-            ),
-          ),
+          Text('Nha Trang', style: TextStyle(fontSize: 14.sp, color: AppColors.neutral600)),
         ],
       ),
     );
   }
-  
+
   Widget _buildItineraryHeader() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: Text(
         'Lịch trình',
-        style: TextStyle(
-          fontSize: 18.sp,
-          fontWeight: FontWeight.w600,
-          color: AppColors.neutral900,
-        ),
+        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: AppColors.neutral900),
       ),
     );
   }
-  
+
   Widget _buildMap() {
     // Sample waypoints for tour route (TP.HCM -> Nha Trang)
     final waypoints = [
@@ -365,7 +322,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
             height: 200.h,
             borderRadius: BorderRadius.circular(12.r),
           ),
-          
+
           // Navigation button
           Positioned(
             bottom: 12.h,
@@ -383,18 +340,14 @@ class ComboDetailPage extends GetView<ComboDetailController> {
                   ),
                 ],
               ),
-              child: Icon(
-                Icons.navigation,
-                color: Colors.white,
-                size: 20.sp,
-              ),
+              child: Icon(Icons.navigation, color: Colors.white, size: 20.sp),
             ),
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildDailySchedule() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,50 +360,53 @@ class ComboDetailPage extends GetView<ComboDetailController> {
             scrollDirection: Axis.horizontal,
             itemCount: 2,
             itemBuilder: (context, index) {
-              return Obx(() => GestureDetector(
-                onTap: () => controller.selectDay(index + 1),
-                child: Container(
-                  margin: EdgeInsets.only(right: 12.w),
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  decoration: BoxDecoration(
-                    color: controller.selectedDay.value == index + 1
-                      ? AppColors.primary
-                      : Colors.white,
-                    borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(
-                      color: controller.selectedDay.value == index + 1
-                        ? AppColors.primary
-                        : AppColors.neutral200,
+              return Obx(
+                () => GestureDetector(
+                  onTap: () => controller.selectDay(index + 1),
+                  child: Container(
+                    margin: EdgeInsets.only(right: 12.w),
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    decoration: BoxDecoration(
+                      color:
+                          controller.selectedDay.value == index + 1
+                              ? AppColors.primary
+                              : Colors.white,
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(
+                        color:
+                            controller.selectedDay.value == index + 1
+                                ? AppColors.primary
+                                : AppColors.neutral200,
+                      ),
                     ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Ngày ${index + 1}',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: controller.selectedDay.value == index + 1
-                          ? Colors.white
-                          : AppColors.neutral700,
+                    child: Center(
+                      child: Text(
+                        'Ngày ${index + 1}',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              controller.selectedDay.value == index + 1
+                                  ? Colors.white
+                                  : AppColors.neutral700,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ));
+              );
             },
           ),
         ),
-        
+
         SizedBox(height: 20.h),
-        
+
         // Day content
-        Obx(() => controller.selectedDay.value == 1
-          ? _buildDay1Content()
-          : _buildDay2Content()),
+        Obx(() => controller.selectedDay.value == 1 ? _buildDay1Content() : _buildDay2Content()),
       ],
     );
   }
-  
+
   Widget _buildDay1Content() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -466,9 +422,9 @@ class ComboDetailPage extends GetView<ComboDetailController> {
               color: AppColors.neutral900,
             ),
           ),
-          
+
           SizedBox(height: 16.h),
-          
+
           // Flight info
           Container(
             padding: EdgeInsets.all(16.w),
@@ -480,11 +436,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      Icons.flight_takeoff,
-                      size: 20.sp,
-                      color: AppColors.primary,
-                    ),
+                    Icon(Icons.flight_takeoff, size: 20.sp, color: AppColors.primary),
                     SizedBox(width: 8.w),
                     Text(
                       'Vietnam Airlines, TP. Hồ Chí Minh',
@@ -497,66 +449,44 @@ class ComboDetailPage extends GetView<ComboDetailController> {
                   ],
                 ),
                 SizedBox(height: 12.h),
-                
+
                 // Time and price
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       '• 05:00 - 06:00: Di chuyển từ TP.HCM đến Nha Trang',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: AppColors.neutral700,
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 13.sp, color: AppColors.neutral700, height: 1.5),
                     ),
                     SizedBox(height: 4.h),
                     Text(
                       '• Vé khách: Giá vé 250.000 - 350.000 VND (Phương Trang, Thành Bưởi)',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: AppColors.neutral700,
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 13.sp, color: AppColors.neutral700, height: 1.5),
                     ),
                     SizedBox(height: 4.h),
                     Text(
                       '• Máy bay: Vé khứ hồi khoảng 1.500.000 - 2.500.000 VND (Vietnam Airlines, Bamboo Airways, Vietjet Air)',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: AppColors.neutral700,
-                        height: 1.5,
-                      ),
+                      style: TextStyle(fontSize: 13.sp, color: AppColors.neutral700, height: 1.5),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          
+
           SizedBox(height: 16.h),
-          
+
           // Places to visit
-          _buildPlaceCard(
-            'Xuất phát',
-            'TP. Hồ Chí Minh',
-            '6:00 - 8:00',
-            Icons.location_city,
-          ),
-          
+          _buildPlaceCard('Xuất phát', 'TP. Hồ Chí Minh', '6:00 - 8:00', Icons.location_city),
+
           SizedBox(height: 12.h),
-          
-          _buildPlaceCard(
-            'Trạm 1',
-            'Nhận phòng',
-            '7:30 - 10:00',
-            Icons.hotel,
-          ),
+
+          _buildPlaceCard('Trạm 1', 'Nhận phòng', '7:30 - 10:00', Icons.hotel),
         ],
       ),
     );
   }
-  
+
   Widget _buildDay2Content() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -572,9 +502,9 @@ class ComboDetailPage extends GetView<ComboDetailController> {
               color: AppColors.neutral900,
             ),
           ),
-          
+
           SizedBox(height: 16.h),
-          
+
           // Places
           _buildPlaceCard(
             'Buổi sáng',
@@ -582,38 +512,31 @@ class ComboDetailPage extends GetView<ComboDetailController> {
             '8:00 - 10:00',
             Icons.temple_buddhist,
           ),
-          
+
           SizedBox(height: 12.h),
-          
+
           _buildPlaceCard(
             'Buổi trưa',
             'Tham quan Tháp Bà Ponagar',
             '10:30 - 12:00',
             Icons.account_balance,
           ),
-          
+
           SizedBox(height: 12.h),
-          
-          _buildPlaceCard(
-            'Buổi chiều',
-            'Vịnh Nha Trang',
-            '14:00 - 17:00',
-            Icons.beach_access,
-          ),
+
+          _buildPlaceCard('Buổi chiều', 'Vịnh Nha Trang', '14:00 - 17:00', Icons.beach_access),
         ],
       ),
     );
   }
-  
+
   Widget _buildPlaceCard(String label, String place, String time, IconData icon) {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: AppColors.neutral100,
-        ),
+        border: Border.all(color: AppColors.neutral100),
       ),
       child: Row(
         children: [
@@ -625,26 +548,16 @@ class ComboDetailPage extends GetView<ComboDetailController> {
               color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              size: 20.sp,
-              color: AppColors.primary,
-            ),
+            child: Icon(icon, size: 20.sp, color: AppColors.primary),
           ),
           SizedBox(width: 12.w),
-          
+
           // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.neutral500,
-                  ),
-                ),
+                Text(label, style: TextStyle(fontSize: 12.sp, color: AppColors.neutral500)),
                 SizedBox(height: 2.h),
                 Text(
                   place,
@@ -657,20 +570,14 @@ class ComboDetailPage extends GetView<ComboDetailController> {
               ],
             ),
           ),
-          
+
           // Time
-          Text(
-            time,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: AppColors.neutral600,
-            ),
-          ),
+          Text(time, style: TextStyle(fontSize: 13.sp, color: AppColors.neutral600)),
         ],
       ),
     );
   }
-  
+
   Widget _buildBottomButton() {
     return Positioned(
       bottom: 0,
@@ -697,10 +604,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
               padding: EdgeInsets.symmetric(vertical: 16.h),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFFB794F4),
-                    AppColors.primary,
-                  ],
+                  colors: [const Color(0xFFB794F4), AppColors.primary],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),

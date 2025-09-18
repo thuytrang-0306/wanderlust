@@ -68,9 +68,7 @@ class UserModel {
       totalFollowing: json['totalFollowing'] ?? 0,
       language: json['language'] ?? 'vi',
       currency: json['currency'] ?? 'VND',
-      notificationSettings: NotificationSettings.fromJson(
-        json['notificationSettings'] ?? {},
-      ),
+      notificationSettings: NotificationSettings.fromJson(json['notificationSettings'] ?? {}),
       createdAt: json['createdAt']?.toDate(),
       updatedAt: json['updatedAt']?.toDate(),
       lastActive: json['lastActive']?.toDate(),
@@ -171,11 +169,6 @@ class NotificationSettings {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'push': push,
-      'email': email,
-      'sms': sms,
-      'marketing': marketing,
-    };
+    return {'push': push, 'email': email, 'sms': sms, 'marketing': marketing};
   }
 }

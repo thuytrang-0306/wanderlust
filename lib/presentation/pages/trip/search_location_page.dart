@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
-import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/presentation/controllers/trip/search_location_controller.dart';
 
 class SearchLocationPage extends StatelessWidget {
@@ -12,18 +11,14 @@ class SearchLocationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(SearchLocationController());
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.chevron_left,
-            color: AppColors.primary,
-            size: 32.sp,
-          ),
+          icon: Icon(Icons.chevron_left, color: AppColors.primary, size: 32.sp),
           onPressed: () => Get.back(),
         ),
         centerTitle: true,
@@ -41,7 +36,7 @@ class SearchLocationPage extends StatelessWidget {
         children: [
           // Search bar
           _buildSearchBar(controller),
-          
+
           // Content
           Expanded(
             child: SingleChildScrollView(
@@ -50,13 +45,13 @@ class SearchLocationPage extends StatelessWidget {
                 children: [
                   // Popular tags section
                   _buildTagsSection(controller),
-                  
+
                   // Saved destinations section
                   _buildSavedSection(controller),
-                  
-                  // Suggestions section  
+
+                  // Suggestions section
                   _buildSuggestionsSection(controller),
-                  
+
                   SizedBox(height: 20.h),
                 ],
               ),
@@ -66,7 +61,7 @@ class SearchLocationPage extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildSearchBar(SearchLocationController controller) {
     return Padding(
       padding: EdgeInsets.all(16.w),
@@ -79,32 +74,19 @@ class SearchLocationPage extends StatelessWidget {
         child: TextField(
           controller: controller.searchController,
           onChanged: controller.onSearchChanged,
-          style: TextStyle(
-            fontSize: 16.sp,
-            color: AppColors.textPrimary,
-          ),
+          style: TextStyle(fontSize: 16.sp, color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: 'Tìm kiếm theo địa điểm',
-            hintStyle: TextStyle(
-              fontSize: 16.sp,
-              color: const Color(0xFF9CA3AF),
-            ),
-            prefixIcon: Icon(
-              Icons.search,
-              color: const Color(0xFF9CA3AF),
-              size: 20.sp,
-            ),
+            hintStyle: TextStyle(fontSize: 16.sp, color: const Color(0xFF9CA3AF)),
+            prefixIcon: Icon(Icons.search, color: const Color(0xFF9CA3AF), size: 20.sp),
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 14.h,
-            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
           ),
         ),
       ),
     );
   }
-  
+
   Widget _buildTagsSection(SearchLocationController controller) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -127,17 +109,14 @@ class SearchLocationPage extends StatelessWidget {
                 onPressed: () {},
                 child: Text(
                   'Xem thêm',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: AppColors.primary,
-                  ),
+                  style: TextStyle(fontSize: 14.sp, color: AppColors.primary),
                 ),
               ),
             ],
           ),
-          
+
           SizedBox(height: 12.h),
-          
+
           // Tag chips
           Wrap(
             spacing: 8.w,
@@ -152,41 +131,29 @@ class SearchLocationPage extends StatelessWidget {
               _buildTagChip('QuangNinh'),
             ],
           ),
-          
+
           SizedBox(height: 24.h),
         ],
       ),
     );
   }
-  
+
   Widget _buildTagChip(String label) {
     return InkWell(
       onTap: () {},
       borderRadius: BorderRadius.circular(20.r),
       child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: 16.w,
-          vertical: 8.h,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20.r),
-          border: Border.all(
-            color: AppColors.primary.withOpacity(0.3),
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: AppColors.primary,
-          ),
-        ),
+        child: Text(label, style: TextStyle(fontSize: 14.sp, color: AppColors.primary)),
       ),
     );
   }
-  
+
   Widget _buildSavedSection(SearchLocationController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,17 +172,13 @@ class SearchLocationPage extends StatelessWidget {
                   color: AppColors.textPrimary,
                 ),
               ),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16.sp,
-                color: AppColors.textSecondary,
-              ),
+              Icon(Icons.arrow_forward_ios, size: 16.sp, color: AppColors.textSecondary),
             ],
           ),
         ),
-        
+
         SizedBox(height: 16.h),
-        
+
         // Horizontal scroll list
         SizedBox(
           height: 240.h,
@@ -230,20 +193,21 @@ class SearchLocationPage extends StatelessWidget {
                 price: index == 0 ? '550.000' : '400.000',
                 rating: 4.9,
                 duration: '4N/5D',
-                imageUrl: index == 0
-                  ? 'https://images.unsplash.com/photo-1528127269322-539801943592?w=400'
-                  : 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400',
+                imageUrl:
+                    index == 0
+                        ? 'https://images.unsplash.com/photo-1528127269322-539801943592?w=400'
+                        : 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400',
                 isHorizontal: true,
               );
             },
           ),
         ),
-        
+
         SizedBox(height: 24.h),
       ],
     );
   }
-  
+
   Widget _buildSuggestionsSection(SearchLocationController controller) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -266,17 +230,14 @@ class SearchLocationPage extends StatelessWidget {
                 onPressed: () {},
                 child: Text(
                   'Xem thêm',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: AppColors.primary,
-                  ),
+                  style: TextStyle(fontSize: 14.sp, color: AppColors.primary),
                 ),
               ),
             ],
           ),
-          
+
           SizedBox(height: 16.h),
-          
+
           // Grid view
           GridView.builder(
             shrinkWrap: true,
@@ -296,9 +257,10 @@ class SearchLocationPage extends StatelessWidget {
                 price: isVinh ? '550.000' : '400.000',
                 rating: 4.9,
                 duration: '4N/5D',
-                imageUrl: isVinh
-                  ? 'https://images.unsplash.com/photo-1528127269322-539801943592?w=400'
-                  : 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400',
+                imageUrl:
+                    isVinh
+                        ? 'https://images.unsplash.com/photo-1528127269322-539801943592?w=400'
+                        : 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400',
                 isHorizontal: false,
               );
             },
@@ -307,7 +269,7 @@ class SearchLocationPage extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildDestinationCard({
     required String title,
     required String location,
@@ -318,14 +280,10 @@ class SearchLocationPage extends StatelessWidget {
     required bool isHorizontal,
   }) {
     final width = isHorizontal ? 160.w : double.infinity;
-    
+
     return GestureDetector(
       onTap: () {
-        Get.back(result: {
-          'title': title,
-          'location': location,
-          'price': price,
-        });
+        Get.back(result: {'title': title, 'location': location, 'price': price});
       },
       child: Container(
         width: width,
@@ -350,9 +308,7 @@ class SearchLocationPage extends StatelessWidget {
                 Container(
                   height: isHorizontal ? 140.h : 120.h,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(12.r),
-                    ),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
                     image: DecorationImage(
                       image: CachedNetworkImageProvider(imageUrl),
                       fit: BoxFit.cover,
@@ -364,10 +320,7 @@ class SearchLocationPage extends StatelessWidget {
                   top: 8.h,
                   left: 8.w,
                   child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 4.h,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF812C),
                       borderRadius: BorderRadius.circular(4.r),
@@ -384,7 +337,7 @@ class SearchLocationPage extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             // Content
             Padding(
               padding: EdgeInsets.all(12.w),
@@ -413,35 +366,21 @@ class SearchLocationPage extends StatelessWidget {
                   SizedBox(height: 4.h),
                   Row(
                     children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 12.sp,
-                        color: AppColors.textTertiary,
-                      ),
+                      Icon(Icons.location_on_outlined, size: 12.sp, color: AppColors.textTertiary),
                       SizedBox(width: 2.w),
                       Expanded(
                         child: Text(
                           location,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColors.textTertiary,
-                          ),
+                          style: TextStyle(fontSize: 12.sp, color: AppColors.textTertiary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Icon(
-                        Icons.star,
-                        size: 12.sp,
-                        color: const Color(0xFFFBBF24),
-                      ),
+                      Icon(Icons.star, size: 12.sp, color: const Color(0xFFFBBF24)),
                       SizedBox(width: 2.w),
                       Text(
                         rating.toString(),
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textSecondary,
-                        ),
+                        style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
                       ),
                     ],
                   ),

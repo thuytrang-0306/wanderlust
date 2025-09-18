@@ -6,17 +6,17 @@ import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_assets.dart';
 
 enum LogoSize {
-  small,   // 60w
-  medium,  // 80w
-  large,   // 100w
-  xlarge,  // 120w
+  small, // 60w
+  medium, // 80w
+  large, // 100w
+  xlarge, // 120w
 }
 
 enum LogoStyle {
-  vertical,   // Logo on top, name below
+  vertical, // Logo on top, name below
   horizontal, // Logo and name side by side
-  logoOnly,   // Just the logo
-  nameOnly,   // Just the app name
+  logoOnly, // Just the logo
+  nameOnly, // Just the app name
 }
 
 class AppLogo extends StatelessWidget {
@@ -37,32 +37,19 @@ class AppLogo extends StatelessWidget {
 
   // Factory constructors for common use cases
   factory AppLogo.splash() {
-    return const AppLogo(
-      size: LogoSize.xlarge,
-      style: LogoStyle.vertical,
-      showTagline: true,
-    );
+    return const AppLogo(size: LogoSize.xlarge, style: LogoStyle.vertical, showTagline: true);
   }
 
   factory AppLogo.auth() {
-    return const AppLogo(
-      size: LogoSize.medium,
-      style: LogoStyle.vertical,
-    );
+    return const AppLogo(size: LogoSize.medium, style: LogoStyle.vertical);
   }
 
   factory AppLogo.compact() {
-    return const AppLogo(
-      size: LogoSize.small,
-      style: LogoStyle.horizontal,
-    );
+    return const AppLogo(size: LogoSize.small, style: LogoStyle.horizontal);
   }
 
   factory AppLogo.header() {
-    return const AppLogo(
-      size: LogoSize.small,
-      style: LogoStyle.horizontal,
-    );
+    return const AppLogo(size: LogoSize.small, style: LogoStyle.horizontal);
   }
 
   @override
@@ -104,11 +91,7 @@ class AppLogo extends StatelessWidget {
             gradient: AppColors.primaryGradient,
             borderRadius: BorderRadius.circular(logoSize * 0.25),
           ),
-          child: Icon(
-            Icons.location_on_rounded,
-            color: AppColors.white,
-            size: logoSize * 0.6,
-          ),
+          child: Icon(Icons.location_on_rounded, color: AppColors.white, size: logoSize * 0.6),
         );
       },
     );
@@ -128,10 +111,7 @@ class AppLogo extends StatelessWidget {
     if (showTagline && (tagline != null || style == LogoStyle.vertical)) {
       taglineWidget = Text(
         tagline ?? 'Khám phá thế giới theo cách của bạn',
-        style: AppTypography.bodyS.copyWith(
-          color: AppColors.textSecondary,
-          fontSize: 14.sp,
-        ),
+        style: AppTypography.bodyS.copyWith(color: AppColors.textSecondary, fontSize: 14.sp),
         textAlign: TextAlign.center,
       );
     }
@@ -145,13 +125,10 @@ class AppLogo extends StatelessWidget {
             logoWidget,
             SizedBox(height: size == LogoSize.small ? AppSpacing.s2 : AppSpacing.s3),
             nameWidget,
-            if (taglineWidget != null) ...[
-              SizedBox(height: AppSpacing.s2),
-              taglineWidget,
-            ],
+            if (taglineWidget != null) ...[SizedBox(height: AppSpacing.s2), taglineWidget],
           ],
         );
-      
+
       case LogoStyle.horizontal:
         return Row(
           mainAxisSize: MainAxisSize.min,
@@ -161,26 +138,20 @@ class AppLogo extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                nameWidget,
-                if (taglineWidget != null) taglineWidget,
-              ],
+              children: [nameWidget, if (taglineWidget != null) taglineWidget],
             ),
           ],
         );
-      
+
       case LogoStyle.logoOnly:
         return logoWidget;
-      
+
       case LogoStyle.nameOnly:
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             nameWidget,
-            if (taglineWidget != null) ...[
-              SizedBox(height: AppSpacing.s1),
-              taglineWidget,
-            ],
+            if (taglineWidget != null) ...[SizedBox(height: AppSpacing.s1), taglineWidget],
           ],
         );
     }

@@ -20,7 +20,7 @@ class BaseView<T extends BaseController> extends StatelessWidget {
   final Widget? endDrawer;
   final bool resizeToAvoidBottomInset;
   final bool extendBodyBehindAppBar;
-  
+
   const BaseView({
     super.key,
     required this.builder,
@@ -38,17 +38,17 @@ class BaseView<T extends BaseController> extends StatelessWidget {
     this.resizeToAvoidBottomInset = true,
     this.extendBodyBehindAppBar = false,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<T>(
       builder: (controller) {
         Widget body = _buildBody(controller);
-        
+
         if (safeArea && !extendBodyBehindAppBar) {
           body = SafeArea(child: body);
         }
-        
+
         return Scaffold(
           backgroundColor: backgroundColor,
           appBar: showAppBar ? appBar : null,
@@ -63,7 +63,7 @@ class BaseView<T extends BaseController> extends StatelessWidget {
       },
     );
   }
-  
+
   Widget _buildBody(T controller) {
     return Obx(() {
       // Handle refresh indicator if refreshing
@@ -73,37 +73,34 @@ class BaseView<T extends BaseController> extends StatelessWidget {
           child: _buildContent(controller),
         );
       }
-      
+
       return _buildContent(controller);
     });
   }
-  
+
   Widget _buildContent(T controller) {
     // Loading state
     if (controller.isLoading) {
       return loadingWidget ?? const LoadingWidget();
     }
-    
+
     // Error state
     if (controller.isError) {
-      return errorWidget ?? 
-        ErrorStateWidget(
-          error: controller.errorMessage,
-          onRetry: controller.loadData,
-        );
+      return errorWidget ??
+          ErrorStateWidget(error: controller.errorMessage, onRetry: controller.loadData);
     }
-    
+
     // Empty state
     if (controller.isEmpty) {
-      return emptyWidget ?? 
-        EmptyStateWidget(
-          title: 'No Data',
-          subtitle: 'No data available at the moment',
-          buttonText: 'Refresh',
-          onButtonPressed: controller.loadData,
-        );
+      return emptyWidget ??
+          EmptyStateWidget(
+            title: 'No Data',
+            subtitle: 'No data available at the moment',
+            buttonText: 'Refresh',
+            onButtonPressed: controller.loadData,
+          );
     }
-    
+
     // Success/Idle state - show actual content
     return builder(controller);
   }
@@ -116,7 +113,7 @@ class SimpleBaseView<T extends BaseController> extends StatelessWidget {
   final List<Widget>? actions;
   final FloatingActionButton? floatingActionButton;
   final Widget? bottomNavigationBar;
-  
+
   const SimpleBaseView({
     super.key,
     required this.builder,
@@ -125,16 +122,11 @@ class SimpleBaseView<T extends BaseController> extends StatelessWidget {
     this.floatingActionButton,
     this.bottomNavigationBar,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return BaseView<T>(
-      appBar: title != null
-          ? AppBar(
-              title: Text(title!),
-              actions: actions,
-            )
-          : null,
+      appBar: title != null ? AppBar(title: Text(title!), actions: actions) : null,
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: bottomNavigationBar,
       builder: builder,
@@ -149,7 +141,7 @@ class CustomStateBaseView<T extends BaseController> extends StatelessWidget {
   final Widget Function(T controller, String error)? errorBuilder;
   final Widget Function(T controller)? emptyBuilder;
   final PreferredSizeWidget? appBar;
-  
+
   const CustomStateBaseView({
     super.key,
     required this.builder,
@@ -158,7 +150,7 @@ class CustomStateBaseView<T extends BaseController> extends StatelessWidget {
     this.emptyBuilder,
     this.appBar,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<T>(
@@ -171,22 +163,19 @@ class CustomStateBaseView<T extends BaseController> extends StatelessWidget {
             } else if (controller.isLoading) {
               return const LoadingWidget();
             }
-            
+
             if (controller.isError && errorBuilder != null) {
               return errorBuilder!(controller, controller.errorMessage);
             } else if (controller.isError) {
-              return ErrorStateWidget(
-                error: controller.errorMessage,
-                onRetry: controller.loadData,
-              );
+              return ErrorStateWidget(error: controller.errorMessage, onRetry: controller.loadData);
             }
-            
+
             if (controller.isEmpty && emptyBuilder != null) {
               return emptyBuilder!(controller);
             } else if (controller.isEmpty) {
               return EmptyStates.noData(onRetry: controller.loadData);
             }
-            
+
             return builder(controller);
           }),
         );

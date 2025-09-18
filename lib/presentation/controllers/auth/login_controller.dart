@@ -11,46 +11,40 @@ import 'package:wanderlust/app/routes/app_pages.dart';
 class LoginController extends BaseController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   // Form controllers
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  
+
   // Form key for validation
   final formKey = GlobalKey<FormState>();
-  
+
   // Password visibility
   final RxBool isPasswordVisible = false.obs;
-  
+
   // Remember me
   final RxBool isRememberMe = false.obs;
-  
+
   // Loading state for social login
   final RxBool isSocialLoading = false.obs;
-  
-  @override
-  void onInit() {
-    super.onInit();
-    // Don't pre-fill email - better UX
-  }
-  
+
   @override
   void onClose() {
     emailController.dispose();
     passwordController.dispose();
     super.onClose();
   }
-  
+
   // Toggle password visibility
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
-  
+
   // Toggle remember me
   void toggleRememberMe() {
     isRememberMe.value = !isRememberMe.value;
   }
-  
+
   // Validate email
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
@@ -61,7 +55,7 @@ class LoginController extends BaseController {
     }
     return null;
   }
-  
+
   // Validate password
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
@@ -72,29 +66,29 @@ class LoginController extends BaseController {
     }
     return null;
   }
-  
+
   // Login with email and password
   Future<void> login() async {
     if (!formKey.currentState!.validate()) {
       return;
     }
-    
+
     setLoading();
-    
+
     try {
       // Sign in with email and password
       final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
-      
+
       LoggerService.i('User logged in successfully: ${userCredential.user?.email}');
-      
+
       // Check if email is verified
       if (userCredential.user != null && !userCredential.user!.emailVerified) {
         // Navigate to email verification screen
         Get.offNamed(Routes.VERIFY_EMAIL);
-        
+
         AppSnackbar.showWarning(
           message: 'Vui lòng xác thực email của bạn',
           title: 'Xác thực email',
@@ -102,15 +96,12 @@ class LoginController extends BaseController {
       } else {
         // Navigate to main screen
         Get.offAllNamed(Routes.MAIN_NAVIGATION);
-        
-        AppSnackbar.showSuccess(
-          message: 'Chào mừng bạn trở lại!',
-        );
+
+        AppSnackbar.showSuccess(message: 'Chào mừng bạn trở lại!');
       }
-      
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Đã xảy ra lỗi';
-      
+
       switch (e.code) {
         case 'user-not-found':
           errorMessage = 'Không tìm thấy tài khoản với email này';
@@ -130,12 +121,9 @@ class LoginController extends BaseController {
         default:
           errorMessage = e.message ?? 'Đã xảy ra lỗi';
       }
-      
+
       setError(errorMessage);
-      AppSnackbar.showError(
-        message: errorMessage,
-      );
-      
+      AppSnackbar.showError(message: errorMessage);
     } catch (e) {
       LoggerService.e('Login error: $e');
       setError('Đã xảy ra lỗi không xác định');
@@ -143,86 +131,79 @@ class LoginController extends BaseController {
       setIdle();
     }
   }
-  
+
   // Sign in with Google
   Future<void> signInWithGoogle() async {
     isSocialLoading.value = true;
-    
+
     try {
       // Configure Google Sign In
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        scopes: ['email', 'profile'],
-      );
-      
+      final GoogleSignIn googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      
+
       // If user cancels
       if (googleUser == null) {
         isSocialLoading.value = false;
         return;
       }
-      
+
       // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      
+
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      
+
       // Sign in to Firebase with the Google credential
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      
+
       LoggerService.i('Google sign in successful: ${userCredential.user?.email}');
-      
+
       // Create or update user document in Firestore
       if (userCredential.user != null) {
         await _createOrUpdateUserDocument(userCredential.user!);
       }
-      
+
       // Navigate to main
       Get.offAllNamed(Routes.MAIN_NAVIGATION);
-      
-      AppSnackbar.showSuccess(
-          message: 'Chào mừng ${userCredential.user?.displayName ?? 'bạn'}!',
-      );
-      
+
+      AppSnackbar.showSuccess(message: 'Chào mừng ${userCredential.user?.displayName ?? 'bạn'}!');
     } catch (e) {
       LoggerService.e('Google sign in error: $e');
-      
+
       String errorMessage = 'Không thể đăng nhập với Google';
       if (e.toString().contains('network')) {
         errorMessage = 'Lỗi kết nối mạng';
       } else if (e.toString().contains('canceled')) {
         errorMessage = 'Đăng nhập đã bị hủy';
       }
-      
-      AppSnackbar.showError(
-        message: errorMessage,
-      );
+
+      AppSnackbar.showError(message: errorMessage);
     } finally {
       isSocialLoading.value = false;
     }
   }
-  
+
   // Navigate to register
   void navigateToRegister() {
     Get.offNamed(Routes.REGISTER);
   }
-  
+
   // Navigate to forgot password
   void navigateToForgotPassword() {
     Get.toNamed(Routes.FORGOT_PASSWORD);
   }
-  
+
   // Create or update user document in Firestore for social login
   Future<void> _createOrUpdateUserDocument(User user) async {
     try {
       final userDoc = _firestore.collection('users').doc(user.uid);
       final docSnapshot = await userDoc.get();
-      
+
       if (!docSnapshot.exists) {
         // Create new user document
         await userDoc.set({
@@ -242,12 +223,7 @@ class LoginController extends BaseController {
           'totalFollowing': 0,
           'language': 'vi',
           'currency': 'VND',
-          'notificationSettings': {
-            'push': true,
-            'email': true,
-            'sms': false,
-            'marketing': false,
-          },
+          'notificationSettings': {'push': true, 'email': true, 'sms': false, 'marketing': false},
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
           'lastActive': FieldValue.serverTimestamp(),

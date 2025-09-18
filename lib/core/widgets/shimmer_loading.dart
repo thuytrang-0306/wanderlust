@@ -9,12 +9,7 @@ class ShimmerLoading extends StatelessWidget {
   final Color? baseColor;
   final Color? highlightColor;
 
-  const ShimmerLoading({
-    super.key,
-    required this.child,
-    this.baseColor,
-    this.highlightColor,
-  });
+  const ShimmerLoading({super.key, required this.child, this.baseColor, this.highlightColor});
 
   @override
   Widget build(BuildContext context) {
@@ -61,12 +56,7 @@ class ShimmerCard extends StatelessWidget {
   final double width;
   final double borderRadius;
 
-  const ShimmerCard({
-    super.key,
-    this.height = 200,
-    this.width = 150,
-    this.borderRadius = 12,
-  });
+  const ShimmerCard({super.key, this.height = 200, this.width = 150, this.borderRadius = 12});
 
   @override
   Widget build(BuildContext context) {
@@ -107,10 +97,7 @@ class ShimmerHorizontalList extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
         itemCount: itemCount,
         separatorBuilder: (_, __) => SizedBox(width: spacing.w),
-        itemBuilder: (_, index) => ShimmerCard(
-          width: itemWidth,
-          height: itemHeight,
-        ),
+        itemBuilder: (_, index) => ShimmerCard(width: itemWidth, height: itemHeight),
       ),
     );
   }
@@ -122,12 +109,7 @@ class ShimmerText extends StatelessWidget {
   final double height;
   final double borderRadius;
 
-  const ShimmerText({
-    super.key,
-    this.width = 100,
-    this.height = 14,
-    this.borderRadius = 4,
-  });
+  const ShimmerText({super.key, this.width = 100, this.height = 14, this.borderRadius = 4});
 
   @override
   Widget build(BuildContext context) {
@@ -148,10 +130,7 @@ class ShimmerText extends StatelessWidget {
 class ShimmerAvatar extends StatelessWidget {
   final double size;
 
-  const ShimmerAvatar({
-    super.key,
-    this.size = 40,
-  });
+  const ShimmerAvatar({super.key, this.size = 40});
 
   @override
   Widget build(BuildContext context) {
@@ -159,10 +138,7 @@ class ShimmerAvatar extends StatelessWidget {
       child: Container(
         width: size.w,
         height: size.w,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
+        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
       ),
     );
   }
@@ -173,11 +149,7 @@ class ShimmerBanner extends StatelessWidget {
   final double height;
   final double borderRadius;
 
-  const ShimmerBanner({
-    super.key,
-    this.height = 180,
-    this.borderRadius = 16,
-  });
+  const ShimmerBanner({super.key, this.height = 180, this.borderRadius = 16});
 
   @override
   Widget build(BuildContext context) {

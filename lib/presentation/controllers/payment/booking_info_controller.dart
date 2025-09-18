@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
-import 'package:wanderlust/core/constants/app_colors.dart';
 
 class BookingInfoController extends BaseController {
   // Observable values
   final RxMap<String, dynamic> bookingData = <String, dynamic>{}.obs;
   final RxBool isProcessing = false.obs;
-  
+
   @override
   void onInit() {
     super.onInit();
     loadBookingData();
   }
-  
+
   void loadBookingData() {
     // Get data from arguments or load from service
     final args = Get.arguments;
@@ -39,11 +38,11 @@ class BookingInfoController extends BaseController {
       };
     }
   }
-  
+
   void editGuestInfo() async {
     // Navigate to customer info page
     final result = await Get.toNamed('/customer-info');
-    
+
     if (result != null && result is Map<String, dynamic>) {
       // Update booking data with new customer info
       bookingData['guestName'] = '${result['lastName']} ${result['firstName']}'.toUpperCase();
@@ -52,30 +51,30 @@ class BookingInfoController extends BaseController {
       bookingData['email'] = result['email'];
     }
   }
-  
+
   void selectPaymentMethod() async {
     // Navigate to payment method page
     final result = await Get.toNamed('/payment-method');
-    
+
     if (result != null && result is Map<String, dynamic>) {
       // Update payment method display
       String paymentDisplay = '';
-      
+
       if (result['type'] == 'card') {
         paymentDisplay = '${result['cardType']} ••${result['lastFourDigits']}';
       } else if (result['type'] == 'digital') {
         paymentDisplay = result['method'];
       }
-      
+
       bookingData['paymentMethod'] = paymentDisplay;
     }
   }
-  
+
   void processPayment() async {
     if (isProcessing.value) return;
-    
+
     isProcessing.value = true;
-    
+
     // Show processing dialog
     Get.dialog(
       WillPopScope(
@@ -98,22 +97,25 @@ class BookingInfoController extends BaseController {
       ),
       barrierDismissible: false,
     );
-    
+
     // Simulate payment processing
     await Future.delayed(const Duration(seconds: 2));
-    
+
     isProcessing.value = false;
     Get.back(); // Close dialog
-    
+
     // Navigate to success page with booking data
-    Get.offNamed('/payment-success', arguments: {
-      'hotelName': bookingData['accommodationName'],
-      'roomType': bookingData['roomType'],
-      'guestName': bookingData['guestName'],
-      'checkIn': bookingData['checkIn'],
-      'checkOut': bookingData['checkOut'],
-      'nights': bookingData['nights'],
-      'totalAmount': bookingData['total'].toString(),
-    });
+    Get.offNamed(
+      '/payment-success',
+      arguments: {
+        'hotelName': bookingData['accommodationName'],
+        'roomType': bookingData['roomType'],
+        'guestName': bookingData['guestName'],
+        'checkIn': bookingData['checkIn'],
+        'checkOut': bookingData['checkOut'],
+        'nights': bookingData['nights'],
+        'totalAmount': bookingData['total'].toString(),
+      },
+    );
   }
 }

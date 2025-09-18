@@ -6,13 +6,13 @@ import 'package:wanderlust/presentation/pages/community/saved_collections_page.d
 
 class SavedCollectionsController extends BaseController {
   final RxList<CollectionModel> collections = <CollectionModel>[].obs;
-  
+
   @override
   void onInit() {
     super.onInit();
     loadCollections();
   }
-  
+
   void loadCollections() {
     // Mock data - in real app, load from database
     collections.value = [
@@ -49,30 +49,25 @@ class SavedCollectionsController extends BaseController {
       ),
     ];
   }
-  
+
   void openCollection(CollectionModel collection) {
-    Get.toNamed('/collection-detail', arguments: {
-      'collectionId': collection.id,
-      'collectionName': collection.name,
-    });
+    Get.toNamed(
+      '/collection-detail',
+      arguments: {'collectionId': collection.id, 'collectionName': collection.name},
+    );
   }
-  
+
   void createNewCollection() {
     Get.defaultDialog(
       title: 'Tạo bộ sưu tập mới',
-      titleStyle: TextStyle(
-        fontSize: 18.sp,
-        fontWeight: FontWeight.w600,
-      ),
+      titleStyle: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
       contentPadding: EdgeInsets.all(16.w),
       content: Column(
         children: [
           TextField(
             decoration: InputDecoration(
               hintText: 'Tên bộ sưu tập',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
             ),
             autofocus: true,
           ),
@@ -81,10 +76,7 @@ class SavedCollectionsController extends BaseController {
       actions: [
         TextButton(
           onPressed: () => Get.back(),
-          child: Text(
-            'Hủy',
-            style: TextStyle(color: Colors.grey),
-          ),
+          child: Text('Hủy', style: TextStyle(color: Colors.grey)),
         ),
         TextButton(
           onPressed: () {

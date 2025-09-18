@@ -14,10 +14,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(
-          'Lịch sử đặt phòng',
-          style: AppTypography.heading5,
-        ),
+        title: Text('Lịch sử đặt phòng', style: AppTypography.heading5),
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
@@ -49,35 +46,34 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
       child: TabBar(
         controller: controller.tabController,
         tabs: [
-          Obx(() => Tab(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Sắp tới'),
-                if (controller.upcomingBookings.isNotEmpty) ...[
-                  SizedBox(width: AppSpacing.s1),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s2,
-                      vertical: 2.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Text(
-                      controller.upcomingBookings.length.toString(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w600,
+          Obx(
+            () => Tab(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Sắp tới'),
+                  if (controller.upcomingBookings.isNotEmpty) ...[
+                    SizedBox(width: AppSpacing.s1),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s2, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Text(
+                        controller.upcomingBookings.length.toString(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          )),
+          ),
           const Tab(text: 'Hoàn thành'),
           const Tab(text: 'Đã hủy'),
         ],
@@ -85,9 +81,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
         unselectedLabelColor: AppColors.grey,
         indicatorColor: AppColors.primary,
         indicatorWeight: 3,
-        labelStyle: AppTypography.bodyMedium.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
+        labelStyle: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
         unselectedLabelStyle: AppTypography.bodyMedium,
       ),
     );
@@ -114,9 +108,10 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
   }
 
   Widget _buildBookingCard(Map<String, dynamic> booking) {
-    final statusColor = booking['status'] == 'upcoming'
-        ? AppColors.success
-        : booking['status'] == 'completed'
+    final statusColor =
+        booking['status'] == 'upcoming'
+            ? AppColors.success
+            : booking['status'] == 'completed'
             ? AppColors.neutral500
             : AppColors.error;
 
@@ -143,9 +138,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
               padding: EdgeInsets.all(AppSpacing.s4),
               decoration: BoxDecoration(
                 color: AppColors.neutral50,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(16.r),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -155,16 +148,12 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                     children: [
                       Text(
                         'Mã đặt phòng',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                        style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                       ),
                       SizedBox(height: AppSpacing.s1),
                       Text(
                         booking['bookingCode'],
-                        style: AppTypography.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -188,7 +177,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                 ],
               ),
             ),
-            
+
             // Booking details
             Padding(
               padding: EdgeInsets.all(AppSpacing.s4),
@@ -206,9 +195,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                           color: AppColors.neutral200,
                         ),
                         child: Icon(
-                          booking['type'] == 'hotel'
-                              ? Icons.hotel
-                              : Icons.tour,
+                          booking['type'] == 'hotel' ? Icons.hotel : Icons.tour,
                           color: AppColors.primary,
                           size: 28.sp,
                         ),
@@ -250,9 +237,9 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                       ),
                     ],
                   ),
-                  
+
                   SizedBox(height: AppSpacing.s4),
-                  
+
                   // Dates and guests
                   Row(
                     children: [
@@ -273,9 +260,9 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                       ),
                     ],
                   ),
-                  
+
                   SizedBox(height: AppSpacing.s3),
-                  
+
                   Row(
                     children: [
                       Expanded(
@@ -295,11 +282,11 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                       ),
                     ],
                   ),
-                  
+
                   SizedBox(height: AppSpacing.s4),
                   const Divider(height: 1),
                   SizedBox(height: AppSpacing.s4),
-                  
+
                   // Total price and action buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -309,19 +296,15 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                         children: [
                           Text(
                             'Tổng tiền',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                           ),
                           Text(
                             booking['totalPrice'],
-                            style: AppTypography.heading5.copyWith(
-                              color: AppColors.primary,
-                            ),
+                            style: AppTypography.heading5.copyWith(color: AppColors.primary),
                           ),
                         ],
                       ),
-                      
+
                       if (booking['status'] == 'upcoming') ...[
                         Row(
                           children: [
@@ -377,9 +360,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                               horizontal: AppSpacing.s4,
                               vertical: AppSpacing.s2,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
                           ),
                           child: Text(
                             'Đặt lại',
@@ -401,18 +382,10 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
     );
   }
 
-  Widget _buildInfoItem({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
+  Widget _buildInfoItem({required IconData icon, required String label, required String value}) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 16.sp,
-          color: AppColors.grey,
-        ),
+        Icon(icon, size: 16.sp, color: AppColors.grey),
         SizedBox(width: AppSpacing.s2),
         Expanded(
           child: Column(
@@ -425,12 +398,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                   fontSize: 10.sp,
                 ),
               ),
-              Text(
-                value,
-                style: AppTypography.bodySmall.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Text(value, style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -443,35 +411,21 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 64.sp,
-            color: AppColors.neutral400,
-          ),
+          Icon(Icons.receipt_long_outlined, size: 64.sp, color: AppColors.neutral400),
           SizedBox(height: AppSpacing.s4),
-          Text(
-            'Chưa có đặt phòng nào',
-            style: AppTypography.heading5,
-          ),
+          Text('Chưa có đặt phòng nào', style: AppTypography.heading5),
           SizedBox(height: AppSpacing.s2),
           Text(
             'Bạn chưa có lịch sử đặt phòng nào',
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
           ),
           SizedBox(height: AppSpacing.s6),
           ElevatedButton(
             onPressed: () => Get.toNamed('/discover'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSpacing.s6,
-                vertical: AppSpacing.s3,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24.r),
-              ),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s3),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
             ),
             child: Text(
               'Khám phá ngay',

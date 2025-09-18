@@ -6,23 +6,23 @@ import 'package:wanderlust/presentation/controllers/app_controller.dart';
 class AuthController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final AppController _appController = Get.find<AppController>();
-  
+
   Rxn<User> firebaseUser = Rxn<User>();
   RxBool isAuthenticated = false.obs;
-  
+
   @override
   void onInit() {
     super.onInit();
     firebaseUser.bindStream(_auth.authStateChanges());
     // Don't auto-navigate, let SplashPage handle initial navigation
     // ever(firebaseUser, _setInitialScreen);
-    
+
     // Just update authentication state
     ever(firebaseUser, (User? user) {
       isAuthenticated.value = user != null;
     });
   }
-  
+
   void _setInitialScreen(User? user) {
     if (user == null) {
       isAuthenticated.value = false;
@@ -32,7 +32,7 @@ class AuthController extends GetxController {
       Get.offAllNamed(Routes.MAIN_NAVIGATION);
     }
   }
-  
+
   Future<void> signUp({
     required String email,
     required String password,
@@ -40,44 +40,38 @@ class AuthController extends GetxController {
   }) async {
     try {
       _appController.showLoading();
-      
+
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
+
       await userCredential.user?.updateDisplayName(name);
       await userCredential.user?.sendEmailVerification();
-      
+
       _appController.hideLoading();
       _appController.showSuccess('Account created successfully! Please verify your email.');
-      
+
       Get.toNamed(Routes.VERIFY_EMAIL);
     } on FirebaseAuthException catch (e) {
       _appController.hideLoading();
       _appController.showError(e.message ?? 'Sign up failed');
     }
   }
-  
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+
+  Future<void> signIn({required String email, required String password}) async {
     try {
       _appController.showLoading();
-      
-      await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      
+
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+
       _appController.hideLoading();
     } on FirebaseAuthException catch (e) {
       _appController.hideLoading();
       _appController.showError(e.message ?? 'Sign in failed');
     }
   }
-  
+
   Future<void> signOut() async {
     try {
       await _auth.signOut();
@@ -85,22 +79,22 @@ class AuthController extends GetxController {
       _appController.showError('Sign out failed');
     }
   }
-  
+
   Future<void> resetPassword(String email) async {
     try {
       _appController.showLoading();
-      
+
       await _auth.sendPasswordResetEmail(email: email);
-      
+
       _appController.hideLoading();
       _appController.showSuccess('Password reset email sent!');
-      
+
       Get.back();
     } on FirebaseAuthException catch (e) {
       _appController.hideLoading();
       _appController.showError(e.message ?? 'Password reset failed');
     }
   }
-  
+
   User? get currentUser => _auth.currentUser;
 }

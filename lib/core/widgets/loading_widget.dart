@@ -7,14 +7,9 @@ class LoadingWidget extends StatelessWidget {
   final String? message;
   final bool isOverlay;
   final Color? color;
-  
-  const LoadingWidget({
-    super.key,
-    this.message,
-    this.isOverlay = false,
-    this.color,
-  });
-  
+
+  const LoadingWidget({super.key, this.message, this.isOverlay = false, this.color});
+
   @override
   Widget build(BuildContext context) {
     final loadingContent = Column(
@@ -22,9 +17,7 @@ class LoadingWidget extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(
-            color ?? AppColors.primary,
-          ),
+          valueColor: AlwaysStoppedAnimation<Color>(color ?? AppColors.primary),
           strokeWidth: 3,
         ),
         if (message != null) ...[
@@ -39,7 +32,7 @@ class LoadingWidget extends StatelessWidget {
         ],
       ],
     );
-    
+
     if (isOverlay) {
       return Container(
         color: AppColors.black.withOpacity(0.5),
@@ -55,7 +48,7 @@ class LoadingWidget extends StatelessWidget {
         ),
       );
     }
-    
+
     return Center(child: loadingContent);
   }
 }
@@ -64,26 +57,15 @@ class LoadingOverlay extends StatelessWidget {
   final Widget child;
   final bool isLoading;
   final String? message;
-  
-  const LoadingOverlay({
-    super.key,
-    required this.child,
-    required this.isLoading,
-    this.message,
-  });
-  
+
+  const LoadingOverlay({super.key, required this.child, required this.isLoading, this.message});
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         child,
-        if (isLoading)
-          Positioned.fill(
-            child: LoadingWidget(
-              isOverlay: true,
-              message: message,
-            ),
-          ),
+        if (isLoading) Positioned.fill(child: LoadingWidget(isOverlay: true, message: message)),
       ],
     );
   }

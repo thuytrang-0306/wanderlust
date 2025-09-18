@@ -14,10 +14,7 @@ class MyTripsPage extends GetView<MyTripsController> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(
-          'Chuyến đi của tôi',
-          style: AppTypography.heading5,
-        ),
+        title: Text('Chuyến đi của tôi', style: AppTypography.heading5),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0.5,
@@ -27,11 +24,7 @@ class MyTripsPage extends GetView<MyTripsController> {
         ),
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.add_circle_outline,
-              color: AppColors.primary,
-              size: 24.sp,
-            ),
+            icon: Icon(Icons.add_circle_outline, color: AppColors.primary, size: 24.sp),
             onPressed: controller.createNewTrip,
           ),
         ],
@@ -52,13 +45,11 @@ class MyTripsPage extends GetView<MyTripsController> {
               unselectedLabelColor: AppColors.grey,
               indicatorColor: AppColors.primary,
               indicatorWeight: 3,
-              labelStyle: AppTypography.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              labelStyle: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
               unselectedLabelStyle: AppTypography.bodyMedium,
             ),
           ),
-          
+
           // Content
           Expanded(
             child: TabBarView(
@@ -78,9 +69,7 @@ class MyTripsPage extends GetView<MyTripsController> {
   Widget _buildTripsList(RxList<Map<String, dynamic>> trips) {
     return Obx(() {
       if (controller.isLoadingTrips.value) {
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
+        return const Center(child: CircularProgressIndicator());
       }
 
       if (trips.isEmpty) {
@@ -101,7 +90,7 @@ class MyTripsPage extends GetView<MyTripsController> {
   Widget _buildTripCard(Map<String, dynamic> trip) {
     final daysLeft = _calculateDaysLeft(trip['startDate']);
     final tripDuration = _calculateTripDuration(trip['startDate'], trip['endDate']);
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: AppSpacing.s4),
       decoration: BoxDecoration(
@@ -127,20 +116,12 @@ class MyTripsPage extends GetView<MyTripsController> {
                 Container(
                   height: 160.h,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(16.r),
-                    ),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
                     color: AppColors.neutral200,
                   ),
-                  child: Center(
-                    child: Icon(
-                      Icons.image,
-                      size: 48.sp,
-                      color: AppColors.neutral400,
-                    ),
-                  ),
+                  child: Center(child: Icon(Icons.image, size: 48.sp, color: AppColors.neutral400)),
                 ),
-                
+
                 // Status badge
                 Positioned(
                   top: AppSpacing.s3,
@@ -157,11 +138,7 @@ class MyTripsPage extends GetView<MyTripsController> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          _getStatusIcon(trip['status']),
-                          size: 14.sp,
-                          color: Colors.white,
-                        ),
+                        Icon(_getStatusIcon(trip['status']), size: 14.sp, color: Colors.white),
                         SizedBox(width: AppSpacing.s1),
                         Text(
                           _getStatusText(trip['status']),
@@ -174,7 +151,7 @@ class MyTripsPage extends GetView<MyTripsController> {
                     ),
                   ),
                 ),
-                
+
                 // Days left badge (for upcoming trips)
                 if (trip['status'] == 'upcoming' && daysLeft > 0)
                   Positioned(
@@ -200,7 +177,7 @@ class MyTripsPage extends GetView<MyTripsController> {
                   ),
               ],
             ),
-            
+
             // Trip info
             Padding(
               padding: EdgeInsets.all(AppSpacing.s4),
@@ -214,53 +191,38 @@ class MyTripsPage extends GetView<MyTripsController> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  
+
                   SizedBox(height: AppSpacing.s2),
-                  
+
                   Row(
                     children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 16.sp,
-                        color: AppColors.grey,
-                      ),
+                      Icon(Icons.location_on_outlined, size: 16.sp, color: AppColors.grey),
                       SizedBox(width: AppSpacing.s1),
                       Expanded(
                         child: Text(
                           trip['destination'],
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                          style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                  
+
                   SizedBox(height: AppSpacing.s3),
-                  
+
                   // Dates and duration
                   Row(
                     children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        size: 14.sp,
-                        color: AppColors.grey,
-                      ),
+                      Icon(Icons.calendar_today_outlined, size: 14.sp, color: AppColors.grey),
                       SizedBox(width: AppSpacing.s1),
                       Text(
                         '${trip['startDate']} - ${trip['endDate']}',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                        style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                       ),
                       SizedBox(width: AppSpacing.s3),
                       Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.s2,
-                          vertical: 2.h,
-                        ),
+                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.s2, vertical: 2.h),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8.r),
@@ -275,59 +237,43 @@ class MyTripsPage extends GetView<MyTripsController> {
                       ),
                     ],
                   ),
-                  
+
                   SizedBox(height: AppSpacing.s3),
-                  
+
                   // Members and activities
                   Row(
                     children: [
                       // Members
                       Row(
                         children: [
-                          Icon(
-                            Icons.people_outline,
-                            size: 16.sp,
-                            color: AppColors.grey,
-                          ),
+                          Icon(Icons.people_outline, size: 16.sp, color: AppColors.grey),
                           SizedBox(width: AppSpacing.s1),
                           Text(
                             '${trip['members']} người',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                           ),
                         ],
                       ),
-                      
+
                       SizedBox(width: AppSpacing.s4),
-                      
+
                       // Activities
                       Row(
                         children: [
-                          Icon(
-                            Icons.explore_outlined,
-                            size: 16.sp,
-                            color: AppColors.grey,
-                          ),
+                          Icon(Icons.explore_outlined, size: 16.sp, color: AppColors.grey),
                           SizedBox(width: AppSpacing.s1),
                           Text(
                             '${trip['activities']} hoạt động',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                           ),
                         ],
                       ),
-                      
+
                       const Spacer(),
-                      
+
                       // More button
                       IconButton(
-                        icon: Icon(
-                          Icons.more_vert,
-                          size: 20.sp,
-                          color: AppColors.grey,
-                        ),
+                        icon: Icon(Icons.more_vert, size: 20.sp, color: AppColors.grey),
                         onPressed: () => _showTripOptions(trip),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -350,22 +296,13 @@ class MyTripsPage extends GetView<MyTripsController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.explore_off,
-              size: 80.sp,
-              color: AppColors.neutral400,
-            ),
+            Icon(Icons.explore_off, size: 80.sp, color: AppColors.neutral400),
             SizedBox(height: AppSpacing.s4),
-            Text(
-              'Chưa có chuyến đi nào',
-              style: AppTypography.heading5,
-            ),
+            Text('Chưa có chuyến đi nào', style: AppTypography.heading5),
             SizedBox(height: AppSpacing.s2),
             Text(
               'Bắt đầu lên kế hoạch cho chuyến đi tiếp theo của bạn',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: AppSpacing.s6),
@@ -376,13 +313,8 @@ class MyTripsPage extends GetView<MyTripsController> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s6,
-                  vertical: AppSpacing.s3,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24.r),
-                ),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s3),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
               ),
             ),
           ],
@@ -397,9 +329,7 @@ class MyTripsPage extends GetView<MyTripsController> {
         padding: EdgeInsets.all(AppSpacing.s5),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20.r),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -438,14 +368,8 @@ class MyTripsPage extends GetView<MyTripsController> {
                 },
               ),
             ListTile(
-              leading: Icon(
-                Icons.delete_outline,
-                color: AppColors.error,
-              ),
-              title: Text(
-                'Xóa',
-                style: TextStyle(color: AppColors.error),
-              ),
+              leading: Icon(Icons.delete_outline, color: AppColors.error),
+              title: Text('Xóa', style: TextStyle(color: AppColors.error)),
               onTap: () {
                 Get.back();
                 controller.deleteTrip(trip);

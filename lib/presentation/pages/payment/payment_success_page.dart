@@ -7,7 +7,6 @@ import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/presentation/controllers/payment/payment_success_controller.dart';
 import 'package:lottie/lottie.dart';
-import 'package:share_plus/share_plus.dart';
 
 class PaymentSuccessPage extends GetView<PaymentSuccessController> {
   const PaymentSuccessPage({super.key});
@@ -15,7 +14,7 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
   @override
   Widget build(BuildContext context) {
     Get.lazyPut(() => PaymentSuccessController());
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -28,12 +27,12 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
                 child: Column(
                   children: [
                     SizedBox(height: AppSpacing.s8),
-                    
+
                     // Success animation or icon
                     _buildSuccessAnimation(),
-                    
+
                     SizedBox(height: AppSpacing.s6),
-                    
+
                     // Success message
                     Text(
                       'Thanh toán thành công!',
@@ -43,36 +42,34 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    
+
                     SizedBox(height: AppSpacing.s3),
-                    
+
                     Text(
                       'Đặt phòng của bạn đã được xác nhận',
-                      style: AppTypography.bodyM.copyWith(
-                        color: AppColors.neutral600,
-                      ),
+                      style: AppTypography.bodyM.copyWith(color: AppColors.neutral600),
                       textAlign: TextAlign.center,
                     ),
-                    
+
                     SizedBox(height: AppSpacing.s8),
-                    
+
                     // QR Code section
                     _buildQRCodeSection(),
-                    
+
                     SizedBox(height: AppSpacing.s6),
-                    
+
                     // Booking details
                     _buildBookingDetails(),
-                    
+
                     SizedBox(height: AppSpacing.s6),
-                    
+
                     // Important notes
                     _buildImportantNotes(),
                   ],
                 ),
               ),
             ),
-            
+
             // Bottom buttons
             _buildBottomButtons(),
           ],
@@ -80,15 +77,12 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
       ),
     );
   }
-  
+
   Widget _buildSuccessAnimation() {
     return Container(
       width: 120.w,
       height: 120.h,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -103,19 +97,11 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
                   height: 100.h,
                   repeat: false,
                   errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      Icons.check_circle,
-                      size: 60.sp,
-                      color: AppColors.primary,
-                    );
+                    return Icon(Icons.check_circle, size: 60.sp, color: AppColors.primary);
                   },
                 );
               } catch (e) {
-                return Icon(
-                  Icons.check_circle,
-                  size: 60.sp,
-                  color: AppColors.primary,
-                );
+                return Icon(Icons.check_circle, size: 60.sp, color: AppColors.primary);
               }
             },
           ),
@@ -123,7 +109,7 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
       ),
     );
   }
-  
+
   Widget _buildQRCodeSection() {
     return Container(
       padding: EdgeInsets.all(AppSpacing.s5),
@@ -140,9 +126,9 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
               color: AppColors.neutral900,
             ),
           ),
-          
+
           SizedBox(height: AppSpacing.s3),
-          
+
           // Booking code
           Text(
             controller.bookingCode,
@@ -152,9 +138,9 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
               letterSpacing: 2,
             ),
           ),
-          
+
           SizedBox(height: AppSpacing.s4),
-          
+
           // QR Code
           Container(
             padding: EdgeInsets.all(AppSpacing.s3),
@@ -170,9 +156,9 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
               errorCorrectionLevel: QrErrorCorrectLevel.H,
             ),
           ),
-          
+
           SizedBox(height: AppSpacing.s3),
-          
+
           Text(
             'Vui lòng xuất trình mã này khi nhận phòng',
             style: AppTypography.bodyS.copyWith(
@@ -185,7 +171,7 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
       ),
     );
   }
-  
+
   Widget _buildBookingDetails() {
     return Container(
       padding: EdgeInsets.all(AppSpacing.s4),
@@ -199,11 +185,7 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
           // Header
           Row(
             children: [
-              Icon(
-                Icons.hotel,
-                size: 20.sp,
-                color: AppColors.primary,
-              ),
+              Icon(Icons.hotel, size: 20.sp, color: AppColors.primary),
               SizedBox(width: AppSpacing.s2),
               Text(
                 'Chi tiết đặt phòng',
@@ -214,9 +196,9 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
               ),
             ],
           ),
-          
+
           SizedBox(height: AppSpacing.s4),
-          
+
           // Details
           _buildDetailRow('Khách sạn', controller.hotelName),
           _buildDetailRow('Loại phòng', controller.roomType),
@@ -224,9 +206,9 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
           _buildDetailRow('Nhận phòng', controller.checkIn),
           _buildDetailRow('Trả phòng', controller.checkOut),
           _buildDetailRow('Số đêm', '${controller.nights} đêm'),
-          
+
           Divider(height: AppSpacing.s6, color: AppColors.neutral200),
-          
+
           // Total amount
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -251,7 +233,7 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
       ),
     );
   }
-  
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: EdgeInsets.only(bottom: AppSpacing.s3),
@@ -260,12 +242,7 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
         children: [
           SizedBox(
             width: 100.w,
-            child: Text(
-              label,
-              style: AppTypography.bodyS.copyWith(
-                color: AppColors.neutral500,
-              ),
-            ),
+            child: Text(label, style: AppTypography.bodyS.copyWith(color: AppColors.neutral500)),
           ),
           Expanded(
             child: Text(
@@ -280,7 +257,7 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
       ),
     );
   }
-  
+
   Widget _buildImportantNotes() {
     return Container(
       padding: EdgeInsets.all(AppSpacing.s3),
@@ -294,11 +271,7 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.info_outline,
-                size: 18.sp,
-                color: Colors.amber.shade700,
-              ),
+              Icon(Icons.info_outline, size: 18.sp, color: Colors.amber.shade700),
               SizedBox(width: AppSpacing.s2),
               Text(
                 'Lưu ý quan trọng',
@@ -314,16 +287,13 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
             '• Vui lòng đến trước 15:00 để làm thủ tục nhận phòng\n'
             '• Mang theo CMND/CCCD khi nhận phòng\n'
             '• Chi tiết đặt phòng đã được gửi qua email',
-            style: AppTypography.bodyXS.copyWith(
-              color: Colors.amber.shade800,
-              height: 1.5,
-            ),
+            style: AppTypography.bodyXS.copyWith(color: Colors.amber.shade800, height: 1.5),
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildBottomButtons() {
     return Container(
       padding: EdgeInsets.all(AppSpacing.s5),
@@ -347,10 +317,7 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
               padding: EdgeInsets.symmetric(vertical: 14.h),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFFB794F4),
-                    AppColors.primary,
-                  ],
+                  colors: [const Color(0xFFB794F4), AppColors.primary],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -367,9 +334,9 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
               ),
             ),
           ),
-          
+
           SizedBox(height: AppSpacing.s3),
-          
+
           // Secondary buttons row
           Row(
             children: [
@@ -386,11 +353,7 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.share_outlined,
-                          size: 18.sp,
-                          color: AppColors.primary,
-                        ),
+                        Icon(Icons.share_outlined, size: 18.sp, color: AppColors.primary),
                         SizedBox(width: AppSpacing.s2),
                         Text(
                           'Chia sẻ',
@@ -404,9 +367,9 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
                   ),
                 ),
               ),
-              
+
               SizedBox(width: AppSpacing.s3),
-              
+
               // Back to home button
               Expanded(
                 child: GestureDetector(
@@ -420,11 +383,7 @@ class PaymentSuccessPage extends GetView<PaymentSuccessController> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.home_outlined,
-                          size: 18.sp,
-                          color: AppColors.neutral700,
-                        ),
+                        Icon(Icons.home_outlined, size: 18.sp, color: AppColors.neutral700),
                         SizedBox(width: AppSpacing.s2),
                         Text(
                           'Về trang chủ',

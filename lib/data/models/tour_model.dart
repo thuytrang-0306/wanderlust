@@ -85,29 +85,33 @@ class TourModel {
     final formatter = price.toStringAsFixed(0);
     return '$formatter $currency';
   }
-  
+
   String get displayDuration {
     if (nights > 0) {
       return '${duration}N/${nights + 1}D';
     }
     return '$duration ngày';
   }
-  
+
   double get discountPercentage {
     if (originalPrice > price) {
       return ((originalPrice - price) / originalPrice * 100);
     }
     return 0;
   }
-  
+
   bool get hasDiscount => originalPrice > price;
-  
+
   String get difficultyText {
     switch (difficulty) {
-      case 'easy': return 'Dễ';
-      case 'moderate': return 'Trung bình';
-      case 'hard': return 'Khó';
-      default: return difficulty;
+      case 'easy':
+        return 'Dễ';
+      case 'moderate':
+        return 'Trung bình';
+      case 'hard':
+        return 'Khó';
+      default:
+        return difficulty;
     }
   }
 
@@ -137,17 +141,20 @@ class TourModel {
       includedServices: List<String>.from(data['includedServices'] ?? []),
       excludedServices: List<String>.from(data['excludedServices'] ?? []),
       highlights: List<String>.from(data['highlights'] ?? []),
-      itinerary: (data['itinerary'] as List<dynamic>?)
-          ?.map((e) => TourItinerary.fromMap(e as Map<String, dynamic>))
-          .toList() ?? [],
-      guide: data['guide'] != null 
-          ? TourGuide.fromMap(data['guide'] as Map<String, dynamic>)
-          : null,
-      departureDates: (data['departureDates'] as List<dynamic>?)
-          ?.map((e) => (e as Timestamp).toDate())
-          .toList() ?? [],
+      itinerary:
+          (data['itinerary'] as List<dynamic>?)
+              ?.map((e) => TourItinerary.fromMap(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      guide:
+          data['guide'] != null ? TourGuide.fromMap(data['guide'] as Map<String, dynamic>) : null,
+      departureDates:
+          (data['departureDates'] as List<dynamic>?)
+              ?.map((e) => (e as Timestamp).toDate())
+              .toList() ??
+          [],
       cancellationPolicy: CancellationPolicy.fromMap(
-        data['cancellationPolicy'] ?? CancellationPolicy.defaultPolicy().toMap()
+        data['cancellationPolicy'] ?? CancellationPolicy.defaultPolicy().toMap(),
       ),
       languages: List<String>.from(data['languages'] ?? ['Tiếng Việt']),
       metadata: data['metadata'] ?? {},
@@ -321,9 +328,11 @@ class CancellationPolicy {
     return CancellationPolicy(
       isRefundable: map['isRefundable'] ?? true,
       freeCancellationDays: map['freeCancellationDays'] ?? 7,
-      refundRules: (map['refundRules'] as List<dynamic>?)
-          ?.map((e) => RefundRule.fromMap(e as Map<String, dynamic>))
-          .toList() ?? [],
+      refundRules:
+          (map['refundRules'] as List<dynamic>?)
+              ?.map((e) => RefundRule.fromMap(e as Map<String, dynamic>))
+              .toList() ??
+          [],
       description: map['description'] ?? '',
     );
   }
@@ -357,10 +366,7 @@ class RefundRule {
   final int daysBeforeDeparture;
   final double refundPercentage;
 
-  RefundRule({
-    required this.daysBeforeDeparture,
-    required this.refundPercentage,
-  });
+  RefundRule({required this.daysBeforeDeparture, required this.refundPercentage});
 
   factory RefundRule.fromMap(Map<String, dynamic> map) {
     return RefundRule(
@@ -370,9 +376,6 @@ class RefundRule {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'daysBeforeDeparture': daysBeforeDeparture,
-      'refundPercentage': refundPercentage,
-    };
+    return {'daysBeforeDeparture': daysBeforeDeparture, 'refundPercentage': refundPercentage};
   }
 }

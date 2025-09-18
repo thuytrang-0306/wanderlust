@@ -4,8 +4,6 @@ import 'package:wanderlust/presentation/controllers/combo/combo_detail_controlle
 class ComboDetailBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<ComboDetailController>(
-      () => ComboDetailController(),
-    );
+    Get.lazyPut<ComboDetailController>(() => ComboDetailController());
   }
 }

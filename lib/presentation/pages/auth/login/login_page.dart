@@ -18,7 +18,7 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(LoginController());
-    
+
     return Scaffold(
       backgroundColor: AppColors.white,
       resizeToAvoidBottomInset: false,
@@ -30,12 +30,12 @@ class LoginPage extends StatelessWidget {
             child: Column(
               children: [
                 SizedBox(height: 60.h),
-                
+
                 // Logo and app name
                 AppLogo.auth(),
-                
+
                 SizedBox(height: AppSpacing.s6),
-                
+
                 // Title
                 Text(
                   'Chào mừng bạn trở lại với Wanderlust!',
@@ -46,9 +46,9 @@ class LoginPage extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const Spacer(),
-                
+
                 // Form section - centered
                 Column(
                   children: [
@@ -58,21 +58,23 @@ class LoginPage extends StatelessWidget {
                       validator: controller.validateEmail,
                       textInputAction: TextInputAction.next,
                     ),
-                    
+
                     SizedBox(height: AppSpacing.s4),
-                    
+
                     // Password input
-                    Obx(() => AppTextField.password(
-                      controller: controller.passwordController,
-                      isPasswordVisible: controller.isPasswordVisible.value,
-                      togglePasswordVisibility: controller.togglePasswordVisibility,
-                      validator: controller.validatePassword,
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => controller.login(),
-                    )),
-                    
+                    Obx(
+                      () => AppTextField.password(
+                        controller: controller.passwordController,
+                        isPasswordVisible: controller.isPasswordVisible.value,
+                        togglePasswordVisibility: controller.togglePasswordVisibility,
+                        validator: controller.validatePassword,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => controller.login(),
+                      ),
+                    ),
+
                     SizedBox(height: AppSpacing.s4),
-                    
+
                     // Forgot password link
                     Align(
                       alignment: Alignment.centerRight,
@@ -92,25 +94,27 @@ class LoginPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
+
                     SizedBox(height: AppSpacing.s6),
-                    
+
                     // Login button
-                    Obx(() => AppButton.primary(
-                      text: 'Đăng nhập',
-                      onPressed: controller.login,
-                      isLoading: controller.isLoading,
-                    )),
+                    Obx(
+                      () => AppButton.primary(
+                        text: 'Đăng nhập',
+                        onPressed: controller.login,
+                        isLoading: controller.isLoading,
+                      ),
+                    ),
                   ],
                 ),
-                
+
                 const Spacer(),
-                
+
                 // Or login with - with divider lines
                 DividerWithText.orLoginWith(),
-                
+
                 SizedBox(height: AppSpacing.s5),
-                
+
                 // Social login buttons
                 SocialLoginButtons(
                   onGooglePressed: controller.signInWithGoogle,
@@ -121,16 +125,13 @@ class LoginPage extends StatelessWidget {
                     // TODO: Apple login
                   },
                 ),
-                
-                
+
                 SizedBox(height: AppSpacing.s6),
-                
+
                 // Don't have account
                 RichText(
                   text: TextSpan(
-                    style: AppTypography.bodyM.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                    style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
                     children: [
                       const TextSpan(text: 'Bạn chưa có tài khoản? '),
                       TextSpan(
@@ -139,13 +140,12 @@ class LoginPage extends StatelessWidget {
                           color: AppColors.primary,
                           fontWeight: AppTypography.medium,
                         ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = controller.navigateToRegister,
+                        recognizer: TapGestureRecognizer()..onTap = controller.navigateToRegister,
                       ),
                     ],
                   ),
                 ),
-                
+
                 SizedBox(height: 20.h),
               ],
             ),

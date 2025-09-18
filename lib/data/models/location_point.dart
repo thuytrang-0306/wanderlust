@@ -53,7 +53,7 @@ class LocationPoint {
         metadata: data['metadata'],
       );
     }
-    
+
     // Handle separate lat/lng fields
     return LocationPoint.fromMap(data, id);
   }

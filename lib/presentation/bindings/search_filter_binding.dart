@@ -4,8 +4,6 @@ import 'package:wanderlust/presentation/controllers/search/search_filter_control
 class SearchFilterBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<SearchFilterController>(
-      () => SearchFilterController(),
-    );
+    Get.lazyPut<SearchFilterController>(() => SearchFilterController());
   }
 }

@@ -17,41 +17,41 @@ class SettingsController extends BaseController {
   final darkModeEnabled = false.obs;
   final offlineModeEnabled = false.obs;
   final currentLanguage = 'Tiếng Việt'.obs;
-  
+
   // Preferences
   final defaultMapProvider = 'Google Maps'.obs;
   final defaultCurrency = 'VND'.obs;
   final measurementUnit = 'Metric'.obs;
-  
+
   // App Info
   final appVersion = '1.0.0'.obs;
   final buildNumber = '2024.1'.obs;
   final cacheSize = '12.5 MB'.obs;
-  
+
   @override
   void onInit() {
     super.onInit();
     loadSettings();
     loadAppInfo();
   }
-  
+
   void loadSettings() {
     // Load from storage
     notificationsEnabled.value = StorageService.to.notificationEnabled;
-    
+
     final savedLanguage = StorageService.to.language;
     currentLanguage.value = savedLanguage == 'vi' ? 'Tiếng Việt' : 'English';
-    
+
     final savedTheme = StorageService.to.theme;
     darkModeEnabled.value = savedTheme == 'dark';
-    
+
     // Load other preferences
     defaultMapProvider.value = StorageService.to.read('map_provider') ?? 'Google Maps';
     defaultCurrency.value = StorageService.to.read('currency') ?? 'VND';
     measurementUnit.value = StorageService.to.read('measurement_unit') ?? 'Metric';
     offlineModeEnabled.value = StorageService.to.read('offline_mode') ?? false;
   }
-  
+
   void loadAppInfo() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
@@ -61,76 +61,64 @@ class SettingsController extends BaseController {
       // Use default values if package info fails
     }
   }
-  
+
   // Navigation methods
   void navigateToEditProfile() {
     Get.toNamed('/edit-profile');
   }
-  
+
   void navigateToSecurity() {
     Get.toNamed('/security-settings');
   }
-  
+
   void navigateToPrivacy() {
     Get.toNamed('/privacy-settings');
   }
-  
+
   void navigateToBookingHistory() {
     Get.toNamed('/booking-history');
   }
-  
+
   void navigateToNotificationSettings() {
     Get.toNamed('/notification-settings');
   }
-  
+
   void navigateToDownloads() {
     AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
   }
-  
+
   void navigateToHelp() {
     Get.toNamed('/help-center');
   }
-  
+
   void navigateToSupport() {
     AppSnackbar.showInfo(message: 'Tính năng chat hỗ trợ đang phát triển');
   }
-  
+
   // Toggle methods
   void toggleNotifications(bool value) async {
     notificationsEnabled.value = value;
     await StorageService.to.setNotificationEnabled(value);
-    
-    AppSnackbar.showInfo(
-      message: value 
-        ? 'Đã bật thông báo' 
-        : 'Đã tắt thông báo',
-    );
+
+    AppSnackbar.showInfo(message: value ? 'Đã bật thông báo' : 'Đã tắt thông báo');
   }
-  
+
   void toggleDarkMode(bool value) async {
     darkModeEnabled.value = value;
     await StorageService.to.saveTheme(value ? 'dark' : 'light');
-    
+
     Get.changeThemeMode(value ? ThemeMode.dark : ThemeMode.light);
-    
-    AppSnackbar.showInfo(
-      message: value 
-        ? 'Đã bật chế độ tối' 
-        : 'Đã tắt chế độ tối',
-    );
+
+    AppSnackbar.showInfo(message: value ? 'Đã bật chế độ tối' : 'Đã tắt chế độ tối');
   }
-  
+
   void toggleOfflineMode(bool value) async {
     offlineModeEnabled.value = value;
     await StorageService.to.write('offline_mode', value);
-    
-    AppSnackbar.showInfo(
-      message: value 
-        ? 'Đã bật chế độ offline' 
-        : 'Đã tắt chế độ offline',
-    );
+
+    AppSnackbar.showInfo(message: value ? 'Đã bật chế độ offline' : 'Đã tắt chế độ offline');
   }
-  
+
   // Picker methods
   void showLanguagePicker() {
     Get.bottomSheet(
@@ -138,18 +126,13 @@ class SettingsController extends BaseController {
         padding: EdgeInsets.all(AppSpacing.s5),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20.r),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Chọn ngôn ngữ',
-              style: AppTypography.heading5,
-            ),
+            Text('Chọn ngôn ngữ', style: AppTypography.heading5),
             SizedBox(height: AppSpacing.s4),
             RadioListTile<String>(
               title: const Text('Tiếng Việt'),
@@ -159,9 +142,7 @@ class SettingsController extends BaseController {
                 currentLanguage.value = 'Tiếng Việt';
                 await StorageService.to.saveLanguage('vi');
                 Get.back();
-                AppSnackbar.showSuccess(
-                  message: 'Đã chuyển sang Tiếng Việt',
-                );
+                AppSnackbar.showSuccess(message: 'Đã chuyển sang Tiếng Việt');
               },
               activeColor: AppColors.primary,
             ),
@@ -173,9 +154,7 @@ class SettingsController extends BaseController {
                 currentLanguage.value = 'English';
                 await StorageService.to.saveLanguage('en');
                 Get.back();
-                AppSnackbar.showSuccess(
-                  message: 'Changed to English',
-                );
+                AppSnackbar.showSuccess(message: 'Changed to English');
               },
               activeColor: AppColors.primary,
             ),
@@ -184,27 +163,22 @@ class SettingsController extends BaseController {
       ),
     );
   }
-  
+
   void showMapProviderPicker() {
     final providers = ['Google Maps', 'Apple Maps', 'OpenStreetMap'];
-    
+
     Get.bottomSheet(
       Container(
         padding: EdgeInsets.all(AppSpacing.s5),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20.r),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Chọn nhà cung cấp bản đồ',
-              style: AppTypography.heading5,
-            ),
+            Text('Chọn nhà cung cấp bản đồ', style: AppTypography.heading5),
             SizedBox(height: AppSpacing.s4),
             ...providers.map((provider) {
               return RadioListTile<String>(
@@ -215,19 +189,17 @@ class SettingsController extends BaseController {
                   defaultMapProvider.value = value!;
                   await StorageService.to.write('map_provider', value);
                   Get.back();
-                  AppSnackbar.showSuccess(
-                    message: 'Đã chọn $value',
-                  );
+                  AppSnackbar.showSuccess(message: 'Đã chọn $value');
                 },
                 activeColor: AppColors.primary,
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
     );
   }
-  
+
   void showCurrencyPicker() {
     final currencies = {
       'VND': 'Việt Nam Đồng',
@@ -236,24 +208,19 @@ class SettingsController extends BaseController {
       'GBP': 'British Pound',
       'JPY': 'Japanese Yen',
     };
-    
+
     Get.bottomSheet(
       Container(
         padding: EdgeInsets.all(AppSpacing.s5),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20.r),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Chọn tiền tệ',
-              style: AppTypography.heading5,
-            ),
+            Text('Chọn tiền tệ', style: AppTypography.heading5),
             SizedBox(height: AppSpacing.s4),
             ...currencies.entries.map((entry) {
               return RadioListTile<String>(
@@ -264,42 +231,32 @@ class SettingsController extends BaseController {
                   defaultCurrency.value = value!;
                   await StorageService.to.write('currency', value);
                   Get.back();
-                  AppSnackbar.showSuccess(
-                    message: 'Đã chọn $value',
-                  );
+                  AppSnackbar.showSuccess(message: 'Đã chọn $value');
                 },
                 activeColor: AppColors.primary,
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
     );
   }
-  
+
   void showUnitPicker() {
-    final units = {
-      'Metric': 'Metric (km, m)',
-      'Imperial': 'Imperial (miles, ft)',
-    };
-    
+    final units = {'Metric': 'Metric (km, m)', 'Imperial': 'Imperial (miles, ft)'};
+
     Get.bottomSheet(
       Container(
         padding: EdgeInsets.all(AppSpacing.s5),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20.r),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Chọn đơn vị đo lường',
-              style: AppTypography.heading5,
-            ),
+            Text('Chọn đơn vị đo lường', style: AppTypography.heading5),
             SizedBox(height: AppSpacing.s4),
             ...units.entries.map((entry) {
               return RadioListTile<String>(
@@ -310,19 +267,17 @@ class SettingsController extends BaseController {
                   measurementUnit.value = value!;
                   await StorageService.to.write('measurement_unit', value);
                   Get.back();
-                  AppSnackbar.showSuccess(
-                    message: 'Đã chọn ${entry.value}',
-                  );
+                  AppSnackbar.showSuccess(message: 'Đã chọn ${entry.value}');
                 },
                 activeColor: AppColors.primary,
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
     );
   }
-  
+
   // Action methods
   void sendFeedback() {
     Get.dialog(
@@ -335,24 +290,17 @@ class SettingsController extends BaseController {
               maxLines: 5,
               decoration: InputDecoration(
                 hintText: 'Nhập phản hồi của bạn...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Hủy'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Hủy')),
           TextButton(
             onPressed: () {
               Get.back();
-              AppSnackbar.showSuccess(
-                message: 'Cảm ơn phản hồi của bạn!',
-              );
+              AppSnackbar.showSuccess(message: 'Cảm ơn phản hồi của bạn!');
             },
             child: const Text('Gửi'),
           ),
@@ -360,12 +308,12 @@ class SettingsController extends BaseController {
       ),
     );
   }
-  
+
   void rateApp() {
     // TODO: Implement app store/play store rating
     AppSnackbar.showInfo(message: 'Chuyển đến App Store/Play Store...');
   }
-  
+
   void showAbout() {
     AppDialogs.showAlert(
       title: 'Về Wanderlust',
@@ -379,25 +327,22 @@ Build: ${buildNumber.value}
 © 2024 Wanderlust. All rights reserved.''',
     );
   }
-  
+
   void showTerms() {
     // TODO: Navigate to terms page or show web view
     AppSnackbar.showInfo(message: 'Mở điều khoản sử dụng...');
   }
-  
+
   void showPrivacyPolicy() {
     // TODO: Navigate to privacy policy page or show web view
     AppSnackbar.showInfo(message: 'Mở chính sách bảo mật...');
   }
-  
+
   void showLicenses() {
     // Show Flutter licenses
-    Get.to(() => const LicensePage(
-      applicationName: 'Wanderlust',
-      applicationVersion: '1.0.0',
-    ));
+    Get.to(() => const LicensePage(applicationName: 'Wanderlust', applicationVersion: '1.0.0'));
   }
-  
+
   void clearCache() async {
     final confirm = await AppDialogs.showConfirm(
       title: 'Xóa bộ nhớ cache',
@@ -405,52 +350,47 @@ Build: ${buildNumber.value}
       confirmText: 'Xóa',
       cancelText: 'Hủy',
     );
-    
+
     if (confirm) {
       AppDialogs.showLoading(message: 'Đang xóa cache...');
-      
+
       // Simulate cache clearing
       await Future.delayed(const Duration(seconds: 2));
-      
+
       cacheSize.value = '0 MB';
-      
+
       AppDialogs.hideLoading();
-      AppSnackbar.showSuccess(
-        message: 'Đã xóa bộ nhớ cache thành công',
-      );
+      AppSnackbar.showSuccess(message: 'Đã xóa bộ nhớ cache thành công');
     }
   }
-  
+
   void clearAllData() async {
     final confirm = await AppDialogs.showConfirm(
       title: 'Xóa tất cả dữ liệu',
-      message: 'Hành động này sẽ xóa toàn bộ dữ liệu cục bộ và đăng xuất khỏi tài khoản. Bạn có chắc chắn?',
+      message:
+          'Hành động này sẽ xóa toàn bộ dữ liệu cục bộ và đăng xuất khỏi tài khoản. Bạn có chắc chắn?',
       confirmText: 'Xóa tất cả',
       cancelText: 'Hủy',
       confirmColor: AppColors.error,
     );
-    
+
     if (confirm) {
       try {
         AppDialogs.showLoading(message: 'Đang xóa dữ liệu...');
-        
+
         // Clear all data and sign out
         await StorageService.to.clearAll();
         await FirebaseAuth.instance.signOut();
-        
+
         AppDialogs.hideLoading();
-        
+
         // Navigate to login
         Get.offAllNamed('/login');
-        
-        AppSnackbar.showInfo(
-          message: 'Đã xóa tất cả dữ liệu',
-        );
+
+        AppSnackbar.showInfo(message: 'Đã xóa tất cả dữ liệu');
       } catch (e) {
         AppDialogs.hideLoading();
-        AppSnackbar.showError(
-          message: 'Không thể xóa dữ liệu: $e',
-        );
+        AppSnackbar.showError(message: 'Không thể xóa dữ liệu: $e');
       }
     }
   }

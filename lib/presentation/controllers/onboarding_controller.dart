@@ -7,7 +7,7 @@ import 'package:wanderlust/core/constants/app_assets.dart';
 class OnboardingController extends GetxController {
   final PageController pageController = PageController();
   final RxInt currentPage = 0.obs;
-  
+
   // Onboarding data - Vietnamese text as per design
   final List<OnboardingData> onboardingPages = [
     OnboardingData(
@@ -46,10 +46,7 @@ class OnboardingController extends GetxController {
 
   void nextPage() {
     if (currentPage.value < onboardingPages.length - 1) {
-      pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     } else {
       // Last page - go to register
       navigateToRegister();
@@ -93,9 +90,5 @@ class OnboardingData {
   final String title;
   final String subtitle;
 
-  OnboardingData({
-    required this.image,
-    required this.title,
-    required this.subtitle,
-  });
+  OnboardingData({required this.image, required this.title, required this.subtitle});
 }

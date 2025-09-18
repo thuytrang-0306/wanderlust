@@ -60,34 +60,38 @@ class AccommodationModel {
   // Getters
   String get fullAddress => '$address, $city, $province';
   String get displayPrice => '${pricePerNight.toStringAsFixed(0)} $currency';
-  double get discountPercent => originalPrice > 0 
-    ? ((originalPrice - pricePerNight) / originalPrice * 100) 
-    : 0;
+  double get discountPercent =>
+      originalPrice > 0 ? ((originalPrice - pricePerNight) / originalPrice * 100) : 0;
   bool get hasDiscount => originalPrice > pricePerNight;
   String get typeDisplay {
     switch (type) {
-      case 'hotel': return 'Khách sạn';
-      case 'homestay': return 'Homestay';
-      case 'resort': return 'Resort';
-      case 'apartment': return 'Căn hộ';
-      default: return type;
+      case 'hotel':
+        return 'Khách sạn';
+      case 'homestay':
+        return 'Homestay';
+      case 'resort':
+        return 'Resort';
+      case 'apartment':
+        return 'Căn hộ';
+      default:
+        return type;
     }
   }
 
   // Helper method to parse GeoPoint from various formats
   static GeoPoint? _parseGeoPoint(dynamic location) {
     if (location == null) return null;
-    
+
     if (location is GeoPoint) {
       return location;
     }
-    
+
     if (location is Map<String, dynamic>) {
       final latitude = location['latitude'] ?? location['_latitude'] ?? 0.0;
       final longitude = location['longitude'] ?? location['_longitude'] ?? 0.0;
       return GeoPoint(latitude.toDouble(), longitude.toDouble());
     }
-    
+
     return null;
   }
 
@@ -110,11 +114,13 @@ class AccommodationModel {
       currency: data['currency'] ?? 'VND',
       images: List<String>.from(data['images'] ?? []),
       amenities: List<String>.from(data['amenities'] ?? []),
-      roomTypes: (data['roomTypes'] as List<dynamic>?)
-          ?.map((e) => RoomType.fromMap(e as Map<String, dynamic>))
-          .toList() ?? [],
+      roomTypes:
+          (data['roomTypes'] as List<dynamic>?)
+              ?.map((e) => RoomType.fromMap(e as Map<String, dynamic>))
+              .toList() ??
+          [],
       policy: AccommodationPolicy.fromMap(
-        data['policy'] ?? AccommodationPolicy.defaultPolicy().toMap()
+        data['policy'] ?? AccommodationPolicy.defaultPolicy().toMap(),
       ),
       hostId: data['hostId'] ?? '',
       hostName: data['hostName'] ?? '',

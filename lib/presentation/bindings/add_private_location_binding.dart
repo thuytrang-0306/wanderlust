@@ -4,8 +4,6 @@ import 'package:wanderlust/presentation/controllers/trip/add_private_location_co
 class AddPrivateLocationBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<AddPrivateLocationController>(
-      () => AddPrivateLocationController(),
-    );
+    Get.lazyPut<AddPrivateLocationController>(() => AddPrivateLocationController());
   }
 }

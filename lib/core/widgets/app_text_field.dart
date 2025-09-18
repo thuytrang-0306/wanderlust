@@ -99,9 +99,7 @@ class AppTextField extends StatelessWidget {
       onChanged: onChanged,
       suffixIcon: IconButton(
         icon: Icon(
-          isPasswordVisible
-              ? Icons.visibility_outlined
-              : Icons.visibility_off_outlined,
+          isPasswordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
           color: AppColors.textTertiary,
           size: 20.sp,
         ),
@@ -171,11 +169,7 @@ class AppTextField extends StatelessWidget {
       onChanged: onChanged,
       onFieldSubmitted: onFieldSubmitted,
       textInputAction: TextInputAction.search,
-      prefixIcon: Icon(
-        Icons.search,
-        color: AppColors.textTertiary,
-        size: 20.sp,
-      ),
+      prefixIcon: Icon(Icons.search, color: AppColors.textTertiary, size: 20.sp),
       suffixIcon: suffixIcon,
     );
   }
@@ -226,23 +220,16 @@ class AppTextField extends StatelessWidget {
       ),
       decoration: InputDecoration(
         labelText: label.isNotEmpty ? label : null,
-        labelStyle: AppTypography.bodyM.copyWith(
-          color: AppColors.textSecondary,
-          fontSize: 14.sp,
-        ),
+        labelStyle: AppTypography.bodyM.copyWith(color: AppColors.textSecondary, fontSize: 14.sp),
         hintText: hintText,
         hintStyle: AppTypography.bodyM.copyWith(
           color: AppColors.textHint.withValues(alpha: 0.5),
           fontSize: 16.sp,
         ),
         errorText: errorText,
-        errorStyle: AppTypography.bodyS.copyWith(
-          color: AppColors.error,
-          fontSize: 12.sp,
-        ),
-        floatingLabelBehavior: label.isNotEmpty 
-            ? FloatingLabelBehavior.always 
-            : FloatingLabelBehavior.never,
+        errorStyle: AppTypography.bodyS.copyWith(color: AppColors.error, fontSize: 12.sp),
+        floatingLabelBehavior:
+            label.isNotEmpty ? FloatingLabelBehavior.always : FloatingLabelBehavior.never,
         floatingLabelStyle: AppTypography.bodyS.copyWith(
           color: AppColors.textSecondary,
           fontSize: 12.sp,
@@ -252,51 +239,30 @@ class AppTextField extends StatelessWidget {
         fillColor: fillColor ?? AppColors.neutral50.withValues(alpha: 0.5),
         suffixIcon: suffixIcon,
         prefixIcon: prefixIcon,
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.s4,
-          vertical: 18.h,
-        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: 18.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.s3),
-          borderSide: BorderSide(
-            color: AppColors.neutral200.withValues(alpha: 0.5),
-            width: 1,
-          ),
+          borderSide: BorderSide(color: AppColors.neutral200.withValues(alpha: 0.5), width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.s3),
-          borderSide: BorderSide(
-            color: AppColors.neutral200.withValues(alpha: 0.5),
-            width: 1,
-          ),
+          borderSide: BorderSide(color: AppColors.neutral200.withValues(alpha: 0.5), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.s3),
-          borderSide: BorderSide(
-            color: AppColors.primary,
-            width: 1.5,
-          ),
+          borderSide: BorderSide(color: AppColors.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.s3),
-          borderSide: BorderSide(
-            color: AppColors.error,
-            width: 1,
-          ),
+          borderSide: BorderSide(color: AppColors.error, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.s3),
-          borderSide: BorderSide(
-            color: AppColors.error,
-            width: 1.5,
-          ),
+          borderSide: BorderSide(color: AppColors.error, width: 1.5),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.s3),
-          borderSide: BorderSide(
-            color: AppColors.neutral200.withValues(alpha: 0.3),
-            width: 1,
-          ),
+          borderSide: BorderSide(color: AppColors.neutral200.withValues(alpha: 0.3), width: 1),
         ),
       ),
     );

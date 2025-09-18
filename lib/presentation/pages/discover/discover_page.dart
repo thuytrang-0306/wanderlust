@@ -26,47 +26,47 @@ class DiscoverPage extends GetView<DiscoverController> {
               children: [
                 // Header
                 _buildHeader(),
-                
+
                 SizedBox(height: AppSpacing.s4),
-                
+
                 // Hero Banner - Only show if we have content
                 _buildHeroBanner(),
-                
+
                 SizedBox(height: AppSpacing.s5),
-                
+
                 // Search Bar
                 _buildSearchBar(),
-                
+
                 SizedBox(height: AppSpacing.s6),
-                
+
                 // Featured Tours
                 _buildFeaturedTours(),
-                
+
                 SizedBox(height: AppSpacing.s6),
-                
+
                 // Planning Section
                 _buildPlanningSection(),
-                
+
                 SizedBox(height: AppSpacing.s6),
-                
+
                 // Explore by Region
                 _buildExploreByRegion(),
-                
+
                 SizedBox(height: AppSpacing.s6),
-                
+
                 // Combo Tours Section
                 _buildComboToursSection(),
-                
+
                 SizedBox(height: AppSpacing.s6),
-                
+
                 // Recent Blogs
                 _buildRecentBlogs(),
-                
+
                 SizedBox(height: AppSpacing.s6),
-                
+
                 // Popular Destinations
                 _buildPopularDestinations(),
-                
+
                 // Bottom padding
                 SizedBox(height: 100.h),
               ],
@@ -79,7 +79,7 @@ class DiscoverPage extends GetView<DiscoverController> {
 
   Widget _buildHeader() {
     final userProfileController = Get.find<UserProfileController>();
-    
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
       child: Row(
@@ -94,32 +94,23 @@ class DiscoverPage extends GetView<DiscoverController> {
                 height: 40.w,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
-                    width: 2,
-                  ),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 2),
                 ),
                 child: ClipOval(
-                  child: profile?.avatar != null && profile!.avatar!.isNotEmpty
-                      ? AppImage.avatar(
-                          imageData: profile.avatar!,
-                          size: 36,
-                        )
-                      : Container(
-                          color: AppColors.primary.withOpacity(0.1),
-                          child: Icon(
-                            Icons.person,
-                            size: 20.sp,
-                            color: AppColors.primary,
+                  child:
+                      profile?.avatar != null && profile!.avatar!.isNotEmpty
+                          ? AppImage.avatar(imageData: profile.avatar!, size: 36)
+                          : Container(
+                            color: AppColors.primary.withOpacity(0.1),
+                            child: Icon(Icons.person, size: 20.sp, color: AppColors.primary),
                           ),
-                        ),
                 ),
               ),
             );
           }),
-          
+
           SizedBox(width: AppSpacing.s3),
-          
+
           // Greeting
           Expanded(
             child: Column(
@@ -127,9 +118,7 @@ class DiscoverPage extends GetView<DiscoverController> {
               children: [
                 Text(
                   controller.greeting,
-                  style: AppTypography.bodyS.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                  style: AppTypography.bodyS.copyWith(color: AppColors.textSecondary),
                 ),
                 Obx(() {
                   final profile = userProfileController.userProfile.value;
@@ -144,14 +133,10 @@ class DiscoverPage extends GetView<DiscoverController> {
               ],
             ),
           ),
-          
+
           // Notification Icon
           IconButton(
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: AppColors.textPrimary,
-              size: 24.sp,
-            ),
+            icon: Icon(Icons.notifications_outlined, color: AppColors.textPrimary, size: 24.sp),
             onPressed: () => Get.toNamed('/notifications'),
           ),
         ],
@@ -163,7 +148,7 @@ class DiscoverPage extends GetView<DiscoverController> {
     return Obx(() {
       // Show welcome banner if no tours available
       final tours = controller.featuredTours;
-      
+
       if (tours.isEmpty) {
         // Single welcome banner
         return Container(
@@ -174,10 +159,7 @@ class DiscoverPage extends GetView<DiscoverController> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                AppColors.primary,
-                AppColors.primary.withOpacity(0.7),
-              ],
+              colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
             ),
           ),
           child: Stack(
@@ -195,7 +177,7 @@ class DiscoverPage extends GetView<DiscoverController> {
                   ),
                 ),
               ),
-              
+
               // Content
               Padding(
                 padding: EdgeInsets.all(AppSpacing.s5),
@@ -213,9 +195,7 @@ class DiscoverPage extends GetView<DiscoverController> {
                     SizedBox(height: AppSpacing.s3),
                     Text(
                       'Khám phá thế giới cùng chúng tôi',
-                      style: AppTypography.bodyM.copyWith(
-                        color: Colors.white.withOpacity(0.9),
-                      ),
+                      style: AppTypography.bodyM.copyWith(color: Colors.white.withOpacity(0.9)),
                     ),
                     SizedBox(height: AppSpacing.s4),
                     ElevatedButton(
@@ -227,15 +207,11 @@ class DiscoverPage extends GetView<DiscoverController> {
                           horizontal: AppSpacing.s5,
                           vertical: AppSpacing.s3,
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24.r),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
                       ),
                       child: Text(
                         'Lên kế hoạch ngay',
-                        style: AppTypography.bodyM.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTypography.bodyM.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -245,9 +221,9 @@ class DiscoverPage extends GetView<DiscoverController> {
           ),
         );
       }
-      
+
       // Show tour carousel if available
-      return Container(
+      return SizedBox(
         height: 200.h,
         child: Stack(
           children: [
@@ -261,12 +237,13 @@ class DiscoverPage extends GetView<DiscoverController> {
                   margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16.r),
-                    image: tour.images.isNotEmpty
-                        ? DecorationImage(
-                            image: NetworkImage(tour.images.first),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
+                    image:
+                        tour.images.isNotEmpty
+                            ? DecorationImage(
+                              image: NetworkImage(tour.images.first),
+                              fit: BoxFit.cover,
+                            )
+                            : null,
                     color: AppColors.primary.withOpacity(0.8),
                   ),
                   child: Container(
@@ -275,10 +252,7 @@ class DiscoverPage extends GetView<DiscoverController> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.7),
-                        ],
+                        colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
                       ),
                     ),
                     padding: EdgeInsets.all(AppSpacing.s5),
@@ -298,9 +272,7 @@ class DiscoverPage extends GetView<DiscoverController> {
                         SizedBox(height: AppSpacing.s2),
                         Text(
                           '${tour.displayPrice} • ${tour.displayDuration}',
-                          style: AppTypography.bodyM.copyWith(
-                            color: Colors.white.withOpacity(0.9),
-                          ),
+                          style: AppTypography.bodyM.copyWith(color: Colors.white.withOpacity(0.9)),
                         ),
                       ],
                     ),
@@ -308,7 +280,7 @@ class DiscoverPage extends GetView<DiscoverController> {
                 );
               },
             ),
-            
+
             // Page Indicator
             if (tours.length > 1)
               Positioned(
@@ -316,16 +288,18 @@ class DiscoverPage extends GetView<DiscoverController> {
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: Obx(() => AnimatedSmoothIndicator(
-                    activeIndex: controller.currentPage.value,
-                    count: tours.length.clamp(1, 5),
-                    effect: WormEffect(
-                      dotWidth: 8.w,
-                      dotHeight: 8.h,
-                      activeDotColor: Colors.white,
-                      dotColor: Colors.white.withOpacity(0.4),
+                  child: Obx(
+                    () => AnimatedSmoothIndicator(
+                      activeIndex: controller.currentPage.value,
+                      count: tours.length.clamp(1, 5),
+                      effect: WormEffect(
+                        dotWidth: 8.w,
+                        dotHeight: 8.h,
+                        activeDotColor: Colors.white,
+                        dotColor: Colors.white.withOpacity(0.4),
+                      ),
                     ),
-                  )),
+                  ),
                 ),
               ),
           ],
@@ -349,18 +323,12 @@ class DiscoverPage extends GetView<DiscoverController> {
             children: [
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-                child: Icon(
-                  Icons.search,
-                  color: AppColors.textTertiary,
-                  size: 24.sp,
-                ),
+                child: Icon(Icons.search, color: AppColors.textTertiary, size: 24.sp),
               ),
               Expanded(
                 child: Text(
                   'Tìm kiếm địa điểm, tour...',
-                  style: AppTypography.bodyM.copyWith(
-                    color: AppColors.textTertiary,
-                  ),
+                  style: AppTypography.bodyM.copyWith(color: AppColors.textTertiary),
                 ),
               ),
             ],
@@ -373,11 +341,11 @@ class DiscoverPage extends GetView<DiscoverController> {
   Widget _buildFeaturedTours() {
     return Obx(() {
       final tours = controller.featuredTours;
-      
+
       if (tours.isEmpty) {
         return _buildEmptyTours();
       }
-      
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -386,27 +354,20 @@ class DiscoverPage extends GetView<DiscoverController> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Tour nổi bật',
-                  style: AppTypography.h4.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text('Tour nổi bật', style: AppTypography.h4.copyWith(fontWeight: FontWeight.bold)),
                 TextButton(
                   onPressed: controller.onSeeAllTours,
                   child: Text(
                     'Xem tất cả',
-                    style: AppTypography.bodyM.copyWith(
-                      color: AppColors.primary,
-                    ),
+                    style: AppTypography.bodyM.copyWith(color: AppColors.primary),
                   ),
                 ),
               ],
             ),
           ),
-          
+
           SizedBox(height: AppSpacing.s3),
-          
+
           SizedBox(
             height: 220.h,
             child: ListView.builder(
@@ -415,7 +376,7 @@ class DiscoverPage extends GetView<DiscoverController> {
               itemCount: tours.length,
               itemBuilder: (context, index) {
                 final tour = tours[index];
-                
+
                 return GestureDetector(
                   onTap: () => controller.onTourTapped(tour),
                   child: Container(
@@ -439,32 +400,29 @@ class DiscoverPage extends GetView<DiscoverController> {
                         Container(
                           height: 140.h,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(16.r),
-                            ),
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
                             color: AppColors.neutral100,
                           ),
-                          child: tour.images.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(16.r),
+                          child:
+                              tour.images.isNotEmpty
+                                  ? ClipRRect(
+                                    borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+                                    child: AppImage(
+                                      imageData: tour.images.first,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                  : Center(
+                                    child: Icon(
+                                      Icons.image,
+                                      size: 40.sp,
+                                      color: AppColors.neutral400,
+                                    ),
                                   ),
-                                  child: AppImage(
-                                    imageData: tour.images.first,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Center(
-                                  child: Icon(
-                                    Icons.image,
-                                    size: 40.sp,
-                                    color: AppColors.neutral400,
-                                  ),
-                                ),
                         ),
-                        
+
                         // Content
                         Padding(
                           padding: EdgeInsets.all(AppSpacing.s3),
@@ -473,20 +431,14 @@ class DiscoverPage extends GetView<DiscoverController> {
                             children: [
                               Text(
                                 tour.name,
-                                style: AppTypography.bodyL.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: AppTypography.bodyL.copyWith(fontWeight: FontWeight.bold),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               SizedBox(height: AppSpacing.s1),
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.schedule,
-                                    size: 14.sp,
-                                    color: AppColors.textTertiary,
-                                  ),
+                                  Icon(Icons.schedule, size: 14.sp, color: AppColors.textTertiary),
                                   SizedBox(width: 4.w),
                                   Text(
                                     tour.displayDuration,
@@ -524,12 +476,7 @@ class DiscoverPage extends GetView<DiscoverController> {
       margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
       padding: EdgeInsets.all(AppSpacing.s5),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFFE6F5C5),
-            const Color(0xFFD0FCEF),
-          ],
-        ),
+        gradient: LinearGradient(colors: [const Color(0xFFE6F5C5), const Color(0xFFD0FCEF)]),
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Row(
@@ -554,9 +501,7 @@ class DiscoverPage extends GetView<DiscoverController> {
                       horizontal: AppSpacing.s5,
                       vertical: AppSpacing.s3,
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24.r),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
                   ),
                   child: Text(
                     'Bắt đầu',
@@ -569,11 +514,7 @@ class DiscoverPage extends GetView<DiscoverController> {
               ],
             ),
           ),
-          Icon(
-            Icons.map_outlined,
-            size: 80.sp,
-            color: AppColors.primary.withOpacity(0.3),
-          ),
+          Icon(Icons.map_outlined, size: 80.sp, color: AppColors.primary.withOpacity(0.3)),
         ],
       ),
     );
@@ -582,11 +523,11 @@ class DiscoverPage extends GetView<DiscoverController> {
   Widget _buildRecentBlogs() {
     return Obx(() {
       final blogs = controller.recentBlogs;
-      
+
       if (blogs.isEmpty) {
         return _buildEmptyBlogs();
       }
-      
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -594,14 +535,12 @@ class DiscoverPage extends GetView<DiscoverController> {
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
             child: Text(
               'Bài viết gần đây',
-              style: AppTypography.h4.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTypography.h4.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
-          
+
           SizedBox(height: AppSpacing.s3),
-          
+
           SizedBox(
             height: 200.h,
             child: ListView.builder(
@@ -610,7 +549,7 @@ class DiscoverPage extends GetView<DiscoverController> {
               itemCount: blogs.length,
               itemBuilder: (context, index) {
                 final blog = blogs[index];
-                
+
                 return GestureDetector(
                   onTap: () => controller.onBlogTapped(blog),
                   child: Container(
@@ -634,32 +573,29 @@ class DiscoverPage extends GetView<DiscoverController> {
                         Container(
                           height: 120.h,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(12.r),
-                            ),
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
                             color: AppColors.neutral100,
                           ),
-                          child: blog.coverImage.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(12.r),
+                          child:
+                              blog.coverImage.isNotEmpty
+                                  ? ClipRRect(
+                                    borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                                    child: AppImage(
+                                      imageData: blog.coverImage,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                  : Center(
+                                    child: Icon(
+                                      Icons.article,
+                                      size: 40.sp,
+                                      color: AppColors.neutral400,
+                                    ),
                                   ),
-                                  child: AppImage(
-                                    imageData: blog.coverImage,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Center(
-                                  child: Icon(
-                                    Icons.article,
-                                    size: 40.sp,
-                                    color: AppColors.neutral400,
-                                  ),
-                                ),
                         ),
-                        
+
                         // Content
                         Padding(
                           padding: EdgeInsets.all(AppSpacing.s3),
@@ -668,18 +604,14 @@ class DiscoverPage extends GetView<DiscoverController> {
                             children: [
                               Text(
                                 blog.title,
-                                style: AppTypography.bodyM.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: AppTypography.bodyM.copyWith(fontWeight: FontWeight.bold),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               SizedBox(height: AppSpacing.s1),
                               Text(
                                 blog.formattedDate,
-                                style: AppTypography.bodyXS.copyWith(
-                                  color: AppColors.textTertiary,
-                                ),
+                                style: AppTypography.bodyXS.copyWith(color: AppColors.textTertiary),
                               ),
                             ],
                           ),
@@ -699,11 +631,11 @@ class DiscoverPage extends GetView<DiscoverController> {
   Widget _buildPopularDestinations() {
     return Obx(() {
       final destinations = controller.popularDestinations;
-      
+
       if (destinations.isEmpty) {
         return _buildEmptyDestinations();
       }
-      
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -714,23 +646,19 @@ class DiscoverPage extends GetView<DiscoverController> {
               children: [
                 Text(
                   'Điểm đến phổ biến',
-                  style: AppTypography.h4.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.h4.copyWith(fontWeight: FontWeight.bold),
                 ),
                 TextButton(
                   onPressed: controller.onSeeAllDestinations,
                   child: Text(
                     'Xem tất cả',
-                    style: AppTypography.bodyM.copyWith(
-                      color: AppColors.primary,
-                    ),
+                    style: AppTypography.bodyM.copyWith(color: AppColors.primary),
                   ),
                 ),
               ],
             ),
           ),
-          
+
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -738,7 +666,7 @@ class DiscoverPage extends GetView<DiscoverController> {
             itemCount: destinations.length,
             itemBuilder: (context, index) {
               final destination = destinations[index];
-              
+
               return GestureDetector(
                 onTap: () => controller.onDestinationTapped(destination),
                 child: Container(
@@ -761,32 +689,31 @@ class DiscoverPage extends GetView<DiscoverController> {
                         width: 100.w,
                         height: 80.h,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.horizontal(
-                            left: Radius.circular(12.r),
-                          ),
+                          borderRadius: BorderRadius.horizontal(left: Radius.circular(12.r)),
                           color: AppColors.neutral100,
                         ),
-                        child: destination.primaryImage.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.horizontal(
-                                  left: Radius.circular(12.r),
+                        child:
+                            destination.primaryImage.isNotEmpty
+                                ? ClipRRect(
+                                  borderRadius: BorderRadius.horizontal(
+                                    left: Radius.circular(12.r),
+                                  ),
+                                  child: AppImage(
+                                    imageData: destination.primaryImage,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                                : Center(
+                                  child: Icon(
+                                    Icons.place,
+                                    size: 30.sp,
+                                    color: AppColors.neutral400,
+                                  ),
                                 ),
-                                child: AppImage(
-                                  imageData: destination.primaryImage,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : Center(
-                                child: Icon(
-                                  Icons.place,
-                                  size: 30.sp,
-                                  color: AppColors.neutral400,
-                                ),
-                              ),
                       ),
-                      
+
                       // Content
                       Expanded(
                         child: Padding(
@@ -796,16 +723,12 @@ class DiscoverPage extends GetView<DiscoverController> {
                             children: [
                               Text(
                                 destination.name,
-                                style: AppTypography.bodyM.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: AppTypography.bodyM.copyWith(fontWeight: FontWeight.bold),
                               ),
                               SizedBox(height: 4.h),
                               Text(
                                 destination.description,
-                                style: AppTypography.bodyS.copyWith(
-                                  color: AppColors.textTertiary,
-                                ),
+                                style: AppTypography.bodyS.copyWith(color: AppColors.textTertiary),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -834,11 +757,7 @@ class DiscoverPage extends GetView<DiscoverController> {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.explore_outlined,
-            size: 48.sp,
-            color: AppColors.neutral400,
-          ),
+          Icon(Icons.explore_outlined, size: 48.sp, color: AppColors.neutral400),
           SizedBox(height: AppSpacing.s3),
           Text(
             'Khám phá thế giới',
@@ -850,16 +769,14 @@ class DiscoverPage extends GetView<DiscoverController> {
           SizedBox(height: AppSpacing.s2),
           Text(
             'Chưa có điểm đến nào được thêm.\nHãy bắt đầu khám phá ngay!',
-            style: AppTypography.bodyM.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildEmptyTours() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
@@ -870,11 +787,7 @@ class DiscoverPage extends GetView<DiscoverController> {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.tour_outlined,
-            size: 48.sp,
-            color: AppColors.neutral400,
-          ),
+          Icon(Icons.tour_outlined, size: 48.sp, color: AppColors.neutral400),
           SizedBox(height: AppSpacing.s3),
           Text(
             'Chưa có tour nào',
@@ -886,16 +799,14 @@ class DiscoverPage extends GetView<DiscoverController> {
           SizedBox(height: AppSpacing.s2),
           Text(
             'Các tour du lịch sẽ sớm được cập nhật.\nVui lòng quay lại sau!',
-            style: AppTypography.bodyM.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildEmptyBlogs() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
@@ -906,11 +817,7 @@ class DiscoverPage extends GetView<DiscoverController> {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.article_outlined,
-            size: 48.sp,
-            color: AppColors.neutral400,
-          ),
+          Icon(Icons.article_outlined, size: 48.sp, color: AppColors.neutral400),
           SizedBox(height: AppSpacing.s3),
           Text(
             'Chưa có bài viết',
@@ -922,9 +829,7 @@ class DiscoverPage extends GetView<DiscoverController> {
           SizedBox(height: AppSpacing.s2),
           Text(
             'Hãy là người đầu tiên chia sẻ trải nghiệm du lịch!',
-            style: AppTypography.bodyM.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           SizedBox(height: AppSpacing.s4),
@@ -932,27 +837,19 @@ class DiscoverPage extends GetView<DiscoverController> {
             onPressed: () => Get.toNamed('/create-post'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSpacing.s5,
-                vertical: AppSpacing.s3,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24.r),
-              ),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s3),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
             ),
             child: Text(
               'Viết bài ngay',
-              style: AppTypography.bodyM.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTypography.bodyM.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildEmptyRegions() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
@@ -963,11 +860,7 @@ class DiscoverPage extends GetView<DiscoverController> {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.map_outlined,
-            size: 48.sp,
-            color: AppColors.neutral400,
-          ),
+          Icon(Icons.map_outlined, size: 48.sp, color: AppColors.neutral400),
           SizedBox(height: AppSpacing.s3),
           Text(
             'Khám phá theo vùng',
@@ -979,16 +872,14 @@ class DiscoverPage extends GetView<DiscoverController> {
           SizedBox(height: AppSpacing.s2),
           Text(
             'Tính năng đang được phát triển.\nVui lòng quay lại sau!',
-            style: AppTypography.bodyM.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildEmptyCombos() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
@@ -999,11 +890,7 @@ class DiscoverPage extends GetView<DiscoverController> {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.card_giftcard_outlined,
-            size: 48.sp,
-            color: AppColors.neutral400,
-          ),
+          Icon(Icons.card_giftcard_outlined, size: 48.sp, color: AppColors.neutral400),
           SizedBox(height: AppSpacing.s3),
           Text(
             'Combo tour đặc biệt',
@@ -1015,24 +902,22 @@ class DiscoverPage extends GetView<DiscoverController> {
           SizedBox(height: AppSpacing.s2),
           Text(
             'Combo tour giá ưu đãi sẽ sớm ra mắt.\nĐừng bỏ lỡ!',
-            style: AppTypography.bodyM.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildExploreByRegion() {
     return Obx(() {
       final regions = controller.exploreRegions;
-      
+
       if (regions.isEmpty) {
         return _buildEmptyRegions();
       }
-      
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1043,25 +928,21 @@ class DiscoverPage extends GetView<DiscoverController> {
               children: [
                 Text(
                   'Khám phá theo vùng',
-                  style: AppTypography.h4.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.h4.copyWith(fontWeight: FontWeight.bold),
                 ),
                 TextButton(
                   onPressed: controller.onSeeAllRegions,
                   child: Text(
                     'Xem tất cả',
-                    style: AppTypography.bodyM.copyWith(
-                      color: AppColors.primary,
-                    ),
+                    style: AppTypography.bodyM.copyWith(color: AppColors.primary),
                   ),
                 ),
               ],
             ),
           ),
-          
+
           SizedBox(height: AppSpacing.s3),
-          
+
           SizedBox(
             height: 140.h,
             child: ListView.builder(
@@ -1070,7 +951,7 @@ class DiscoverPage extends GetView<DiscoverController> {
               itemCount: regions.length,
               itemBuilder: (context, index) {
                 final region = regions[index];
-                
+
                 return GestureDetector(
                   onTap: () => controller.onRegionTapped(region),
                   child: Container(
@@ -1085,33 +966,29 @@ class DiscoverPage extends GetView<DiscoverController> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.neutral100,
-                            border: Border.all(
-                              color: AppColors.primary.withOpacity(0.2),
-                              width: 2,
-                            ),
+                            border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
                           ),
                           child: ClipOval(
-                            child: region['image'] != null
-                                ? AppImage(
-                                    imageData: region['image'],
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Icon(
-                                    Icons.landscape,
-                                    size: 40.sp,
-                                    color: AppColors.neutral400,
-                                  ),
+                            child:
+                                region['image'] != null
+                                    ? AppImage(
+                                      imageData: region['image'],
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      fit: BoxFit.cover,
+                                    )
+                                    : Icon(
+                                      Icons.landscape,
+                                      size: 40.sp,
+                                      color: AppColors.neutral400,
+                                    ),
                           ),
                         ),
                         SizedBox(height: AppSpacing.s2),
                         Expanded(
                           child: Text(
                             region['name'] ?? '',
-                            style: AppTypography.bodyM.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: AppTypography.bodyM.copyWith(fontWeight: FontWeight.w600),
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1128,15 +1005,15 @@ class DiscoverPage extends GetView<DiscoverController> {
       );
     });
   }
-  
+
   Widget _buildComboToursSection() {
     return Obx(() {
       final combos = controller.comboTours;
-      
+
       if (combos.isEmpty) {
         return _buildEmptyCombos();
       }
-      
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1147,25 +1024,21 @@ class DiscoverPage extends GetView<DiscoverController> {
               children: [
                 Text(
                   'Combo tour nổi bật',
-                  style: AppTypography.h4.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.h4.copyWith(fontWeight: FontWeight.bold),
                 ),
                 TextButton(
                   onPressed: controller.onSeeAllCombos,
                   child: Text(
                     'Xem tất cả',
-                    style: AppTypography.bodyM.copyWith(
-                      color: AppColors.primary,
-                    ),
+                    style: AppTypography.bodyM.copyWith(color: AppColors.primary),
                   ),
                 ),
               ],
             ),
           ),
-          
+
           SizedBox(height: AppSpacing.s3),
-          
+
           SizedBox(
             height: 280.h,
             child: ListView.builder(
@@ -1174,7 +1047,7 @@ class DiscoverPage extends GetView<DiscoverController> {
               itemCount: combos.length,
               itemBuilder: (context, index) {
                 final combo = combos[index];
-                
+
                 return GestureDetector(
                   onTap: () => controller.onComboTourTapped(combo),
                   child: Container(
@@ -1198,33 +1071,30 @@ class DiscoverPage extends GetView<DiscoverController> {
                         Container(
                           height: 160.h,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(16.r),
-                            ),
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
                             color: AppColors.neutral100,
                           ),
                           child: Stack(
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(16.r),
-                                ),
-                                child: combo.images.isNotEmpty
-                                    ? AppImage(
-                                        imageData: combo.images.first,
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Center(
-                                        child: Icon(
-                                          Icons.tour,
-                                          size: 40.sp,
-                                          color: AppColors.neutral400,
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+                                child:
+                                    combo.images.isNotEmpty
+                                        ? AppImage(
+                                          imageData: combo.images.first,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                          fit: BoxFit.cover,
+                                        )
+                                        : Center(
+                                          child: Icon(
+                                            Icons.tour,
+                                            size: 40.sp,
+                                            color: AppColors.neutral400,
+                                          ),
                                         ),
-                                      ),
                               ),
-                              
+
                               // Badge
                               Positioned(
                                 top: AppSpacing.s2,
@@ -1250,7 +1120,7 @@ class DiscoverPage extends GetView<DiscoverController> {
                             ],
                           ),
                         ),
-                        
+
                         // Content
                         Padding(
                           padding: EdgeInsets.all(AppSpacing.s3),
@@ -1259,9 +1129,7 @@ class DiscoverPage extends GetView<DiscoverController> {
                             children: [
                               Text(
                                 combo.name,
-                                style: AppTypography.bodyM.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: AppTypography.bodyM.copyWith(fontWeight: FontWeight.bold),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -1276,7 +1144,7 @@ class DiscoverPage extends GetView<DiscoverController> {
                                   SizedBox(width: 4.w),
                                   Expanded(
                                     child: Text(
-                                      combo.destinations.isNotEmpty 
+                                      combo.destinations.isNotEmpty
                                           ? combo.destinations.join(', ')
                                           : combo.startLocation,
                                       style: AppTypography.bodyS.copyWith(

@@ -55,23 +55,16 @@ class TripModel {
       endDate: (json['endDate'] as Timestamp).toDate(),
       budget: (json['budget'] ?? 0).toDouble(),
       spentAmount: (json['spentAmount'] ?? 0).toDouble(),
-      travelers: (json['travelers'] as List<dynamic>? ?? [])
-          .map((t) => TripTraveler.fromJson(t))
-          .toList(),
+      travelers:
+          (json['travelers'] as List<dynamic>? ?? []).map((t) => TripTraveler.fromJson(t)).toList(),
       status: json['status'] ?? 'planning',
       visibility: json['visibility'] ?? 'private',
       coverImage: json['coverImage'] ?? '',
       notes: json['notes'] ?? '',
       tags: List<String>.from(json['tags'] ?? []),
-      stats: json['stats'] != null 
-          ? TripStats.fromJson(json['stats'])
-          : TripStats.empty(),
-      createdAt: json['createdAt'] != null
-          ? (json['createdAt'] as Timestamp).toDate()
-          : null,
-      updatedAt: json['updatedAt'] != null
-          ? (json['updatedAt'] as Timestamp).toDate()
-          : null,
+      stats: json['stats'] != null ? TripStats.fromJson(json['stats']) : TripStats.empty(),
+      createdAt: json['createdAt'] != null ? (json['createdAt'] as Timestamp).toDate() : null,
+      updatedAt: json['updatedAt'] != null ? (json['updatedAt'] as Timestamp).toDate() : null,
     );
   }
 
@@ -93,16 +86,15 @@ class TripModel {
       'notes': notes,
       'tags': tags,
       'stats': stats.toJson(),
-      'createdAt': createdAt != null
-          ? Timestamp.fromDate(createdAt!)
-          : FieldValue.serverTimestamp(),
+      'createdAt':
+          createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }
 
   // Helper methods
   int get duration => endDate.difference(startDate).inDays + 1;
-  
+
   String get durationText {
     final days = duration;
     if (days == 1) return '1 ngày';
@@ -114,20 +106,20 @@ class TripModel {
   }
 
   double get remainingBudget => budget - spentAmount;
-  
+
   double get budgetProgress => budget > 0 ? (spentAmount / budget) : 0;
-  
+
   bool get isOverBudget => spentAmount > budget;
-  
+
   bool get isOngoing {
     final now = DateTime.now();
     return now.isAfter(startDate) && now.isBefore(endDate);
   }
-  
+
   bool get isUpcoming => DateTime.now().isBefore(startDate);
-  
+
   bool get isPast => DateTime.now().isAfter(endDate);
-  
+
   String get statusDisplay {
     if (status == 'cancelled') return 'Đã hủy';
     if (isOngoing) return 'Đang diễn ra';
@@ -137,7 +129,7 @@ class TripModel {
   }
 
   String get formattedBudget => '${budget.toStringAsFixed(0)}₫';
-  
+
   String get formattedSpent => '${spentAmount.toStringAsFixed(0)}₫';
 }
 
@@ -167,13 +159,7 @@ class TripTraveler {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'email': email,
-      'avatar': avatar,
-      'role': role,
-    };
+    return {'id': id, 'name': name, 'email': email, 'avatar': avatar, 'role': role};
   }
 }
 
@@ -236,9 +222,10 @@ class TripItinerary {
       dayNumber: json['dayNumber'] ?? 1,
       date: (json['date'] as Timestamp).toDate(),
       title: json['title'] ?? '',
-      activities: (json['activities'] as List<dynamic>? ?? [])
-          .map((a) => ItineraryActivity.fromJson(a))
-          .toList(),
+      activities:
+          (json['activities'] as List<dynamic>? ?? [])
+              .map((a) => ItineraryActivity.fromJson(a))
+              .toList(),
     );
   }
 
@@ -360,9 +347,7 @@ class TripExpense {
       notes: json['notes'],
       paidBy: json['paidBy'] ?? '',
       sharedWith: List<String>.from(json['sharedWith'] ?? []),
-      createdAt: json['createdAt'] != null
-          ? (json['createdAt'] as Timestamp).toDate()
-          : null,
+      createdAt: json['createdAt'] != null ? (json['createdAt'] as Timestamp).toDate() : null,
     );
   }
 
@@ -377,9 +362,8 @@ class TripExpense {
       'notes': notes,
       'paidBy': paidBy,
       'sharedWith': sharedWith,
-      'createdAt': createdAt != null
-          ? Timestamp.fromDate(createdAt!)
-          : FieldValue.serverTimestamp(),
+      'createdAt':
+          createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
     };
   }
 

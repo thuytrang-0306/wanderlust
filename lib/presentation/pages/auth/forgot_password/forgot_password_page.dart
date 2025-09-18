@@ -15,7 +15,7 @@ class ForgotPasswordPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ForgotPasswordController());
-    
+
     return Scaffold(
       backgroundColor: AppColors.white,
       resizeToAvoidBottomInset: false,
@@ -23,11 +23,7 @@ class ForgotPasswordPage extends StatelessWidget {
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: AppColors.primary,
-            size: 24.sp,
-          ),
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 24.sp),
           onPressed: controller.navigateBack,
         ),
         title: Text(
@@ -48,7 +44,7 @@ class ForgotPasswordPage extends StatelessWidget {
             child: Column(
               children: [
                 const Spacer(flex: 1),
-                
+
                 // Title with gradient
                 ShaderMask(
                   shaderCallback: (Rect bounds) {
@@ -63,9 +59,9 @@ class ForgotPasswordPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 SizedBox(height: AppSpacing.s4),
-                
+
                 // Subtitle
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
@@ -79,9 +75,9 @@ class ForgotPasswordPage extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                
+
                 const Spacer(flex: 2),
-                
+
                 // Email input
                 AppTextField.email(
                   controller: controller.emailController,
@@ -89,18 +85,20 @@ class ForgotPasswordPage extends StatelessWidget {
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => controller.sendPasswordResetEmail(),
                 ),
-                
+
                 const Spacer(flex: 1),
-                
+
                 // Send button
-                Obx(() => AppButton.primary(
-                  text: 'Gửi',
-                  onPressed: controller.sendPasswordResetEmail,
-                  isLoading: controller.isLoading,
-                )),
-                
+                Obx(
+                  () => AppButton.primary(
+                    text: 'Gửi',
+                    onPressed: controller.sendPasswordResetEmail,
+                    isLoading: controller.isLoading,
+                  ),
+                ),
+
                 const Spacer(flex: 4),
-                
+
                 // Terms and conditions
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
@@ -113,19 +111,18 @@ class ForgotPasswordPage extends StatelessWidget {
                         fontSize: 12.sp,
                       ),
                       children: [
-                        const TextSpan(
-                          text: 'Bằng việc đăng ký, bạn đã đồng ý với\n',
-                        ),
+                        const TextSpan(text: 'Bằng việc đăng ký, bạn đã đồng ý với\n'),
                         TextSpan(
                           text: 'Điều khoản và dịch vụ',
                           style: TextStyle(
                             color: AppColors.primary,
                             decoration: TextDecoration.underline,
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              // Navigate to terms
-                            },
+                          recognizer:
+                              TapGestureRecognizer()
+                                ..onTap = () {
+                                  // Navigate to terms
+                                },
                         ),
                         const TextSpan(text: ' & '),
                         TextSpan(
@@ -134,17 +131,18 @@ class ForgotPasswordPage extends StatelessWidget {
                             color: AppColors.primary,
                             decoration: TextDecoration.underline,
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              // Navigate to privacy policy
-                            },
+                          recognizer:
+                              TapGestureRecognizer()
+                                ..onTap = () {
+                                  // Navigate to privacy policy
+                                },
                         ),
                         const TextSpan(text: ' của ứng dụng'),
                       ],
                     ),
                   ),
                 ),
-                
+
                 SizedBox(height: AppSpacing.s4),
               ],
             ),

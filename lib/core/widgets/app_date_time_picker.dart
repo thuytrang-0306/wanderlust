@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
@@ -37,12 +36,7 @@ class AppDateTimePicker {
                 height: 50.h,
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: AppColors.neutral200,
-                      width: 0.5,
-                    ),
-                  ),
+                  border: Border(bottom: BorderSide(color: AppColors.neutral200, width: 0.5)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -51,9 +45,7 @@ class AppDateTimePicker {
                       onTap: () => Navigator.pop(context),
                       child: Text(
                         'Hủy',
-                        style: AppTypography.bodyL.copyWith(
-                          color: AppColors.neutral500,
-                        ),
+                        style: AppTypography.bodyL.copyWith(color: AppColors.neutral500),
                       ),
                     ),
                     Text(
@@ -142,12 +134,7 @@ class AppDateTimePicker {
                 height: 50.h,
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: AppColors.neutral200,
-                      width: 0.5,
-                    ),
-                  ),
+                  border: Border(bottom: BorderSide(color: AppColors.neutral200, width: 0.5)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -156,9 +143,7 @@ class AppDateTimePicker {
                       onTap: () => Navigator.pop(context),
                       child: Text(
                         'Hủy',
-                        style: AppTypography.bodyL.copyWith(
-                          color: AppColors.neutral500,
-                        ),
+                        style: AppTypography.bodyL.copyWith(color: AppColors.neutral500),
                       ),
                     ),
                     Text(
@@ -199,19 +184,10 @@ class AppDateTimePicker {
                     ),
                     child: CupertinoDatePicker(
                       mode: CupertinoDatePickerMode.time,
-                      initialDateTime: DateTime(
-                        2000,
-                        1,
-                        1,
-                        selectedTime.hour,
-                        selectedTime.minute,
-                      ),
+                      initialDateTime: DateTime(2000, 1, 1, selectedTime.hour, selectedTime.minute),
                       use24hFormat: false,
                       onDateTimeChanged: (DateTime newTime) {
-                        selectedTime = TimeOfDay(
-                          hour: newTime.hour,
-                          minute: newTime.minute,
-                        );
+                        selectedTime = TimeOfDay(hour: newTime.hour, minute: newTime.minute);
                       },
                       backgroundColor: Colors.white,
                     ),
@@ -247,21 +223,14 @@ class AppDateTimePicker {
     // Then pick time
     final time = await showTimePicker(
       context: context,
-      initialTime: initialDateTime != null
-          ? TimeOfDay.fromDateTime(initialDateTime)
-          : TimeOfDay.now(),
+      initialTime:
+          initialDateTime != null ? TimeOfDay.fromDateTime(initialDateTime) : TimeOfDay.now(),
     );
 
     if (time == null) return null;
 
     // Combine date and time
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
+    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 }
 
@@ -330,17 +299,11 @@ class AppDatePickerField extends StatelessWidget {
                         ? DateFormat(dateFormat).format(value!)
                         : (hintText ?? 'Chọn ngày'),
                     style: AppTypography.bodyM.copyWith(
-                      color: value != null
-                          ? AppColors.neutral900
-                          : AppColors.neutral400,
+                      color: value != null ? AppColors.neutral900 : AppColors.neutral400,
                     ),
                   ),
                 ),
-                Icon(
-                  Icons.calendar_today_outlined,
-                  size: 20.sp,
-                  color: AppColors.neutral500,
-                ),
+                Icon(Icons.calendar_today_outlined, size: 20.sp, color: AppColors.neutral500),
               ],
             ),
           ),

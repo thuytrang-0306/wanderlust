@@ -2,25 +2,23 @@ import 'package:get/get.dart';
 import 'package:wanderlust/presentation/pages/community/community_page.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 import 'package:wanderlust/data/services/blog_service.dart';
-import 'package:wanderlust/data/models/blog_post_model.dart';
 import 'package:wanderlust/data/services/accommodation_service.dart';
-import 'package:wanderlust/data/models/accommodation_model.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 
 class CommunityController extends GetxController {
   // Services
   final BlogService _blogService = Get.put(BlogService());
   final AccommodationService _accommodationService = Get.put(AccommodationService());
-  
+
   // Observable lists
   final RxList<PostModel> posts = <PostModel>[].obs;
   final RxList<ReviewModel> reviews = <ReviewModel>[].obs;
   final RxBool isLoading = false.obs;
-  
+
   // User interaction tracking
   final RxSet<String> likedPostIds = <String>{}.obs;
   final RxSet<String> bookmarkedPostIds = <String>{}.obs;
-  
+
   @override
   void onInit() {
     super.onInit();
@@ -28,7 +26,7 @@ class CommunityController extends GetxController {
     _loadRealReviews();
     _trackUserInteractions();
   }
-  
+
   void _trackUserInteractions() {
     // Track liked posts
     _blogService.getUserLikedPosts().listen((likedIds) {
@@ -36,7 +34,7 @@ class CommunityController extends GetxController {
       // Update post models with like status
       _updatePostLikeStatus();
     });
-    
+
     // Track bookmarked posts
     _blogService.getUserBookmarkedPosts().listen((bookmarkedIds) {
       bookmarkedPostIds.value = bookmarkedIds;
@@ -44,7 +42,7 @@ class CommunityController extends GetxController {
       _updatePostBookmarkStatus();
     });
   }
-  
+
   void _updatePostLikeStatus() {
     for (int i = 0; i < posts.length; i++) {
       final post = posts[i];
@@ -65,7 +63,7 @@ class CommunityController extends GetxController {
       }
     }
   }
-  
+
   void _updatePostBookmarkStatus() {
     for (int i = 0; i < posts.length; i++) {
       final post = posts[i];
@@ -86,58 +84,65 @@ class CommunityController extends GetxController {
       }
     }
   }
-  
+
   void _loadRealPosts() {
     try {
       isLoading.value = true;
-      
+
       // Listen to real-time updates from Firestore
-      _blogService.getPublishedPosts(limit: 20).listen((blogPosts) {
-        // Convert BlogPostModel to PostModel for UI
-        posts.value = blogPosts.map((blog) {
-          // Calculate relative time
-          String timeAndLocation = _getRelativeTime(blog.publishedAt ?? blog.createdAt);
-          if (blog.destinations.isNotEmpty) {
-            timeAndLocation += ' · ${blog.destinations.first}';
-          }
-          
-          return PostModel(
-            id: blog.id,
-            userName: blog.authorName,
-            userAvatar: blog.authorAvatar.isEmpty 
-                ? 'https://i.pravatar.cc/150?img=${blog.id.hashCode % 10}'
-                : blog.authorAvatar,
-            timeAndLocation: timeAndLocation,
-            content: '${blog.title}\n${blog.excerpt}',
-            images: [blog.coverImage, ...blog.images].where((img) => img.isNotEmpty).toList(),
-            likeCount: blog.likes,
-            commentCount: blog.commentsCount,
-            isLiked: likedPostIds.contains(blog.id),
-            isBookmarked: bookmarkedPostIds.contains(blog.id)
+      _blogService
+          .getPublishedPosts(limit: 20)
+          .listen(
+            (blogPosts) {
+              // Convert BlogPostModel to PostModel for UI
+              posts.value =
+                  blogPosts.map((blog) {
+                    // Calculate relative time
+                    String timeAndLocation = _getRelativeTime(blog.publishedAt ?? blog.createdAt);
+                    if (blog.destinations.isNotEmpty) {
+                      timeAndLocation += ' · ${blog.destinations.first}';
+                    }
+
+                    return PostModel(
+                      id: blog.id,
+                      userName: blog.authorName,
+                      userAvatar:
+                          blog.authorAvatar.isEmpty
+                              ? 'https://i.pravatar.cc/150?img=${blog.id.hashCode % 10}'
+                              : blog.authorAvatar,
+                      timeAndLocation: timeAndLocation,
+                      content: '${blog.title}\n${blog.excerpt}',
+                      images:
+                          [blog.coverImage, ...blog.images].where((img) => img.isNotEmpty).toList(),
+                      likeCount: blog.likes,
+                      commentCount: blog.commentsCount,
+                      isLiked: likedPostIds.contains(blog.id),
+                      isBookmarked: bookmarkedPostIds.contains(blog.id),
+                    );
+                  }).toList();
+
+              isLoading.value = false;
+            },
+            onError: (error) {
+              LoggerService.e('Error loading posts', error: error);
+              isLoading.value = false;
+              // No fallback - show empty state
+            },
           );
-        }).toList();
-        
-        isLoading.value = false;
-      }, onError: (error) {
-        LoggerService.e('Error loading posts', error: error);
-        isLoading.value = false;
-        // No fallback - show empty state
-      });
-      
     } catch (e) {
       LoggerService.e('Error in _loadRealPosts', error: e);
       isLoading.value = false;
       // No fallback - show empty state
     }
   }
-  
+
   // REMOVED: _loadDemoPosts() - No more demo data
   // REMOVED: _checkAndAddDemoPosts() - No automatic demo creation
-  
+
   String _getRelativeTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    
+
     if (difference.inDays > 7) {
       return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     } else if (difference.inDays > 1) {
@@ -152,37 +157,38 @@ class CommunityController extends GetxController {
       return 'Vừa xong';
     }
   }
-  
+
   void _loadRealReviews() async {
     try {
       // Load featured accommodations as reviews
       final accommodations = await _accommodationService.getFeaturedAccommodations();
-      reviews.value = accommodations.map((acc) {
-        // Format price
-        String priceText = '${(acc.pricePerNight / 1000).toStringAsFixed(0)}.000 VND';
-        
-        return ReviewModel(
-          id: acc.id,
-          name: acc.name,
-          location: acc.city,
-          imageUrl: acc.images.isNotEmpty 
-              ? acc.images.first 
-              : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
-          rating: acc.rating,
-          price: priceText,
-          duration: null, // Accommodations don't have duration
-        );
-      }).toList();
-      
+      reviews.value =
+          accommodations.map((acc) {
+            // Format price
+            String priceText = '${(acc.pricePerNight / 1000).toStringAsFixed(0)}.000 VND';
+
+            return ReviewModel(
+              id: acc.id,
+              name: acc.name,
+              location: acc.city,
+              imageUrl:
+                  acc.images.isNotEmpty
+                      ? acc.images.first
+                      : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+              rating: acc.rating,
+              price: priceText,
+              duration: null, // Accommodations don't have duration
+            );
+          }).toList();
     } catch (e) {
       LoggerService.e('Error in _loadRealReviews', error: e);
       // No fallback - show empty state
     }
   }
-  
+
   // REMOVED: _loadDemoReviews() - No more demo data
   // REMOVED: _checkAndAddDemoAccommodations() - No automatic demo creation
-  
+
   Future<void> toggleLike(String postId) async {
     final index = posts.indexWhere((p) => p.id == postId);
     if (index != -1) {
@@ -200,10 +206,10 @@ class CommunityController extends GetxController {
         isLiked: !post.isLiked,
         isBookmarked: post.isBookmarked,
       );
-      
+
       // Update backend
       final newStatus = await _blogService.toggleLike(postId);
-      
+
       // Update local tracking
       if (newStatus) {
         likedPostIds.add(postId);
@@ -212,7 +218,7 @@ class CommunityController extends GetxController {
       }
     }
   }
-  
+
   Future<void> toggleBookmark(String postId) async {
     final index = posts.indexWhere((p) => p.id == postId);
     if (index != -1) {
@@ -230,10 +236,10 @@ class CommunityController extends GetxController {
         isLiked: post.isLiked,
         isBookmarked: !post.isBookmarked,
       );
-      
+
       // Update backend
       final newStatus = await _blogService.toggleBookmark(postId);
-      
+
       // Update local tracking
       if (newStatus) {
         bookmarkedPostIds.add(postId);
@@ -242,16 +248,16 @@ class CommunityController extends GetxController {
       }
     }
   }
-  
+
   void openComments(String postId) {
     // Navigate to blog detail page
     Get.toNamed(Routes.BLOG_DETAIL, arguments: {'postId': postId});
   }
-  
+
   void createPost() async {
     // Navigate to create post page
     final result = await Get.toNamed(Routes.CREATE_POST);
-    
+
     if (result != null && result is Map<String, dynamic>) {
       // Create post via BlogService
       final post = await _blogService.createPost(
@@ -265,17 +271,13 @@ class CommunityController extends GetxController {
         images: result['images'] ?? [],
         publish: true,
       );
-      
+
       if (post != null) {
-        Get.snackbar(
-          'Thành công',
-          'Đã đăng bài viết mới',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        Get.snackbar('Thành công', 'Đã đăng bài viết mới', snackPosition: SnackPosition.BOTTOM);
       }
     }
   }
-  
+
   void openBookmarks() {
     Get.toNamed('/saved-collections');
   }

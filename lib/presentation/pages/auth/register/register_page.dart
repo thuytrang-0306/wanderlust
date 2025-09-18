@@ -18,7 +18,7 @@ class RegisterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(RegisterController());
-    
+
     return Scaffold(
       backgroundColor: AppColors.white,
       resizeToAvoidBottomInset: false,
@@ -30,12 +30,12 @@ class RegisterPage extends StatelessWidget {
             child: Column(
               children: [
                 SizedBox(height: 40.h),
-                
+
                 // Logo and app name - Smaller size
                 AppLogo.auth(),
-                
+
                 SizedBox(height: AppSpacing.s4),
-                
+
                 // Title
                 Text(
                   'Hãy bắt đầu với việc đăng ký tài khoản',
@@ -46,9 +46,9 @@ class RegisterPage extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const Spacer(),
-                
+
                 // Form section - centered
                 Column(
                   children: [
@@ -60,46 +60,50 @@ class RegisterPage extends StatelessWidget {
                       validator: controller.validateName,
                       textInputAction: TextInputAction.next,
                     ),
-                    
+
                     SizedBox(height: AppSpacing.s4),
-                    
+
                     // Email input
                     AppTextField.email(
                       controller: controller.emailController,
                       validator: controller.validateEmail,
                       textInputAction: TextInputAction.next,
                     ),
-                    
+
                     SizedBox(height: AppSpacing.s4),
-                    
+
                     // Password input
-                    Obx(() => AppTextField.password(
-                      controller: controller.passwordController,
-                      isPasswordVisible: controller.isPasswordVisible.value,
-                      togglePasswordVisibility: controller.togglePasswordVisibility,
-                      validator: controller.validatePassword,
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => controller.register(),
-                    )),
-                    
+                    Obx(
+                      () => AppTextField.password(
+                        controller: controller.passwordController,
+                        isPasswordVisible: controller.isPasswordVisible.value,
+                        togglePasswordVisibility: controller.togglePasswordVisibility,
+                        validator: controller.validatePassword,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => controller.register(),
+                      ),
+                    ),
+
                     SizedBox(height: AppSpacing.s5),
-                    
+
                     // Register button
-                    Obx(() => AppButton.primary(
-                      text: 'Đăng ký',
-                      onPressed: controller.register,
-                      isLoading: controller.isLoading,
-                    )),
+                    Obx(
+                      () => AppButton.primary(
+                        text: 'Đăng ký',
+                        onPressed: controller.register,
+                        isLoading: controller.isLoading,
+                      ),
+                    ),
                   ],
                 ),
-                
+
                 const Spacer(),
-                
+
                 // Or login with - with divider lines
                 DividerWithText.orRegisterWith(),
-                
+
                 SizedBox(height: AppSpacing.s4),
-                
+
                 // Social login buttons
                 SocialLoginButtons(
                   onGooglePressed: controller.signInWithGoogle,
@@ -110,9 +114,9 @@ class RegisterPage extends StatelessWidget {
                     // TODO: Apple login
                   },
                 ),
-                
+
                 SizedBox(height: AppSpacing.s5),
-                
+
                 // Terms and conditions
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
@@ -125,19 +129,18 @@ class RegisterPage extends StatelessWidget {
                         fontSize: 12.sp,
                       ),
                       children: [
-                        const TextSpan(
-                          text: 'Bằng việc đăng ký, bạn đã đồng ý với\n',
-                        ),
+                        const TextSpan(text: 'Bằng việc đăng ký, bạn đã đồng ý với\n'),
                         TextSpan(
                           text: 'Điều khoản và dịch vụ',
                           style: TextStyle(
                             color: AppColors.primary,
                             decoration: TextDecoration.underline,
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              // Navigate to terms
-                            },
+                          recognizer:
+                              TapGestureRecognizer()
+                                ..onTap = () {
+                                  // Navigate to terms
+                                },
                         ),
                         const TextSpan(text: ' & '),
                         TextSpan(
@@ -146,25 +149,24 @@ class RegisterPage extends StatelessWidget {
                             color: AppColors.primary,
                             decoration: TextDecoration.underline,
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              // Navigate to privacy policy
-                            },
+                          recognizer:
+                              TapGestureRecognizer()
+                                ..onTap = () {
+                                  // Navigate to privacy policy
+                                },
                         ),
                         const TextSpan(text: ' của ứng dụng'),
                       ],
                     ),
                   ),
                 ),
-                
+
                 SizedBox(height: AppSpacing.s4),
-                
+
                 // Already have account
                 RichText(
                   text: TextSpan(
-                    style: AppTypography.bodyM.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                    style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
                     children: [
                       const TextSpan(text: 'Bạn đã có tài khoản? '),
                       TextSpan(
@@ -173,13 +175,12 @@ class RegisterPage extends StatelessWidget {
                           color: AppColors.primary,
                           fontWeight: AppTypography.medium,
                         ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = controller.navigateToLogin,
+                        recognizer: TapGestureRecognizer()..onTap = controller.navigateToLogin,
                       ),
                     ],
                   ),
                 ),
-                
+
                 SizedBox(height: 20.h),
               ],
             ),

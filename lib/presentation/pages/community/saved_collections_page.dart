@@ -12,18 +12,14 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
   @override
   Widget build(BuildContext context) {
     Get.lazyPut(() => SavedCollectionsController());
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.chevron_left,
-            color: AppColors.primary,
-            size: 32.sp,
-          ),
+          icon: Icon(Icons.chevron_left, color: AppColors.primary, size: 32.sp),
           onPressed: () => Get.back(),
         ),
         centerTitle: true,
@@ -42,16 +38,9 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
               height: 24.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary,
-                  width: 2,
-                ),
+                border: Border.all(color: AppColors.primary, width: 2),
               ),
-              child: Icon(
-                Icons.add,
-                color: AppColors.primary,
-                size: 16.sp,
-              ),
+              child: Icon(Icons.add, color: AppColors.primary, size: 16.sp),
             ),
             onPressed: controller.createNewCollection,
           ),
@@ -61,7 +50,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
         if (controller.collections.isEmpty) {
           return _buildEmptyState();
         }
-        
+
         return Padding(
           padding: EdgeInsets.all(16.w),
           child: GridView.builder(
@@ -81,7 +70,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
       }),
     );
   }
-  
+
   Widget _buildCollectionCard(CollectionModel collection) {
     return GestureDetector(
       onTap: () => controller.openCollection(collection),
@@ -102,7 +91,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
             children: [
               // Collection Images Collage
               _buildCollageImages(collection.images),
-              
+
               // Gradient overlay
               Positioned(
                 bottom: 0,
@@ -114,15 +103,12 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.7),
-                      ],
+                      colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
                     ),
                   ),
                 ),
               ),
-              
+
               // Collection Name
               Positioned(
                 bottom: 12.h,
@@ -145,21 +131,17 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
       ),
     );
   }
-  
+
   Widget _buildCollageImages(List<String> images) {
     if (images.isEmpty) {
       return Container(
         color: AppColors.neutral200,
         child: Center(
-          child: Icon(
-            Icons.bookmark_outline,
-            color: AppColors.neutral400,
-            size: 40.sp,
-          ),
+          child: Icon(Icons.bookmark_outline, color: AppColors.neutral400, size: 40.sp),
         ),
       );
     }
-    
+
     if (images.length == 1) {
       return CachedNetworkImage(
         imageUrl: images[0],
@@ -168,7 +150,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
         height: double.infinity,
       );
     }
-    
+
     if (images.length == 2) {
       return Row(
         children: [
@@ -189,7 +171,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
         ],
       );
     }
-    
+
     if (images.length == 3) {
       return Column(
         children: [
@@ -223,7 +205,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
         ],
       );
     }
-    
+
     // 4 or more images
     return Column(
       children: [
@@ -258,13 +240,14 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
                 ),
               ),
               Expanded(
-                child: images.length > 3
-                  ? CachedNetworkImage(
-                      imageUrl: images[3],
-                      fit: BoxFit.cover,
-                      height: double.infinity,
-                    )
-                  : Container(color: AppColors.neutral200),
+                child:
+                    images.length > 3
+                        ? CachedNetworkImage(
+                          imageUrl: images[3],
+                          fit: BoxFit.cover,
+                          height: double.infinity,
+                        )
+                        : Container(color: AppColors.neutral200),
               ),
             ],
           ),
@@ -272,7 +255,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
       ],
     );
   }
-  
+
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -280,11 +263,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.bookmark_border_rounded,
-              size: 80.sp,
-              color: AppColors.neutral300,
-            ),
+            Icon(Icons.bookmark_border_rounded, size: 80.sp, color: AppColors.neutral300),
             SizedBox(height: AppSpacing.s4),
             Text(
               'Chưa có bộ sưu tập nào',
@@ -297,10 +276,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
             SizedBox(height: AppSpacing.s2),
             Text(
               'Tạo bộ sưu tập để lưu các bài viết yêu thích',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.neutral500,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: AppColors.neutral500),
               textAlign: TextAlign.center,
             ),
           ],

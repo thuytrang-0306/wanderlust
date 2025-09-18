@@ -7,10 +7,8 @@ import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/widgets/app_text_field.dart';
 import 'package:wanderlust/core/widgets/app_date_time_picker.dart';
 import 'package:wanderlust/presentation/controllers/planning/trip_edit_controller.dart';
-import 'package:wanderlust/core/constants/app_assets.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/data/services/image_upload_service.dart';
-import 'dart:io';
 
 class TripEditPage extends GetView<TripEditController> {
   const TripEditPage({super.key});
@@ -24,7 +22,7 @@ class TripEditPage extends GetView<TripEditController> {
           children: [
             // Header
             _buildHeader(),
-            
+
             // Content
             Expanded(
               child: SingleChildScrollView(
@@ -34,7 +32,7 @@ class TripEditPage extends GetView<TripEditController> {
                     // Illustration
                     _buildIllustration(),
                     SizedBox(height: AppSpacing.s8),
-                    
+
                     // Form fields
                     _buildForm(),
                   ],
@@ -53,12 +51,7 @@ class TripEditPage extends GetView<TripEditController> {
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.neutral100,
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.neutral100, width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -68,25 +61,21 @@ class TripEditPage extends GetView<TripEditController> {
             onTap: () => Get.back(),
             child: Container(
               padding: EdgeInsets.all(AppSpacing.s2),
-              child: Icon(
-                Icons.arrow_back_ios,
-                size: 24.sp,
-                color: AppColors.primary,
+              child: Icon(Icons.arrow_back_ios, size: 24.sp, color: AppColors.primary),
+            ),
+          ),
+
+          // Title
+          Obx(
+            () => Text(
+              controller.isEditMode.value ? 'Chỉnh sửa lịch trình' : 'Tạo lịch trình',
+              style: AppTypography.h4.copyWith(
+                color: AppColors.neutral900,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          
-          // Title
-          Obx(() => Text(
-            controller.isEditMode.value 
-                ? 'Chỉnh sửa lịch trình'
-                : 'Tạo lịch trình',
-            style: AppTypography.h4.copyWith(
-              color: AppColors.neutral900,
-              fontWeight: FontWeight.w600,
-            ),
-          )),
-          
+
           // Save button
           GestureDetector(
             onTap: controller.saveTripPlan,
@@ -109,7 +98,7 @@ class TripEditPage extends GetView<TripEditController> {
   Widget _buildIllustration() {
     return Obx(() {
       final coverImage = controller.coverImage.value;
-      
+
       return GestureDetector(
         onTap: _selectCoverImage,
         child: Container(
@@ -118,15 +107,12 @@ class TripEditPage extends GetView<TripEditController> {
           decoration: BoxDecoration(
             color: AppColors.neutral50,
             borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(
-              color: AppColors.neutral200,
-              width: 1,
-            ),
+            border: Border.all(color: AppColors.neutral200, width: 1),
           ),
           child: Stack(
             children: [
               // Display selected image or placeholder
-              if (coverImage != null && coverImage.isNotEmpty)
+              if (coverImage.isNotEmpty)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20.r),
                   child: AppImage(
@@ -157,16 +143,14 @@ class TripEditPage extends GetView<TripEditController> {
                       SizedBox(height: AppSpacing.s1),
                       Text(
                         'Ảnh sẽ được hiển thị trên lịch trình',
-                        style: AppTypography.bodyS.copyWith(
-                          color: AppColors.neutral500,
-                        ),
+                        style: AppTypography.bodyS.copyWith(color: AppColors.neutral500),
                       ),
                     ],
                   ),
                 ),
-              
+
               // Edit button overlay if image exists
-              if (coverImage != null && coverImage.isNotEmpty)
+              if (coverImage.isNotEmpty)
                 Positioned(
                   top: AppSpacing.s3,
                   right: AppSpacing.s3,
@@ -176,11 +160,7 @@ class TripEditPage extends GetView<TripEditController> {
                       color: Colors.black.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(20.r),
                     ),
-                    child: Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                      size: 20.sp,
-                    ),
+                    child: Icon(Icons.edit, color: Colors.white, size: 20.sp),
                   ),
                 ),
             ],
@@ -189,11 +169,11 @@ class TripEditPage extends GetView<TripEditController> {
       );
     });
   }
-  
+
   Future<void> _selectCoverImage() async {
     final imageUploadService = Get.find<ImageUploadService>();
     final base64Image = await imageUploadService.showImagePickerDialog();
-    
+
     if (base64Image != null) {
       controller.setCoverImage(base64Image);
     }
@@ -204,15 +184,17 @@ class TripEditPage extends GetView<TripEditController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Trip name
-        Obx(() => AppTextField(
-          label: 'Tên lịch trình',
-          hintText: 'Nhập tên lịch trình',
-          controller: controller.tripNameController,
-          onChanged: (value) => controller.updateField('tripName', value),
-          errorText: controller.errors['tripName'],
-        )),
+        Obx(
+          () => AppTextField(
+            label: 'Tên lịch trình',
+            hintText: 'Nhập tên lịch trình',
+            controller: controller.tripNameController,
+            onChanged: (value) => controller.updateField('tripName', value),
+            errorText: controller.errors['tripName'],
+          ),
+        ),
         SizedBox(height: AppSpacing.s5),
-        
+
         // Description
         AppTextField.multiline(
           label: 'Mô tả',
@@ -221,54 +203,60 @@ class TripEditPage extends GetView<TripEditController> {
           maxLines: 3,
         ),
         SizedBox(height: AppSpacing.s5),
-        
+
         // Destination
-        Obx(() => AppTextField(
-          label: 'Điểm đến',
-          hintText: 'Bạn hãy điền điểm đến nhé',
-          controller: controller.destinationController,
-          onChanged: (value) => controller.updateField('destination', value),
-          errorText: controller.errors['destination'],
-        )),
+        Obx(
+          () => AppTextField(
+            label: 'Điểm đến',
+            hintText: 'Bạn hãy điền điểm đến nhé',
+            controller: controller.destinationController,
+            onChanged: (value) => controller.updateField('destination', value),
+            errorText: controller.errors['destination'],
+          ),
+        ),
         SizedBox(height: AppSpacing.s5),
-        
+
         // Date row
         Row(
           children: [
             // Start date
             Expanded(
-              child: Obx(() => AppDatePickerField(
-                label: 'Ngày bắt đầu',
-                value: controller.startDate.value,
-                onChanged: controller.updateStartDate,
-                hintText: '8/1/2025',
-                dateFormat: 'd/M/yyyy',
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-              )),
+              child: Obx(
+                () => AppDatePickerField(
+                  label: 'Ngày bắt đầu',
+                  value: controller.startDate.value,
+                  onChanged: controller.updateStartDate,
+                  hintText: '8/1/2025',
+                  dateFormat: 'd/M/yyyy',
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+                ),
+              ),
             ),
             SizedBox(width: AppSpacing.s4),
-            
+
             // End date
             Expanded(
-              child: Obx(() => AppDatePickerField(
-                label: 'Ngày kết thúc',
-                value: controller.endDate.value,
-                onChanged: controller.updateEndDate,
-                hintText: '12/1/2025',
-                dateFormat: 'd/M/yyyy',
-                firstDate: controller.startDate.value ?? DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-              )),
+              child: Obx(
+                () => AppDatePickerField(
+                  label: 'Ngày kết thúc',
+                  value: controller.endDate.value,
+                  onChanged: controller.updateEndDate,
+                  hintText: '12/1/2025',
+                  dateFormat: 'd/M/yyyy',
+                  firstDate: controller.startDate.value ?? DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+                ),
+              ),
             ),
           ],
         ),
         SizedBox(height: AppSpacing.s5),
-        
+
         // Number of people
         _buildPeopleSelector(),
         SizedBox(height: AppSpacing.s5),
-        
+
         // Budget
         AppTextField(
           label: 'Ngân sách (VND)',
@@ -277,15 +265,15 @@ class TripEditPage extends GetView<TripEditController> {
           keyboardType: TextInputType.number,
         ),
         SizedBox(height: AppSpacing.s5),
-        
+
         // Tags
         _buildTagsSection(),
         SizedBox(height: AppSpacing.s5),
-        
+
         // Visibility
         _buildVisibilitySection(),
         SizedBox(height: AppSpacing.s5),
-        
+
         // Notes
         AppTextField.multiline(
           label: 'Ghi chú',
@@ -297,7 +285,7 @@ class TripEditPage extends GetView<TripEditController> {
       ],
     );
   }
-  
+
   Widget _buildTagsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,41 +298,44 @@ class TripEditPage extends GetView<TripEditController> {
           ),
         ),
         SizedBox(height: 8.h),
-        Obx(() => Wrap(
-          spacing: AppSpacing.s2,
-          runSpacing: AppSpacing.s2,
-          children: controller.availableTags.map((tag) {
-            final isSelected = controller.selectedTags.contains(tag);
-            return GestureDetector(
-              onTap: () => controller.toggleTag(tag),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s3,
-                  vertical: AppSpacing.s2,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.white,
-                  borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(
-                    color: isSelected ? AppColors.primary : AppColors.neutral300,
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  tag,
-                  style: AppTypography.bodyS.copyWith(
-                    color: isSelected ? Colors.white : AppColors.neutral700,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        )),
+        Obx(
+          () => Wrap(
+            spacing: AppSpacing.s2,
+            runSpacing: AppSpacing.s2,
+            children:
+                controller.availableTags.map((tag) {
+                  final isSelected = controller.selectedTags.contains(tag);
+                  return GestureDetector(
+                    onTap: () => controller.toggleTag(tag),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s3,
+                        vertical: AppSpacing.s2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primary : Colors.white,
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : AppColors.neutral300,
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        tag,
+                        style: AppTypography.bodyS.copyWith(
+                          color: isSelected ? Colors.white : AppColors.neutral700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+          ),
+        ),
       ],
     );
   }
-  
+
   Widget _buildVisibilitySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,42 +348,29 @@ class TripEditPage extends GetView<TripEditController> {
           ),
         ),
         SizedBox(height: 8.h),
-        Obx(() => Row(
-          children: [
-            _buildVisibilityOption(
-              'private',
-              Icons.lock_outline,
-              'Riêng tư',
-            ),
-            SizedBox(width: AppSpacing.s3),
-            _buildVisibilityOption(
-              'friends',
-              Icons.people_outline,
-              'Bạn bè',
-            ),
-            SizedBox(width: AppSpacing.s3),
-            _buildVisibilityOption(
-              'public',
-              Icons.public,
-              'Công khai',
-            ),
-          ],
-        )),
+        Obx(
+          () => Row(
+            children: [
+              _buildVisibilityOption('private', Icons.lock_outline, 'Riêng tư'),
+              SizedBox(width: AppSpacing.s3),
+              _buildVisibilityOption('friends', Icons.people_outline, 'Bạn bè'),
+              SizedBox(width: AppSpacing.s3),
+              _buildVisibilityOption('public', Icons.public, 'Công khai'),
+            ],
+          ),
+        ),
       ],
     );
   }
-  
+
   Widget _buildVisibilityOption(String value, IconData icon, String label) {
     final isSelected = controller.selectedVisibility.value == value;
-    
+
     return Expanded(
       child: GestureDetector(
         onTap: () => controller.setVisibility(value),
         child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.s3,
-            vertical: AppSpacing.s3,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s3, vertical: AppSpacing.s3),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white,
             borderRadius: BorderRadius.circular(12.r),
@@ -403,11 +381,7 @@ class TripEditPage extends GetView<TripEditController> {
           ),
           child: Column(
             children: [
-              Icon(
-                icon,
-                size: 24.sp,
-                color: isSelected ? AppColors.primary : AppColors.neutral600,
-              ),
+              Icon(icon, size: 24.sp, color: isSelected ? AppColors.primary : AppColors.neutral600),
               SizedBox(height: 4.h),
               Text(
                 label,
@@ -441,10 +415,7 @@ class TripEditPage extends GetView<TripEditController> {
           decoration: BoxDecoration(
             color: AppColors.neutral50,
             borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(
-              color: AppColors.neutral200,
-              width: 1,
-            ),
+            border: Border.all(color: AppColors.neutral200, width: 1),
           ),
           child: Row(
             children: [
@@ -454,46 +425,34 @@ class TripEditPage extends GetView<TripEditController> {
                 child: Container(
                   width: 36.w,
                   height: 36.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.remove,
-                    color: Colors.white,
-                    size: 20.sp,
-                  ),
+                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  child: Icon(Icons.remove, color: Colors.white, size: 20.sp),
                 ),
               ),
-              
+
               // Number display
               Expanded(
                 child: Center(
-                  child: Obx(() => Text(
-                    controller.numberOfPeople.value.toString(),
-                    style: AppTypography.h3.copyWith(
-                      color: AppColors.neutral900,
-                      fontWeight: FontWeight.w600,
+                  child: Obx(
+                    () => Text(
+                      controller.numberOfPeople.value.toString(),
+                      style: AppTypography.h3.copyWith(
+                        color: AppColors.neutral900,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  )),
+                  ),
                 ),
               ),
-              
+
               // Increase button
               GestureDetector(
                 onTap: controller.increasePeople,
                 child: Container(
                   width: 36.w,
                   height: 36.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 20.sp,
-                  ),
+                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  child: Icon(Icons.add, color: Colors.white, size: 20.sp),
                 ),
               ),
             ],

@@ -27,72 +27,69 @@ class MainNavigationPage extends StatelessWidget {
       const AccountPage(),
     ];
 
-    return Obx(() => Scaffold(
-      body: IndexedStack(
-        index: controller.currentIndex.value,
-        children: pages,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.05),
-              offset: const Offset(0, -2),
-              blurRadius: 10,
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: controller.currentIndex.value,
-          onTap: controller.changeTab,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: AppColors.white,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textTertiary,
-          selectedLabelStyle: AppTypography.bodyXS.copyWith(
-            fontWeight: AppTypography.medium,
-            fontSize: 11.sp,
+    return Obx(
+      () => Scaffold(
+        body: IndexedStack(index: controller.currentIndex.value, children: pages),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.black.withValues(alpha: 0.05),
+                offset: const Offset(0, -2),
+                blurRadius: 10,
+              ),
+            ],
           ),
-          unselectedLabelStyle: AppTypography.bodyXS.copyWith(
-            fontSize: 11.sp,
+          child: BottomNavigationBar(
+            currentIndex: controller.currentIndex.value,
+            onTap: controller.changeTab,
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: AppColors.white,
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: AppColors.textTertiary,
+            selectedLabelStyle: AppTypography.bodyXS.copyWith(
+              fontWeight: AppTypography.medium,
+              fontSize: 11.sp,
+            ),
+            unselectedLabelStyle: AppTypography.bodyXS.copyWith(fontSize: 11.sp),
+            elevation: 0,
+            items: [
+              _buildNavItem(
+                icon: AppAssets.iconTabHome,
+                label: 'Khám phá',
+                index: 0,
+                currentIndex: controller.currentIndex.value,
+              ),
+              _buildNavItem(
+                icon: AppAssets.iconTabCommunity,
+                label: 'Cộng đồng',
+                index: 1,
+                currentIndex: controller.currentIndex.value,
+              ),
+              _buildNavItem(
+                icon: AppAssets.iconTabPlanning,
+                label: 'Lập kế hoạch',
+                index: 2,
+                currentIndex: controller.currentIndex.value,
+              ),
+              _buildNavItem(
+                icon: AppAssets.iconTabNotifications,
+                label: 'Thông báo',
+                index: 3,
+                currentIndex: controller.currentIndex.value,
+              ),
+              _buildNavItem(
+                icon: AppAssets.iconTabAccount,
+                label: 'Tài khoản',
+                index: 4,
+                currentIndex: controller.currentIndex.value,
+              ),
+            ],
           ),
-          elevation: 0,
-          items: [
-            _buildNavItem(
-              icon: AppAssets.iconTabHome,
-              label: 'Khám phá',
-              index: 0,
-              currentIndex: controller.currentIndex.value,
-            ),
-            _buildNavItem(
-              icon: AppAssets.iconTabCommunity,
-              label: 'Cộng đồng',
-              index: 1,
-              currentIndex: controller.currentIndex.value,
-            ),
-            _buildNavItem(
-              icon: AppAssets.iconTabPlanning,
-              label: 'Lập kế hoạch',
-              index: 2,
-              currentIndex: controller.currentIndex.value,
-            ),
-            _buildNavItem(
-              icon: AppAssets.iconTabNotifications,
-              label: 'Thông báo',
-              index: 3,
-              currentIndex: controller.currentIndex.value,
-            ),
-            _buildNavItem(
-              icon: AppAssets.iconTabAccount,
-              label: 'Tài khoản',
-              index: 4,
-              currentIndex: controller.currentIndex.value,
-            ),
-          ],
         ),
       ),
-    ));
+    );
   }
 
   BottomNavigationBarItem _buildNavItem({
@@ -102,7 +99,7 @@ class MainNavigationPage extends StatelessWidget {
     required int currentIndex,
   }) {
     final isSelected = index == currentIndex;
-    
+
     return BottomNavigationBarItem(
       icon: Padding(
         padding: EdgeInsets.only(bottom: 4.h),

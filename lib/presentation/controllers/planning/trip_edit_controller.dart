@@ -13,25 +13,25 @@ class TripEditController extends BaseController {
   // Services
   final TripService _tripService = Get.find<TripService>();
   final DestinationService _destinationService = Get.find<DestinationService>();
-  
+
   // Controllers
   final tripNameController = TextEditingController();
   final descriptionController = TextEditingController();
   final destinationController = TextEditingController();
   final budgetController = TextEditingController();
   final notesController = TextEditingController();
-  
+
   // Form validation is done manually since TripEditPage doesn't use Form widget
-  
+
   // Data
   TripModel? editingTrip;
   final RxList<DestinationModel> availableDestinations = <DestinationModel>[].obs;
   DestinationModel? selectedDestination;
-  
+
   // Date selection - Non-nullable to avoid null issues
   final Rx<DateTime> startDate = DateTime.now().add(const Duration(days: 7)).obs;
   final Rx<DateTime> endDate = DateTime.now().add(const Duration(days: 10)).obs;
-  
+
   // UI State
   final RxBool isSaving = false.obs;
   final RxBool isEditMode = false.obs;
@@ -40,7 +40,7 @@ class TripEditController extends BaseController {
   final RxInt numberOfPeople = 1.obs;
   final RxMap<String, String?> errors = <String, String?>{}.obs;
   final RxString coverImage = ''.obs; // Base64 cover image
-  
+
   // Available tags
   final List<String> availableTags = [
     'Phiêu lưu',
@@ -58,7 +58,7 @@ class TripEditController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    
+
     // Check if editing existing trip
     final args = Get.arguments;
     if (args != null && args['trip'] != null) {
@@ -66,7 +66,7 @@ class TripEditController extends BaseController {
       isEditMode.value = true;
       _loadTripData();
     }
-    
+
     loadDestinations();
   }
 
@@ -82,13 +82,13 @@ class TripEditController extends BaseController {
 
   void _loadTripData() {
     if (editingTrip == null) return;
-    
+
     tripNameController.text = editingTrip!.title;
     descriptionController.text = editingTrip!.description;
     destinationController.text = editingTrip!.destination;
     budgetController.text = editingTrip!.budget > 0 ? editingTrip!.budget.toStringAsFixed(0) : '';
     notesController.text = editingTrip!.notes;
-    
+
     startDate.value = editingTrip!.startDate;
     endDate.value = editingTrip!.endDate;
     selectedVisibility.value = editingTrip!.visibility;
@@ -118,10 +118,10 @@ class TripEditController extends BaseController {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
-    
+
     if (picked != null) {
       startDate.value = picked;
-      
+
       // Adjust end date if needed
       if (endDate.value.isBefore(picked)) {
         endDate.value = picked.add(const Duration(days: 3));
@@ -136,7 +136,7 @@ class TripEditController extends BaseController {
       firstDate: startDate.value,
       lastDate: startDate.value.add(const Duration(days: 365)),
     );
-    
+
     if (picked != null) {
       endDate.value = picked;
     }
@@ -154,9 +154,8 @@ class TripEditController extends BaseController {
     selectedVisibility.value = visibility;
   }
 
-
   int get tripDuration => endDate.value.difference(startDate.value).inDays + 1;
-  
+
   String get durationText {
     final days = tripDuration;
     if (days == 1) return '1 ngày';
@@ -171,7 +170,7 @@ class TripEditController extends BaseController {
   void updateField(String field, String value) {
     // Clear error when user types
     errors[field] = null;
-    
+
     // Validate field
     switch (field) {
       case 'tripName':
@@ -221,7 +220,7 @@ class TripEditController extends BaseController {
   void setCoverImage(String base64Image) {
     coverImage.value = base64Image;
   }
-  
+
   // Save trip plan (alias for saveTrip)
   void saveTripPlan() {
     saveTrip();
@@ -230,75 +229,62 @@ class TripEditController extends BaseController {
   // Update saveTrip to use correct controller name
   Future<void> saveTrip() async {
     LoggerService.i('Starting saveTrip process');
-    
+
     // Clear all errors
     errors.clear();
-    
+
     // Validate all fields
     if (tripNameController.text.trim().isEmpty) {
       errors['tripName'] = 'Vui lòng nhập tên lịch trình';
       LoggerService.w('Validation failed: empty trip name');
-      AppSnackbar.showError(
-        title: 'Lỗi',
-        message: 'Vui lòng nhập tên lịch trình',
-      );
+      AppSnackbar.showError(title: 'Lỗi', message: 'Vui lòng nhập tên lịch trình');
       return;
     }
-    
+
     if (tripNameController.text.trim().length < 3) {
       errors['tripName'] = 'Tên phải có ít nhất 3 ký tự';
       LoggerService.w('Validation failed: trip name too short');
-      AppSnackbar.showError(
-        title: 'Lỗi',
-        message: 'Tên phải có ít nhất 3 ký tự',
-      );
+      AppSnackbar.showError(title: 'Lỗi', message: 'Tên phải có ít nhất 3 ký tự');
       return;
     }
-    
+
     if (destinationController.text.trim().isEmpty) {
       errors['destination'] = 'Vui lòng nhập điểm đến';
       LoggerService.w('Validation failed: empty destination');
-      AppSnackbar.showError(
-        title: 'Lỗi',
-        message: 'Vui lòng nhập điểm đến',
-      );
+      AppSnackbar.showError(title: 'Lỗi', message: 'Vui lòng nhập điểm đến');
       return;
     }
-    
+
     // Validate budget if provided
     if (budgetController.text.isNotEmpty) {
       final budget = double.tryParse(budgetController.text);
       if (budget == null || budget < 0) {
         errors['budget'] = 'Ngân sách không hợp lệ';
         LoggerService.w('Validation failed: invalid budget');
-        AppSnackbar.showError(
-          title: 'Lỗi',
-          message: 'Ngân sách không hợp lệ',
-        );
+        AppSnackbar.showError(title: 'Lỗi', message: 'Ngân sách không hợp lệ');
         return;
       }
     }
-    
+
     LoggerService.i('Validation passed, proceeding with save');
-    
+
     try {
       isSaving.value = true;
-      
+
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        AppSnackbar.showError(
-          title: 'Lỗi',
-          message: 'Vui lòng đăng nhập để tiếp tục',
-        );
+        AppSnackbar.showError(title: 'Lỗi', message: 'Vui lòng đăng nhập để tiếp tục');
         return;
       }
-      
+
       // Use user-selected cover image if available, otherwise try destination image
       String coverImageToSave = coverImage.value;
-      if (coverImageToSave.isEmpty && selectedDestination != null && selectedDestination!.images.isNotEmpty) {
+      if (coverImageToSave.isEmpty &&
+          selectedDestination != null &&
+          selectedDestination!.images.isNotEmpty) {
         coverImageToSave = selectedDestination!.images.first;
       }
-      
+
       if (editingTrip != null) {
         // Update existing trip
         final updates = {
@@ -314,27 +300,21 @@ class TripEditController extends BaseController {
           'tags': selectedTags,
           'coverImage': coverImageToSave,
         };
-        
+
         final success = await _tripService.updateTrip(editingTrip!.id, updates);
-        
+
         if (success) {
-          AppSnackbar.showSuccess(
-            title: 'Thành công',
-            message: 'Đã cập nhật chuyến đi',
-          );
+          AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã cập nhật chuyến đi');
           // Small delay to allow snackbar to show
           await Future.delayed(const Duration(milliseconds: 500));
           Get.back(result: true);
         } else {
-          AppSnackbar.showError(
-            title: 'Lỗi',
-            message: 'Không thể cập nhật chuyến đi',
-          );
+          AppSnackbar.showError(title: 'Lỗi', message: 'Không thể cập nhật chuyến đi');
         }
       } else {
         // Create new trip
         LoggerService.i('Creating new trip');
-        
+
         final newTrip = TripModel(
           id: '',
           userId: user.uid,
@@ -361,33 +341,24 @@ class TripEditController extends BaseController {
           tags: selectedTags,
           stats: TripStats.empty(),
         );
-        
+
         LoggerService.i('Calling _tripService.createTrip');
         final tripId = await _tripService.createTrip(newTrip);
-        
+
         if (tripId != null) {
           LoggerService.i('Trip created successfully with ID: $tripId');
-          AppSnackbar.showSuccess(
-            title: 'Thành công',
-            message: 'Đã tạo chuyến đi mới',
-          );
+          AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã tạo chuyến đi mới');
           // Small delay to allow snackbar to show
           await Future.delayed(const Duration(milliseconds: 500));
           Get.back(result: true);
         } else {
           LoggerService.e('Failed to create trip - returned null');
-          AppSnackbar.showError(
-            title: 'Lỗi',
-            message: 'Không thể tạo chuyến đi',
-          );
+          AppSnackbar.showError(title: 'Lỗi', message: 'Không thể tạo chuyến đi');
         }
       }
     } catch (e) {
       LoggerService.e('Error saving trip', error: e);
-      AppSnackbar.showError(
-        title: 'Lỗi',
-        message: 'Có lỗi xảy ra',
-      );
+      AppSnackbar.showError(title: 'Lỗi', message: 'Có lỗi xảy ra');
     } finally {
       isSaving.value = false;
     }

@@ -8,16 +8,16 @@ class ComboDetailController extends BaseController {
   final RxBool isBookmarked = false.obs;
   final RxBool showFullDescription = false.obs;
   final RxInt selectedDay = 1.obs;
-  
+
   // Combo data from arguments
   Map<String, dynamic> comboData = {};
-  
+
   @override
   void onInit() {
     super.onInit();
     loadComboData();
   }
-  
+
   void loadComboData() {
     // Get data from arguments
     final args = Get.arguments;
@@ -36,31 +36,25 @@ class ComboDetailController extends BaseController {
       };
     }
   }
-  
+
   void toggleBookmark() {
     isBookmarked.value = !isBookmarked.value;
-    
+
     if (isBookmarked.value) {
-      AppSnackbar.showSuccess(
-        message: 'Đã lưu combo tour',
-        position: SnackPosition.BOTTOM,
-      );
+      AppSnackbar.showSuccess(message: 'Đã lưu combo tour', position: SnackPosition.BOTTOM);
     } else {
-      AppSnackbar.showInfo(
-        message: 'Đã bỏ lưu combo tour',
-        position: SnackPosition.BOTTOM,
-      );
+      AppSnackbar.showInfo(message: 'Đã bỏ lưu combo tour', position: SnackPosition.BOTTOM);
     }
   }
-  
+
   void toggleDescription() {
     showFullDescription.value = !showFullDescription.value;
   }
-  
+
   void selectDay(int day) {
     selectedDay.value = day;
   }
-  
+
   void initializeCombo() {
     // Show confirmation dialog
     Get.dialog(
@@ -75,41 +69,39 @@ class ComboDetailController extends BaseController {
             onPressed: () => Get.back(),
             child: Text(
               'Hủy',
-              style: TextStyle(
-                color: Get.theme.colorScheme.onSurface.withOpacity(0.6),
-              ),
+              style: TextStyle(color: Get.theme.colorScheme.onSurface.withOpacity(0.6)),
             ),
           ),
-          TextButton(
-            onPressed: _createTripFromCombo,
-            child: Text('Xác nhận'),
-          ),
+          TextButton(onPressed: _createTripFromCombo, child: Text('Xác nhận')),
         ],
       ),
     );
   }
-  
+
   void _createTripFromCombo() {
     Get.back(); // Close dialog
-    
+
     // Navigate to TripEditPage with combo data
-    Get.toNamed('/trip-edit', arguments: {
-      'isNewTrip': true,
-      'fromCombo': true,
-      'comboData': {
-        'title': comboData['title'],
-        'location': comboData['location'],
-        'duration': comboData['duration'],
-        'itinerary': _generateItineraryFromCombo(),
+    Get.toNamed(
+      '/trip-edit',
+      arguments: {
+        'isNewTrip': true,
+        'fromCombo': true,
+        'comboData': {
+          'title': comboData['title'],
+          'location': comboData['location'],
+          'duration': comboData['duration'],
+          'itinerary': _generateItineraryFromCombo(),
+        },
       },
-    });
-    
+    );
+
     AppSnackbar.showSuccess(
       message: 'Đã tạo lịch trình từ combo tour',
       position: SnackPosition.BOTTOM,
     );
   }
-  
+
   Map<String, dynamic> _generateItineraryFromCombo() {
     // Generate itinerary data from combo
     return {
@@ -124,32 +116,16 @@ class ComboDetailController extends BaseController {
               'type': 'transport',
               'details': 'Vietnam Airlines',
             },
-            {
-              'time': '07:30 - 10:00',
-              'title': 'Nhận phòng khách sạn',
-              'type': 'accommodation',
-            },
+            {'time': '07:30 - 10:00', 'title': 'Nhận phòng khách sạn', 'type': 'accommodation'},
           ],
         },
         {
           'day': 2,
           'title': 'Khám phá Nha Trang',
           'activities': [
-            {
-              'time': '08:00 - 10:00',
-              'title': 'Viếng chùa Long Sơn',
-              'type': 'attraction',
-            },
-            {
-              'time': '10:30 - 12:00',
-              'title': 'Tham quan Tháp Bà Ponagar',
-              'type': 'attraction',
-            },
-            {
-              'time': '14:00 - 17:00',
-              'title': 'Vịnh Nha Trang',
-              'type': 'beach',
-            },
+            {'time': '08:00 - 10:00', 'title': 'Viếng chùa Long Sơn', 'type': 'attraction'},
+            {'time': '10:30 - 12:00', 'title': 'Tham quan Tháp Bà Ponagar', 'type': 'attraction'},
+            {'time': '14:00 - 17:00', 'title': 'Vịnh Nha Trang', 'type': 'beach'},
           ],
         },
       ],

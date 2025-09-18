@@ -7,31 +7,31 @@ import 'package:share_plus/share_plus.dart';
 
 class MyTripsController extends BaseController with GetTickerProviderStateMixin {
   late TabController tabController;
-  
+
   final RxBool isLoadingTrips = false.obs;
   final upcomingTrips = <Map<String, dynamic>>[].obs;
   final ongoingTrips = <Map<String, dynamic>>[].obs;
   final completedTrips = <Map<String, dynamic>>[].obs;
-  
+
   @override
   void onInit() {
     super.onInit();
     tabController = TabController(length: 3, vsync: this);
     loadTrips();
   }
-  
+
   @override
   void onClose() {
     tabController.dispose();
     super.onClose();
   }
-  
+
   void loadTrips() async {
     isLoadingTrips.value = true;
-    
+
     // Simulate API call
     await Future.delayed(const Duration(seconds: 1));
-    
+
     // Mock data
     upcomingTrips.value = [
       {
@@ -57,7 +57,7 @@ class MyTripsController extends BaseController with GetTickerProviderStateMixin 
         'image': '',
       },
     ];
-    
+
     ongoingTrips.value = [
       {
         'id': '3',
@@ -71,7 +71,7 @@ class MyTripsController extends BaseController with GetTickerProviderStateMixin 
         'image': '',
       },
     ];
-    
+
     completedTrips.value = [
       {
         'id': '4',
@@ -96,22 +96,22 @@ class MyTripsController extends BaseController with GetTickerProviderStateMixin 
         'image': '',
       },
     ];
-    
+
     isLoadingTrips.value = false;
   }
-  
+
   void createNewTrip() {
     Get.toNamed('/trip-edit');
   }
-  
+
   void navigateToTripDetail(Map<String, dynamic> trip) {
     Get.toNamed('/trip-detail', arguments: trip);
   }
-  
+
   void editTrip(Map<String, dynamic> trip) {
     Get.toNamed('/trip-edit', arguments: trip);
   }
-  
+
   void shareTrip(Map<String, dynamic> trip) async {
     final shareText = '''
 Chuyến đi: ${trip['name']}
@@ -122,10 +122,10 @@ Số hoạt động: ${trip['activities']}
 
 Chia sẻ từ ứng dụng Wanderlust
 ''';
-    
+
     await Share.share(shareText);
   }
-  
+
   void duplicateTrip(Map<String, dynamic> trip) async {
     final confirm = await AppDialogs.showConfirm(
       title: 'Sao chép chuyến đi',
@@ -133,15 +133,13 @@ Chia sẻ từ ứng dụng Wanderlust
       confirmText: 'Sao chép',
       cancelText: 'Hủy',
     );
-    
+
     if (confirm) {
       // TODO: Implement duplicate logic
-      AppSnackbar.showSuccess(
-        message: 'Đã sao chép chuyến đi thành công',
-      );
+      AppSnackbar.showSuccess(message: 'Đã sao chép chuyến đi thành công');
     }
   }
-  
+
   void archiveTrip(Map<String, dynamic> trip) async {
     final confirm = await AppDialogs.showConfirm(
       title: 'Lưu trữ chuyến đi',
@@ -149,7 +147,7 @@ Chia sẻ từ ứng dụng Wanderlust
       confirmText: 'Lưu trữ',
       cancelText: 'Hủy',
     );
-    
+
     if (confirm) {
       // Remove from current list
       if (trip['status'] == 'upcoming') {
@@ -157,22 +155,21 @@ Chia sẻ từ ứng dụng Wanderlust
       } else if (trip['status'] == 'ongoing') {
         ongoingTrips.removeWhere((t) => t['id'] == trip['id']);
       }
-      
-      AppSnackbar.showSuccess(
-        message: 'Đã lưu trữ chuyến đi',
-      );
+
+      AppSnackbar.showSuccess(message: 'Đã lưu trữ chuyến đi');
     }
   }
-  
+
   void deleteTrip(Map<String, dynamic> trip) async {
     final confirm = await AppDialogs.showConfirm(
       title: 'Xóa chuyến đi',
-      message: 'Bạn có chắc chắn muốn xóa chuyến đi "${trip['name']}"? Hành động này không thể hoàn tác.',
+      message:
+          'Bạn có chắc chắn muốn xóa chuyến đi "${trip['name']}"? Hành động này không thể hoàn tác.',
       confirmText: 'Xóa',
       cancelText: 'Hủy',
       confirmColor: const Color(0xFFF87B7B),
     );
-    
+
     if (confirm) {
       // Remove from appropriate list
       if (trip['status'] == 'upcoming') {
@@ -182,10 +179,8 @@ Chia sẻ từ ứng dụng Wanderlust
       } else if (trip['status'] == 'completed') {
         completedTrips.removeWhere((t) => t['id'] == trip['id']);
       }
-      
-      AppSnackbar.showSuccess(
-        message: 'Đã xóa chuyến đi',
-      );
+
+      AppSnackbar.showSuccess(message: 'Đã xóa chuyến đi');
     }
   }
 }

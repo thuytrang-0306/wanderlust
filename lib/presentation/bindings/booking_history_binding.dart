@@ -4,8 +4,6 @@ import 'package:wanderlust/presentation/controllers/booking/booking_history_cont
 class BookingHistoryBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<BookingHistoryController>(
-      () => BookingHistoryController(),
-    );
+    Get.lazyPut<BookingHistoryController>(() => BookingHistoryController());
   }
 }

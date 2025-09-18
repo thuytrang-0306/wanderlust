@@ -10,20 +10,17 @@ import 'package:wanderlust/core/widgets/app_dialogs.dart';
 
 class ImageService extends GetxService {
   static ImageService get to => Get.find();
-  
+
   final ImagePicker _picker = ImagePicker();
   final FirebaseStorage _storage = FirebaseStorage.instance;
-  
+
   // Image quality settings
   static const int imageQuality = 85;
   static const int maxWidth = 1080;
   static const int maxHeight = 1920;
   static const int thumbnailSize = 300;
-  
-  Future<File?> pickImage({
-    ImageSource source = ImageSource.gallery,
-    bool compress = true,
-  }) async {
+
+  Future<File?> pickImage({ImageSource source = ImageSource.gallery, bool compress = true}) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
@@ -31,7 +28,7 @@ class ImageService extends GetxService {
         maxWidth: compress ? maxWidth.toDouble() : null,
         maxHeight: compress ? maxHeight.toDouble() : null,
       );
-      
+
       if (pickedFile != null) {
         LoggerService.i('Image picked: ${pickedFile.path}');
         return File(pickedFile.path);
@@ -46,11 +43,8 @@ class ImageService extends GetxService {
       return null;
     }
   }
-  
-  Future<List<File>?> pickMultipleImages({
-    bool compress = true,
-    int? limit,
-  }) async {
+
+  Future<List<File>?> pickMultipleImages({bool compress = true, int? limit}) async {
     try {
       final List<XFile> pickedFiles = await _picker.pickMultiImage(
         imageQuality: compress ? imageQuality : 100,
@@ -58,7 +52,7 @@ class ImageService extends GetxService {
         maxHeight: compress ? maxHeight.toDouble() : null,
         limit: limit,
       );
-      
+
       if (pickedFiles.isNotEmpty) {
         LoggerService.i('${pickedFiles.length} images picked');
         return pickedFiles.map((file) => File(file.path)).toList();
@@ -73,7 +67,7 @@ class ImageService extends GetxService {
       return null;
     }
   }
-  
+
   Future<File?> showImageSourceDialog() async {
     final source = await Get.bottomSheet<ImageSource>(
       Container(
@@ -119,13 +113,13 @@ class ImageService extends GetxService {
       ),
       backgroundColor: Colors.transparent,
     );
-    
+
     if (source != null) {
       return pickImage(source: source);
     }
     return null;
   }
-  
+
   Future<File?> compressImage(
     File file, {
     int quality = imageQuality,
@@ -137,7 +131,7 @@ class ImageService extends GetxService {
         path.extension(file.path),
         '_compressed${path.extension(file.path)}',
       );
-      
+
       final XFile? result = await FlutterImageCompress.compressAndGetFile(
         file.absolute.path,
         targetPath,
@@ -145,16 +139,16 @@ class ImageService extends GetxService {
         minWidth: minWidth ?? maxWidth,
         minHeight: minHeight ?? maxHeight,
       );
-      
+
       if (result != null) {
         final compressedFile = File(result.path);
         final originalSize = await file.length();
         final compressedSize = await compressedFile.length();
-        
+
         LoggerService.i(
           'Image compressed: ${originalSize ~/ 1024}KB -> ${compressedSize ~/ 1024}KB',
         );
-        
+
         return compressedFile;
       }
       return file;
@@ -163,7 +157,7 @@ class ImageService extends GetxService {
       return file;
     }
   }
-  
+
   Future<String?> uploadImage(
     File file, {
     required String path,
@@ -174,25 +168,25 @@ class ImageService extends GetxService {
       if (showProgress) {
         AppDialogs.showLoading(message: 'Uploading image...');
       }
-      
+
       final String fileName = '${DateTime.now().millisecondsSinceEpoch}_${path.split('/').last}';
       final Reference ref = _storage.ref().child(path).child(fileName);
-      
+
       final UploadTask uploadTask = ref.putFile(file);
-      
+
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
         final progress = snapshot.bytesTransferred / snapshot.totalBytes;
         onProgress?.call(progress);
         LoggerService.d('Upload progress: ${(progress * 100).toStringAsFixed(2)}%');
       });
-      
+
       final TaskSnapshot snapshot = await uploadTask;
       final String downloadUrl = await snapshot.ref.getDownloadURL();
-      
+
       if (showProgress) {
         AppDialogs.hideLoading();
       }
-      
+
       LoggerService.i('Image uploaded successfully: $downloadUrl');
       return downloadUrl;
     } catch (e) {
@@ -207,7 +201,7 @@ class ImageService extends GetxService {
       return null;
     }
   }
-  
+
   Future<List<String>> uploadMultipleImages(
     List<File> files, {
     required String path,
@@ -217,25 +211,21 @@ class ImageService extends GetxService {
       if (showProgress) {
         AppDialogs.showLoading(message: 'Uploading ${files.length} images...');
       }
-      
+
       final List<String> urls = [];
-      
+
       for (int i = 0; i < files.length; i++) {
-        final url = await uploadImage(
-          files[i],
-          path: path,
-          showProgress: false,
-        );
-        
+        final url = await uploadImage(files[i], path: path, showProgress: false);
+
         if (url != null) {
           urls.add(url);
         }
       }
-      
+
       if (showProgress) {
         AppDialogs.hideLoading();
       }
-      
+
       LoggerService.i('Uploaded ${urls.length}/${files.length} images successfully');
       return urls;
     } catch (e) {
@@ -246,7 +236,7 @@ class ImageService extends GetxService {
       return [];
     }
   }
-  
+
   Future<bool> deleteImage(String url) async {
     try {
       final Reference ref = _storage.refFromURL(url);
@@ -258,7 +248,7 @@ class ImageService extends GetxService {
       return false;
     }
   }
-  
+
   Future<File?> cropImage(File file) async {
     // Implement image cropping if needed
     // You can use packages like image_cropper

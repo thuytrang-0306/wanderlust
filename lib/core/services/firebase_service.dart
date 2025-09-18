@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -8,26 +6,26 @@ import 'package:get/get.dart';
 
 class FirebaseService extends GetxService {
   static FirebaseService get to => Get.find();
-  
+
   late FirebaseAuth auth;
   late FirebaseFirestore firestore;
   late FirebaseStorage storage;
   // late FirebaseMessaging messaging;
-  
+
   Future<FirebaseService> init() async {
     // Firebase already initialized in main.dart
     auth = FirebaseAuth.instance;
     firestore = FirebaseFirestore.instance;
     storage = FirebaseStorage.instance;
     // messaging = FirebaseMessaging.instance;
-    
+
     // Temporarily disable messaging for testing
     // TODO: Enable messaging after proper setup
     // await _setupMessaging();
-    
+
     return this;
   }
-  
+
   /* Temporarily disabled - uncomment when firebase_messaging is re-enabled
   Future<void> _setupMessaging() async {
     NotificationSettings settings = await messaging.requestPermission(

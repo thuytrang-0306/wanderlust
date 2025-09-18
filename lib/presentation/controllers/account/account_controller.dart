@@ -16,26 +16,26 @@ import 'package:wanderlust/presentation/controllers/account/user_profile_control
 class AccountController extends GetxController {
   final UserProfileService _profileService = Get.find<UserProfileService>();
   final UnifiedImageService _imageService = Get.find<UnifiedImageService>();
-  
+
   // User profile data - sync with UserProfileController
   final Rxn<UserProfileModel> userProfile = Rxn<UserProfileModel>();
   final Rxn<Uint8List> avatarBytes = Rxn<Uint8List>();
   final RxBool isLoadingAvatar = false.obs;
-  
+
   // Getters for compatibility
   String get userName => userProfile.value?.displayName ?? 'User';
   String get userEmail => userProfile.value?.email ?? '';
   bool get hasAvatar => avatarBytes.value != null;
-  
+
   // Settings
   final RxBool notificationsEnabled = true.obs;
   final RxBool darkModeEnabled = false.obs;
-  
+
   @override
   void onInit() {
     super.onInit();
     _loadUserData();
-    
+
     // Stream profile changes for real-time updates
     _profileService.streamCurrentUserProfile().listen((profile) {
       if (profile != null) {
@@ -44,12 +44,12 @@ class AccountController extends GetxController {
       }
     });
   }
-  
+
   void _loadUserData() async {
     try {
       // Load profile from Firestore
       final profile = await _profileService.getCurrentUserProfile();
-      
+
       if (profile != null) {
         userProfile.value = profile;
         _loadAvatarBytes(profile);
@@ -58,7 +58,7 @@ class AccountController extends GetxController {
         await _profileService.initializeNewUserProfile();
         _loadUserData(); // Reload after initialization
       }
-      
+
       // Load settings from local storage with defaults
       final savedNotifications = StorageService.to.read('notifications_enabled');
       if (savedNotifications != null) {
@@ -72,7 +72,7 @@ class AccountController extends GetxController {
       LoggerService.e('Error loading user data', error: e);
     }
   }
-  
+
   void _loadAvatarBytes(UserProfileModel profile) {
     // Load avatar bytes if exists (prefer thumbnail for performance)
     if (profile.avatarThumbnail != null) {
@@ -82,7 +82,7 @@ class AccountController extends GetxController {
     } else {
       avatarBytes.value = null;
     }
-    
+
     // Also update UserProfileController if it exists
     if (Get.isRegistered<UserProfileController>()) {
       final userProfileCtrl = Get.find<UserProfileController>();
@@ -90,39 +90,33 @@ class AccountController extends GetxController {
       userProfileCtrl.update();
     }
   }
-  
+
   void changeAvatar() async {
     try {
       // Show source selection dialog
       final source = await _showImageSourceDialog();
       if (source == null) return;
-      
+
       isLoadingAvatar.value = true;
       AppSnackbar.showInfo(message: 'Đang xử lý ảnh...');
-      
+
       // Update avatar using UserProfileService
       final success = await _profileService.updateAvatar(source);
-      
+
       if (success) {
         // Profile will be updated via stream
-        AppSnackbar.showSuccess(
-          message: 'Cập nhật ảnh đại diện thành công!',
-        );
+        AppSnackbar.showSuccess(message: 'Cập nhật ảnh đại diện thành công!');
       } else {
-        AppSnackbar.showError(
-          message: 'Không thể cập nhật ảnh đại diện',
-        );
+        AppSnackbar.showError(message: 'Không thể cập nhật ảnh đại diện');
       }
     } catch (e) {
       LoggerService.e('Error changing avatar', error: e);
-      AppSnackbar.showError(
-        message: 'Có lỗi xảy ra',
-      );
+      AppSnackbar.showError(message: 'Có lỗi xảy ra');
     } finally {
       isLoadingAvatar.value = false;
     }
   }
-  
+
   Future<ImageSource?> _showImageSourceDialog() async {
     return await Get.bottomSheet<ImageSource>(
       Container(
@@ -134,10 +128,7 @@ class AccountController extends GetxController {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Chọn nguồn ảnh',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            Text('Chọn nguồn ảnh', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 20),
             ListTile(
               leading: Icon(Icons.camera_alt),
@@ -156,63 +147,55 @@ class AccountController extends GetxController {
       backgroundColor: Colors.transparent,
     );
   }
-  
+
   void toggleNotifications(bool value) {
     notificationsEnabled.value = value;
     StorageService.to.write('notifications_enabled', value);
-    AppSnackbar.showInfo(
-      message: value 
-          ? 'Đã bật thông báo' 
-          : 'Đã tắt thông báo',
-    );
+    AppSnackbar.showInfo(message: value ? 'Đã bật thông báo' : 'Đã tắt thông báo');
   }
-  
+
   void toggleDarkMode(bool value) {
     darkModeEnabled.value = value;
     Get.changeThemeMode(value ? ThemeMode.dark : ThemeMode.light);
-    AppSnackbar.showInfo(
-      message: value 
-          ? 'Đã bật chế độ tối' 
-          : 'Đã tắt chế độ tối',
-    );
+    AppSnackbar.showInfo(message: value ? 'Đã bật chế độ tối' : 'Đã tắt chế độ tối');
   }
-  
+
   void navigateToProfile() {
     Get.toNamed('/user-profile');
   }
-  
+
   void navigateToChangePassword() {
     AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
   }
-  
+
   void navigateToSavedPosts() {
     Get.toNamed('/saved-collections');
   }
-  
+
   void navigateToTripHistory() {
     Get.toNamed('/my-trips');
   }
-  
+
   void navigateToFavorites() {
     AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
   }
-  
+
   void navigateToLanguage() {
     AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
   }
-  
+
   void navigateToHelp() {
     AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
   }
-  
+
   void navigateToPrivacy() {
     AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
   }
-  
+
   void navigateToTerms() {
     AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
   }
-  
+
   void navigateToAbout() {
     AppDialogs.showAlert(
       title: 'Về Wanderlust',
@@ -226,7 +209,7 @@ Build: 2024.1
 © 2024 Wanderlust. All rights reserved.''',
     );
   }
-  
+
   void logout() async {
     // Show confirmation dialog
     final result = await AppDialogs.showConfirm(
@@ -235,32 +218,28 @@ Build: 2024.1
       confirmText: 'Đăng xuất',
       cancelText: 'Hủy',
     );
-    
+
     if (result == true) {
       try {
         AppDialogs.showLoading(message: 'Đang đăng xuất...');
-        
+
         // Sign out from Firebase
         await FirebaseAuth.instance.signOut();
-        
+
         // Clear local storage
         await StorageService.to.clearAll();
-        
+
         // Clear image cache
         _imageService.clearCache();
-        
+
         AppDialogs.hideLoading();
-        
+
         Get.offAllNamed(Routes.LOGIN);
-        AppSnackbar.showSuccess(
-          message: 'Đăng xuất thành công',
-        );
+        AppSnackbar.showSuccess(message: 'Đăng xuất thành công');
       } catch (e) {
         AppDialogs.hideLoading();
         LoggerService.e('Failed to logout', error: e);
-        AppSnackbar.showError(
-          message: 'Không thể đăng xuất',
-        );
+        AppSnackbar.showError(message: 'Không thể đăng xuất');
       }
     }
   }

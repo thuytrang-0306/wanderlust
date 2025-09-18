@@ -8,22 +8,22 @@ import 'package:wanderlust/core/widgets/app_snackbar.dart';
 class BlogDetailController extends BaseController {
   // Services
   final BlogService _blogService = Get.find<BlogService>();
-  
+
   // Observable values
   final RxBool isBookmarked = false.obs;
   final RxBool isLiked = false.obs;
   final RxInt likeCount = 0.obs;
   final RxInt commentCount = 0.obs;
   final RxBool isLoadingData = true.obs;
-  
+
   // Blog data
   final Rx<BlogPostModel?> blogPost = Rx<BlogPostModel?>(null);
   final RxList<BlogComment> comments = <BlogComment>[].obs;
   final RxList<Map<String, dynamic>> suggestions = <Map<String, dynamic>>[].obs;
-  
+
   // Post ID from route arguments
   String? postId;
-  
+
   @override
   void onInit() {
     super.onInit();
@@ -34,7 +34,7 @@ class BlogDetailController extends BaseController {
     } else if (args != null && args is String) {
       postId = args;
     }
-    
+
     if (postId != null) {
       loadBlogData();
       loadComments();
@@ -45,15 +45,15 @@ class BlogDetailController extends BaseController {
     }
     loadSuggestions();
   }
-  
+
   Future<void> loadBlogData() async {
     if (postId == null) return;
-    
+
     try {
       isLoadingData.value = true;
       setLoading();
       final post = await _blogService.getPost(postId!);
-      
+
       if (post != null) {
         blogPost.value = post;
         likeCount.value = post.likes;
@@ -61,70 +61,67 @@ class BlogDetailController extends BaseController {
         // Check if user has liked/bookmarked this post
         await checkUserInteractions();
       } else {
-        AppSnackbar.showError(
-          title: 'Lỗi',
-          message: 'Không tìm thấy bài viết',
-        );
+        AppSnackbar.showError(title: 'Lỗi', message: 'Không tìm thấy bài viết');
       }
     } catch (e) {
       LoggerService.e('Error loading blog post', error: e);
-      AppSnackbar.showError(
-        title: 'Lỗi',
-        message: 'Không thể tải bài viết',
-      );
+      AppSnackbar.showError(title: 'Lỗi', message: 'Không thể tải bài viết');
     } finally {
       isLoadingData.value = false;
       setIdle();
     }
   }
-  
+
   void loadComments() {
     if (postId == null) return;
-    
+
     // Listen to real-time comments
-    _blogService.getPostComments(postId!).listen((commentList) {
-      comments.value = commentList;
-    }, onError: (error) {
-      LoggerService.e('Error loading comments', error: error);
-    });
+    _blogService
+        .getPostComments(postId!)
+        .listen(
+          (commentList) {
+            comments.value = commentList;
+          },
+          onError: (error) {
+            LoggerService.e('Error loading comments', error: error);
+          },
+        );
   }
-  
+
   void loadSuggestions() {
     // TODO: Load real suggestions from AccommodationService or TourService
     // For now, leave empty - no mock data
     suggestions.value = [];
   }
-  
+
   Future<void> toggleBookmark() async {
     if (postId == null) return;
-    
+
     // Optimistic update
     isBookmarked.value = !isBookmarked.value;
-    
+
     // Update in backend
     final success = await _blogService.toggleBookmark(postId!);
-    
+
     if (success != isBookmarked.value) {
       // Backend returned different state
       isBookmarked.value = success;
     }
-    
-    AppSnackbar.showSuccess(
-      message: isBookmarked.value ? 'Đã lưu bài viết' : 'Đã bỏ lưu bài viết',
-    );
+
+    AppSnackbar.showSuccess(message: isBookmarked.value ? 'Đã lưu bài viết' : 'Đã bỏ lưu bài viết');
   }
-  
+
   Future<void> toggleLike() async {
     if (postId == null) return;
-    
+
     // Optimistic update
     final previousState = isLiked.value;
     isLiked.value = !previousState;
     likeCount.value += isLiked.value ? 1 : -1;
-    
+
     // Update in backend
     final newLikeStatus = await _blogService.toggleLike(postId!);
-    
+
     if (newLikeStatus != isLiked.value) {
       // Backend returned different state, update UI
       isLiked.value = newLikeStatus;
@@ -136,50 +133,43 @@ class BlogDetailController extends BaseController {
       }
     }
   }
-  
+
   Future<void> addComment(String comment) async {
     if (postId == null || comment.trim().isEmpty) return;
-    
+
     final commentId = await _blogService.addCommentToPost(postId!, comment.trim());
-    
+
     if (commentId != null) {
       // Comment will appear via stream listener
       commentCount.value++;
-      AppSnackbar.showSuccess(
-        message: 'Đã thêm bình luận',
-      );
+      AppSnackbar.showSuccess(message: 'Đã thêm bình luận');
     } else {
-      AppSnackbar.showError(
-        message: 'Không thể thêm bình luận',
-      );
+      AppSnackbar.showError(message: 'Không thể thêm bình luận');
     }
   }
-  
+
   // Check user interactions
   Future<void> checkUserInteractions() async {
     if (postId == null) return;
-    
+
     try {
       // Check if liked
       isLiked.value = await _blogService.isPostLiked(postId!);
-      
+
       // Check if bookmarked
       isBookmarked.value = await _blogService.isPostBookmarked(postId!);
     } catch (e) {
       LoggerService.e('Error checking user interactions', error: e);
     }
   }
-  
+
   Future<void> shareArticle() async {
     if (postId == null || blogPost.value == null) return;
-    
+
     // Increment share count
     await _blogService.incrementShares(postId!);
-    
+
     // TODO: Implement actual share functionality (share_plus package)
-    AppSnackbar.showInfo(
-      title: 'Chia sẻ',
-      message: 'Tính năng chia sẻ sẽ sớm ra mắt',
-    );
+    AppSnackbar.showInfo(title: 'Chia sẻ', message: 'Tính năng chia sẻ sẽ sớm ra mắt');
   }
 }

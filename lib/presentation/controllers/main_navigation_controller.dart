@@ -8,7 +8,7 @@ import 'package:wanderlust/presentation/controllers/planning/planning_controller
 class MainNavigationController extends BaseController {
   // Current tab index
   final RxInt currentIndex = 0.obs;
-  
+
   // Tab labels
   final List<String> tabLabels = [
     'Khám phá',
@@ -17,7 +17,7 @@ class MainNavigationController extends BaseController {
     'Thông báo',
     'Tài khoản',
   ];
-  
+
   @override
   void onInit() {
     super.onInit();
@@ -25,19 +25,19 @@ class MainNavigationController extends BaseController {
     Get.lazyPut(() => DiscoverController());
     Get.lazyPut(() => PlanningController());
     Get.lazyPut(() => AccountController());
-    
+
     // Put UserProfileController immediately and permanently
     // This ensures it's available for all pages that need user data
     if (!Get.isRegistered<UserProfileController>()) {
       Get.put(UserProfileController(), permanent: true);
     }
   }
-  
+
   // Change tab
   void changeTab(int index) {
     currentIndex.value = index;
   }
-  
+
   // Get current tab label
   String get currentTabLabel => tabLabels[currentIndex.value];
 }

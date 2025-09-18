@@ -9,7 +9,7 @@ class TripService extends GetxService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final _uuid = const Uuid();
-  
+
   // Collections
   static const String _tripsCollection = 'trips';
   static const String _itinerariesCollection = 'itineraries';
@@ -30,9 +30,7 @@ class TripService extends GetxService {
       final tripData = trip.toJson();
       tripData['userId'] = _userId;
 
-      final docRef = await _firestore
-          .collection(_tripsCollection)
-          .add(tripData);
+      final docRef = await _firestore.collection(_tripsCollection).add(tripData);
 
       LoggerService.i('Trip created successfully: ${docRef.id}');
       return docRef.id;
@@ -51,19 +49,15 @@ class TripService extends GetxService {
       }
 
       // Simplified query to avoid index requirement
-      final snapshot = await _firestore
-          .collection(_tripsCollection)
-          .where('userId', isEqualTo: _userId)
-          .get();
+      final snapshot =
+          await _firestore.collection(_tripsCollection).where('userId', isEqualTo: _userId).get();
 
       // Sort locally after fetching
-      final trips = snapshot.docs
-          .map((doc) => TripModel.fromJson(doc.data(), doc.id))
-          .toList();
-      
+      final trips = snapshot.docs.map((doc) => TripModel.fromJson(doc.data(), doc.id)).toList();
+
       // Sort by startDate ascending
       trips.sort((a, b) => a.startDate.compareTo(b.startDate));
-      
+
       return trips;
     } catch (e) {
       LoggerService.e('Error getting user trips', error: e);
@@ -75,30 +69,28 @@ class TripService extends GetxService {
   Future<List<TripModel>> getAllPublicTrips() async {
     try {
       // Get all trips with public visibility
-      final snapshot = await _firestore
-          .collection(_tripsCollection)
-          .where('visibility', isEqualTo: 'public')
-          .orderBy('createdAt', descending: true)
-          .limit(20) // Limit to prevent too much data
-          .get();
+      final snapshot =
+          await _firestore
+              .collection(_tripsCollection)
+              .where('visibility', isEqualTo: 'public')
+              .orderBy('createdAt', descending: true)
+              .limit(20) // Limit to prevent too much data
+              .get();
 
-      final trips = snapshot.docs
-          .map((doc) => TripModel.fromJson(doc.data(), doc.id))
-          .toList();
-      
+      final trips = snapshot.docs.map((doc) => TripModel.fromJson(doc.data(), doc.id)).toList();
+
       // If no public trips, get all trips for now (for testing)
       if (trips.isEmpty) {
-        final allSnapshot = await _firestore
-            .collection(_tripsCollection)
-            .orderBy('createdAt', descending: true)
-            .limit(20)
-            .get();
-            
-        return allSnapshot.docs
-            .map((doc) => TripModel.fromJson(doc.data(), doc.id))
-            .toList();
+        final allSnapshot =
+            await _firestore
+                .collection(_tripsCollection)
+                .orderBy('createdAt', descending: true)
+                .limit(20)
+                .get();
+
+        return allSnapshot.docs.map((doc) => TripModel.fromJson(doc.data(), doc.id)).toList();
       }
-      
+
       return trips;
     } catch (e) {
       LoggerService.e('Error getting public trips', error: e);
@@ -112,17 +104,16 @@ class TripService extends GetxService {
       if (_userId == null) return [];
 
       final now = DateTime.now();
-      final snapshot = await _firestore
-          .collection(_tripsCollection)
-          .where('userId', isEqualTo: _userId)
-          .where('startDate', isGreaterThan: Timestamp.fromDate(now))
-          .orderBy('startDate')
-          .limit(5)
-          .get();
+      final snapshot =
+          await _firestore
+              .collection(_tripsCollection)
+              .where('userId', isEqualTo: _userId)
+              .where('startDate', isGreaterThan: Timestamp.fromDate(now))
+              .orderBy('startDate')
+              .limit(5)
+              .get();
 
-      return snapshot.docs
-          .map((doc) => TripModel.fromJson(doc.data(), doc.id))
-          .toList();
+      return snapshot.docs.map((doc) => TripModel.fromJson(doc.data(), doc.id)).toList();
     } catch (e) {
       LoggerService.e('Error getting upcoming trips', error: e);
       return [];
@@ -135,16 +126,15 @@ class TripService extends GetxService {
       if (_userId == null) return [];
 
       final now = DateTime.now();
-      final snapshot = await _firestore
-          .collection(_tripsCollection)
-          .where('userId', isEqualTo: _userId)
-          .where('startDate', isLessThanOrEqualTo: Timestamp.fromDate(now))
-          .where('endDate', isGreaterThanOrEqualTo: Timestamp.fromDate(now))
-          .get();
+      final snapshot =
+          await _firestore
+              .collection(_tripsCollection)
+              .where('userId', isEqualTo: _userId)
+              .where('startDate', isLessThanOrEqualTo: Timestamp.fromDate(now))
+              .where('endDate', isGreaterThanOrEqualTo: Timestamp.fromDate(now))
+              .get();
 
-      return snapshot.docs
-          .map((doc) => TripModel.fromJson(doc.data(), doc.id))
-          .toList();
+      return snapshot.docs.map((doc) => TripModel.fromJson(doc.data(), doc.id)).toList();
     } catch (e) {
       LoggerService.e('Error getting ongoing trips', error: e);
       return [];
@@ -157,17 +147,16 @@ class TripService extends GetxService {
       if (_userId == null) return [];
 
       final now = DateTime.now();
-      final snapshot = await _firestore
-          .collection(_tripsCollection)
-          .where('userId', isEqualTo: _userId)
-          .where('endDate', isLessThan: Timestamp.fromDate(now))
-          .orderBy('endDate', descending: true)
-          .limit(10)
-          .get();
+      final snapshot =
+          await _firestore
+              .collection(_tripsCollection)
+              .where('userId', isEqualTo: _userId)
+              .where('endDate', isLessThan: Timestamp.fromDate(now))
+              .orderBy('endDate', descending: true)
+              .limit(10)
+              .get();
 
-      return snapshot.docs
-          .map((doc) => TripModel.fromJson(doc.data(), doc.id))
-          .toList();
+      return snapshot.docs.map((doc) => TripModel.fromJson(doc.data(), doc.id)).toList();
     } catch (e) {
       LoggerService.e('Error getting past trips', error: e);
       return [];
@@ -177,10 +166,7 @@ class TripService extends GetxService {
   // Get single trip
   Future<TripModel?> getTrip(String tripId) async {
     try {
-      final doc = await _firestore
-          .collection(_tripsCollection)
-          .doc(tripId)
-          .get();
+      final doc = await _firestore.collection(_tripsCollection).doc(tripId).get();
 
       if (doc.exists && doc.data() != null) {
         return TripModel.fromJson(doc.data()!, doc.id);
@@ -196,11 +182,8 @@ class TripService extends GetxService {
   Future<bool> updateTrip(String tripId, Map<String, dynamic> updates) async {
     try {
       updates['updatedAt'] = FieldValue.serverTimestamp();
-      
-      await _firestore
-          .collection(_tripsCollection)
-          .doc(tripId)
-          .update(updates);
+
+      await _firestore.collection(_tripsCollection).doc(tripId).update(updates);
 
       LoggerService.i('Trip updated successfully: $tripId');
       return true;
@@ -214,27 +197,23 @@ class TripService extends GetxService {
   Future<bool> deleteTrip(String tripId) async {
     try {
       // Delete trip document
-      await _firestore
-          .collection(_tripsCollection)
-          .doc(tripId)
-          .delete();
+      await _firestore.collection(_tripsCollection).doc(tripId).delete();
 
       // Delete all itineraries
-      final itineraries = await _firestore
-          .collection(_itinerariesCollection)
-          .where('tripId', isEqualTo: tripId)
-          .get();
-      
+      final itineraries =
+          await _firestore
+              .collection(_itinerariesCollection)
+              .where('tripId', isEqualTo: tripId)
+              .get();
+
       for (final doc in itineraries.docs) {
         await doc.reference.delete();
       }
 
       // Delete all expenses
-      final expenses = await _firestore
-          .collection(_expensesCollection)
-          .where('tripId', isEqualTo: tripId)
-          .get();
-      
+      final expenses =
+          await _firestore.collection(_expensesCollection).where('tripId', isEqualTo: tripId).get();
+
       for (final doc in expenses.docs) {
         await doc.reference.delete();
       }
@@ -257,13 +236,11 @@ class TripService extends GetxService {
         .where('userId', isEqualTo: _userId)
         .snapshots()
         .map((snapshot) {
-          final trips = snapshot.docs
-              .map((doc) => TripModel.fromJson(doc.data(), doc.id))
-              .toList();
-          
+          final trips = snapshot.docs.map((doc) => TripModel.fromJson(doc.data(), doc.id)).toList();
+
           // Sort locally by startDate
           trips.sort((a, b) => a.startDate.compareTo(b.startDate));
-          
+
           return trips;
         });
   }
@@ -273,9 +250,7 @@ class TripService extends GetxService {
   // Add itinerary day
   Future<String?> addItinerary(TripItinerary itinerary) async {
     try {
-      final docRef = await _firestore
-          .collection(_itinerariesCollection)
-          .add(itinerary.toJson());
+      final docRef = await _firestore.collection(_itinerariesCollection).add(itinerary.toJson());
 
       // Update trip stats
       await _updateTripStats(itinerary.tripId, placesIncrement: 1);
@@ -291,15 +266,14 @@ class TripService extends GetxService {
   // Get trip itineraries
   Future<List<TripItinerary>> getTripItineraries(String tripId) async {
     try {
-      final snapshot = await _firestore
-          .collection(_itinerariesCollection)
-          .where('tripId', isEqualTo: tripId)
-          .orderBy('dayNumber')
-          .get();
+      final snapshot =
+          await _firestore
+              .collection(_itinerariesCollection)
+              .where('tripId', isEqualTo: tripId)
+              .orderBy('dayNumber')
+              .get();
 
-      return snapshot.docs
-          .map((doc) => TripItinerary.fromJson(doc.data(), doc.id))
-          .toList();
+      return snapshot.docs.map((doc) => TripItinerary.fromJson(doc.data(), doc.id)).toList();
     } catch (e) {
       LoggerService.e('Error getting itineraries', error: e);
       return [];
@@ -309,10 +283,7 @@ class TripService extends GetxService {
   // Update itinerary
   Future<bool> updateItinerary(String itineraryId, Map<String, dynamic> updates) async {
     try {
-      await _firestore
-          .collection(_itinerariesCollection)
-          .doc(itineraryId)
-          .update(updates);
+      await _firestore.collection(_itinerariesCollection).doc(itineraryId).update(updates);
 
       LoggerService.i('Itinerary updated successfully: $itineraryId');
       return true;
@@ -325,10 +296,7 @@ class TripService extends GetxService {
   // Delete itinerary
   Future<bool> deleteItinerary(String itineraryId, String tripId) async {
     try {
-      await _firestore
-          .collection(_itinerariesCollection)
-          .doc(itineraryId)
-          .delete();
+      await _firestore.collection(_itinerariesCollection).doc(itineraryId).delete();
 
       // Update trip stats
       await _updateTripStats(tripId, placesIncrement: -1);
@@ -346,9 +314,7 @@ class TripService extends GetxService {
   // Add expense
   Future<String?> addExpense(TripExpense expense) async {
     try {
-      final docRef = await _firestore
-          .collection(_expensesCollection)
-          .add(expense.toJson());
+      final docRef = await _firestore.collection(_expensesCollection).add(expense.toJson());
 
       // Update trip spent amount
       await _updateTripSpentAmount(expense.tripId, expense.amount);
@@ -364,15 +330,14 @@ class TripService extends GetxService {
   // Get trip expenses
   Future<List<TripExpense>> getTripExpenses(String tripId) async {
     try {
-      final snapshot = await _firestore
-          .collection(_expensesCollection)
-          .where('tripId', isEqualTo: tripId)
-          .orderBy('date', descending: true)
-          .get();
+      final snapshot =
+          await _firestore
+              .collection(_expensesCollection)
+              .where('tripId', isEqualTo: tripId)
+              .orderBy('date', descending: true)
+              .get();
 
-      return snapshot.docs
-          .map((doc) => TripExpense.fromJson(doc.data(), doc.id))
-          .toList();
+      return snapshot.docs.map((doc) => TripExpense.fromJson(doc.data(), doc.id)).toList();
     } catch (e) {
       LoggerService.e('Error getting expenses', error: e);
       return [];
@@ -380,12 +345,14 @@ class TripService extends GetxService {
   }
 
   // Update expense
-  Future<bool> updateExpense(String expenseId, Map<String, dynamic> updates, String tripId, double oldAmount) async {
+  Future<bool> updateExpense(
+    String expenseId,
+    Map<String, dynamic> updates,
+    String tripId,
+    double oldAmount,
+  ) async {
     try {
-      await _firestore
-          .collection(_expensesCollection)
-          .doc(expenseId)
-          .update(updates);
+      await _firestore.collection(_expensesCollection).doc(expenseId).update(updates);
 
       // Update trip spent amount if amount changed
       if (updates.containsKey('amount')) {
@@ -404,10 +371,7 @@ class TripService extends GetxService {
   // Delete expense
   Future<bool> deleteExpense(String expenseId, String tripId, double amount) async {
     try {
-      await _firestore
-          .collection(_expensesCollection)
-          .doc(expenseId)
-          .delete();
+      await _firestore.collection(_expensesCollection).doc(expenseId).delete();
 
       // Update trip spent amount
       await _updateTripSpentAmount(tripId, -amount);
@@ -423,7 +387,8 @@ class TripService extends GetxService {
   // === HELPER METHODS ===
 
   // Update trip stats
-  Future<void> _updateTripStats(String tripId, {
+  Future<void> _updateTripStats(
+    String tripId, {
     int? placesIncrement,
     int? photosIncrement,
     int? notesIncrement,
@@ -431,7 +396,7 @@ class TripService extends GetxService {
   }) async {
     try {
       final updates = <String, dynamic>{};
-      
+
       if (placesIncrement != null) {
         updates['stats.placesCount'] = FieldValue.increment(placesIncrement);
       }
@@ -447,10 +412,7 @@ class TripService extends GetxService {
 
       if (updates.isNotEmpty) {
         updates['updatedAt'] = FieldValue.serverTimestamp();
-        await _firestore
-            .collection(_tripsCollection)
-            .doc(tripId)
-            .update(updates);
+        await _firestore.collection(_tripsCollection).doc(tripId).update(updates);
       }
     } catch (e) {
       LoggerService.e('Error updating trip stats', error: e);
@@ -460,10 +422,7 @@ class TripService extends GetxService {
   // Update trip spent amount
   Future<void> _updateTripSpentAmount(String tripId, double amount) async {
     try {
-      await _firestore
-          .collection(_tripsCollection)
-          .doc(tripId)
-          .update({
+      await _firestore.collection(_tripsCollection).doc(tripId).update({
         'spentAmount': FieldValue.increment(amount),
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -488,20 +447,18 @@ class TripService extends GetxService {
       }
 
       // Get all user trips
-      final snapshot = await _firestore
-          .collection(_tripsCollection)
-          .where('userId', isEqualTo: _userId)
-          .get();
+      final snapshot =
+          await _firestore.collection(_tripsCollection).where('userId', isEqualTo: _userId).get();
 
       // Delete each trip
       final batch = _firestore.batch();
       for (final doc in snapshot.docs) {
         batch.delete(doc.reference);
       }
-      
+
       // Commit the batch delete
       await batch.commit();
-      
+
       LoggerService.i('Deleted ${snapshot.docs.length} trips for user $_userId');
       return true;
     } catch (e) {

@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
-import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/presentation/controllers/accommodation/accommodation_detail_controller.dart';
 
 class AccommodationDetailPage extends GetView<AccommodationDetailController> {
@@ -12,7 +11,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
   @override
   Widget build(BuildContext context) {
     Get.lazyPut(() => AccommodationDetailController());
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -24,32 +23,28 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                 // Header image
                 Stack(
                   children: [
-                    Container(
+                    SizedBox(
                       height: 280.h,
                       width: double.infinity,
                       child: Obx(() {
-                        final imageUrl = controller.accommodation.value?.images.isNotEmpty == true
-                            ? controller.accommodation.value!.images.first
-                            : 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800';
-                        
+                        final imageUrl =
+                            controller.accommodation.value?.images.isNotEmpty == true
+                                ? controller.accommodation.value!.images.first
+                                : 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800';
+
                         return CachedNetworkImage(
                           imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: AppColors.neutral200,
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: AppColors.neutral200,
-                            child: Icon(
-                              Icons.image,
-                              size: 50.sp,
-                              color: AppColors.neutral400,
-                            ),
-                          ),
+                          placeholder: (context, url) => Container(color: AppColors.neutral200),
+                          errorWidget:
+                              (context, url, error) => Container(
+                                color: AppColors.neutral200,
+                                child: Icon(Icons.image, size: 50.sp, color: AppColors.neutral400),
+                              ),
                         );
                       }),
                     ),
-                    
+
                     // Header buttons overlay
                     Positioned(
                       top: 0,
@@ -79,7 +74,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                   onPressed: () => Get.back(),
                                 ),
                               ),
-                              
+
                               // Bookmark button
                               Container(
                                 width: 40.w,
@@ -88,19 +83,22 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                   color: Colors.white.withOpacity(0.9),
                                   shape: BoxShape.circle,
                                 ),
-                                child: Obx(() => IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: Icon(
-                                    controller.isBookmarked.value
-                                      ? Icons.bookmark
-                                      : Icons.bookmark_border,
-                                    color: controller.isBookmarked.value
-                                      ? const Color(0xFFFBBF24)
-                                      : Colors.black87,
-                                    size: 24.sp,
+                                child: Obx(
+                                  () => IconButton(
+                                    padding: EdgeInsets.zero,
+                                    icon: Icon(
+                                      controller.isBookmarked.value
+                                          ? Icons.bookmark
+                                          : Icons.bookmark_border,
+                                      color:
+                                          controller.isBookmarked.value
+                                              ? const Color(0xFFFBBF24)
+                                              : Colors.black87,
+                                      size: 24.sp,
+                                    ),
+                                    onPressed: controller.toggleBookmark,
                                   ),
-                                  onPressed: controller.toggleBookmark,
-                                )),
+                                ),
                               ),
                             ],
                           ),
@@ -109,7 +107,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                     ),
                   ],
                 ),
-                
+
                 // Content with curved top
                 Container(
                   transform: Matrix4.translationValues(0, -20.h, 0),
@@ -123,7 +121,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Basic info  
+                      // Basic info
                       Padding(
                         padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 0),
                         child: Column(
@@ -139,49 +137,51 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                 ),
                                 SizedBox(width: 4.w),
                                 Expanded(
-                                  child: Obx(() => Text(
-                                    controller.accommodation.value?.fullAddress ?? 'Đang tải...',
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      color: const Color(0xFF9CA3AF),
+                                  child: Obx(
+                                    () => Text(
+                                      controller.accommodation.value?.fullAddress ?? 'Đang tải...',
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: const Color(0xFF9CA3AF),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  )),
+                                  ),
                                 ),
                                 SizedBox(width: 12.w),
-                                Icon(
-                                  Icons.star,
-                                  size: 16.sp,
-                                  color: const Color(0xFFFBBF24),
-                                ),
+                                Icon(Icons.star, size: 16.sp, color: const Color(0xFFFBBF24)),
                                 SizedBox(width: 4.w),
-                                Obx(() => Text(
-                                  controller.accommodation.value?.rating.toString() ?? '0.0',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: const Color(0xFF374151),
-                                    fontWeight: FontWeight.w600,
+                                Obx(
+                                  () => Text(
+                                    controller.accommodation.value?.rating.toString() ?? '0.0',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: const Color(0xFF374151),
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                )),
+                                ),
                               ],
                             ),
-                            
+
                             SizedBox(height: 8.h),
-                            
+
                             // Name
-                            Obx(() => Text(
-                              controller.accommodation.value?.name ?? 'Đang tải...',
-                              style: TextStyle(
-                                fontSize: 24.sp,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF111827),
+                            Obx(
+                              () => Text(
+                                controller.accommodation.value?.name ?? 'Đang tải...',
+                                style: TextStyle(
+                                  fontSize: 24.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF111827),
+                                ),
                               ),
-                            )),
+                            ),
                           ],
                         ),
                       ),
-                      
+
                       // Description
                       Padding(
                         padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 0),
@@ -197,16 +197,21 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                               ),
                             ),
                             SizedBox(height: 12.h),
-                            Obx(() => Text(
-                              controller.accommodation.value?.description ?? 'Đang tải...',
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: const Color(0xFF6B7280),
-                                height: 1.5,
+                            Obx(
+                              () => Text(
+                                controller.accommodation.value?.description ?? 'Đang tải...',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: const Color(0xFF6B7280),
+                                  height: 1.5,
+                                ),
+                                maxLines: controller.isDescriptionExpanded.value ? null : 3,
+                                overflow:
+                                    controller.isDescriptionExpanded.value
+                                        ? TextOverflow.visible
+                                        : TextOverflow.ellipsis,
                               ),
-                              maxLines: controller.isDescriptionExpanded.value ? null : 3,
-                              overflow: controller.isDescriptionExpanded.value ? TextOverflow.visible : TextOverflow.ellipsis,
-                            )),
+                            ),
                             SizedBox(height: 8.h),
                             GestureDetector(
                               onTap: controller.toggleDescription,
@@ -222,7 +227,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                           ],
                         ),
                       ),
-                      
+
                       // Amenities
                       Padding(
                         padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
@@ -238,46 +243,58 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                               ),
                             ),
                             SizedBox(height: 16.h),
-                            
+
                             // Amenities grid - dynamic
                             Obx(() {
                               final amenities = controller.accommodation.value?.amenities ?? [];
                               if (amenities.isEmpty) {
                                 return Text(
                                   'Đang tải...',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: const Color(0xFF6B7280),
-                                  ),
+                                  style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
                                 );
                               }
-                              
+
                               return Wrap(
                                 spacing: 24.w,
                                 runSpacing: 20.h,
-                                children: amenities.take(6).map((amenity) {
-                                  IconData icon = Icons.check_circle_outline;
-                                  if (amenity.toLowerCase().contains('wifi')) icon = Icons.wifi;
-                                  else if (amenity.toLowerCase().contains('ti vi') || amenity.toLowerCase().contains('tv')) icon = Icons.tv;
-                                  else if (amenity.toLowerCase().contains('bể bơi') || amenity.toLowerCase().contains('hồ bơi')) icon = Icons.pool;
-                                  else if (amenity.toLowerCase().contains('điều hòa') || amenity.toLowerCase().contains('ac')) icon = Icons.ac_unit;
-                                  else if (amenity.toLowerCase().contains('nhà hàng') || amenity.toLowerCase().contains('bữa')) icon = Icons.restaurant;
-                                  else if (amenity.toLowerCase().contains('đỗ xe') || amenity.toLowerCase().contains('parking')) icon = Icons.local_parking;
-                                  else if (amenity.toLowerCase().contains('gym')) icon = Icons.fitness_center;
-                                  else if (amenity.toLowerCase().contains('spa')) icon = Icons.spa;
-                                  else if (amenity.toLowerCase().contains('bar')) icon = Icons.local_bar;
-                                  
-                                  return SizedBox(
-                                    width: 100.w,
-                                    child: _buildAmenityItem(icon, amenity),
-                                  );
-                                }).toList(),
+                                children:
+                                    amenities.take(6).map((amenity) {
+                                      IconData icon = Icons.check_circle_outline;
+                                      if (amenity.toLowerCase().contains('wifi')) {
+                                        icon = Icons.wifi;
+                                      } else if (amenity.toLowerCase().contains('ti vi') ||
+                                          amenity.toLowerCase().contains('tv'))
+                                        icon = Icons.tv;
+                                      else if (amenity.toLowerCase().contains('bể bơi') ||
+                                          amenity.toLowerCase().contains('hồ bơi'))
+                                        icon = Icons.pool;
+                                      else if (amenity.toLowerCase().contains('điều hòa') ||
+                                          amenity.toLowerCase().contains('ac'))
+                                        icon = Icons.ac_unit;
+                                      else if (amenity.toLowerCase().contains('nhà hàng') ||
+                                          amenity.toLowerCase().contains('bữa'))
+                                        icon = Icons.restaurant;
+                                      else if (amenity.toLowerCase().contains('đỗ xe') ||
+                                          amenity.toLowerCase().contains('parking'))
+                                        icon = Icons.local_parking;
+                                      else if (amenity.toLowerCase().contains('gym'))
+                                        icon = Icons.fitness_center;
+                                      else if (amenity.toLowerCase().contains('spa'))
+                                        icon = Icons.spa;
+                                      else if (amenity.toLowerCase().contains('bar'))
+                                        icon = Icons.local_bar;
+
+                                      return SizedBox(
+                                        width: 100.w,
+                                        child: _buildAmenityItem(icon, amenity),
+                                      );
+                                    }).toList(),
                               );
                             }),
                           ],
                         ),
                       ),
-                      
+
                       // Gallery preview
                       Padding(
                         padding: EdgeInsets.fromLTRB(20.w, 24.h, 0, 0),
@@ -296,7 +313,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                               ),
                             ),
                             SizedBox(height: 12.h),
-                            
+
                             // Gallery horizontal scroll
                             SizedBox(
                               height: 80.h,
@@ -313,7 +330,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                     ),
                                   );
                                 }
-                                
+
                                 return ListView.builder(
                                   scrollDirection: Axis.horizontal,
                                   padding: EdgeInsets.only(right: 20.w),
@@ -357,7 +374,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                         ),
                                       );
                                     }
-                                    
+
                                     return Container(
                                       width: 80.w,
                                       margin: EdgeInsets.only(right: 8.w),
@@ -376,7 +393,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                           ],
                         ),
                       ),
-                      
+
                       // Room selection
                       Padding(
                         padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
@@ -385,19 +402,13 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                           children: [
                             Text(
                               'Nhận và Trả phòng',
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: const Color(0xFF6B7280),
-                              ),
+                              style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
                             ),
                             SizedBox(height: 8.h),
-                            
+
                             // Date selection
                             Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 10.h,
-                              ),
+                              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF3F0FF),
                                 borderRadius: BorderRadius.circular(8.r),
@@ -415,33 +426,24 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                 ],
                               ),
                             ),
-                            
+
                             SizedBox(height: 16.h),
-                            
+
                             Text(
                               'Phòng và khách',
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: const Color(0xFF6B7280),
-                              ),
+                              style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
                             ),
                             SizedBox(height: 8.h),
-                            
+
                             // Room and guest selection
                             Row(
                               children: [
                                 // Room count
                                 Expanded(
                                   child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 12.w,
-                                      vertical: 10.h,
-                                    ),
+                                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
                                     decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: const Color(0xFFE5E7EB),
-                                        width: 1,
-                                      ),
+                                      border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
                                       borderRadius: BorderRadius.circular(8.r),
                                     ),
                                     child: Row(
@@ -475,21 +477,15 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                     ),
                                   ),
                                 ),
-                                
+
                                 SizedBox(width: 12.w),
-                                
+
                                 // Guest count
                                 Expanded(
                                   child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 12.w,
-                                      vertical: 10.h,
-                                    ),
+                                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
                                     decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: const Color(0xFFE5E7EB),
-                                        width: 1,
-                                      ),
+                                      border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
                                       borderRadius: BorderRadius.circular(8.r),
                                     ),
                                     child: Row(
@@ -534,7 +530,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                           ],
                         ),
                       ),
-                      
+
                       // Bottom spacing
                       SizedBox(height: 120.h),
                     ],
@@ -543,7 +539,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
               ],
             ),
           ),
-          
+
           // Bottom booking bar
           Positioned(
             bottom: 0,
@@ -564,16 +560,10 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
               child: SafeArea(
                 top: false,
                 child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 20.w,
-                    vertical: 16.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFFB794F4),
-                        AppColors.primary,
-                      ],
+                      colors: [const Color(0xFFB794F4), AppColors.primary],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
@@ -589,23 +579,22 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                         children: [
                           Text(
                             'Giá ước tính:',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: Colors.white.withOpacity(0.9),
-                            ),
+                            style: TextStyle(fontSize: 12.sp, color: Colors.white.withOpacity(0.9)),
                           ),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
                             children: [
-                              Obx(() => Text(
-                                controller.accommodation.value?.displayPrice ?? '0 VND',
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                              Obx(
+                                () => Text(
+                                  controller.accommodation.value?.displayPrice ?? '0 VND',
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              )),
+                              ),
                               Text(
                                 '/đêm',
                                 style: TextStyle(
@@ -617,15 +606,12 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                           ),
                         ],
                       ),
-                      
+
                       // Book button
                       GestureDetector(
                         onTap: controller.bookRoom,
                         child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 24.w,
-                            vertical: 10.h,
-                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20.r),
@@ -650,22 +636,15 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
       ),
     );
   }
-  
+
   Widget _buildAmenityItem(IconData icon, String label) {
     return Column(
       children: [
-        Icon(
-          icon,
-          size: 24.sp,
-          color: AppColors.primary,
-        ),
+        Icon(icon, size: 24.sp, color: AppColors.primary),
         SizedBox(height: 8.h),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: const Color(0xFF6B7280),
-          ),
+          style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280)),
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,

@@ -14,17 +14,17 @@ class PaymentSuccessController extends BaseController {
   late String checkOut;
   late int nights;
   late String totalAmount;
-  
+
   @override
   void onInit() {
     super.onInit();
     loadBookingData();
   }
-  
+
   void loadBookingData() {
     // Get data from arguments or generate mock data
     final args = Get.arguments;
-    
+
     if (args != null && args is Map<String, dynamic>) {
       bookingCode = args['bookingCode'] ?? _generateBookingCode();
       hotelName = args['hotelName'] ?? 'Homestay Sơn Thủy';
@@ -46,24 +46,22 @@ class PaymentSuccessController extends BaseController {
       totalAmount = '480.000';
     }
   }
-  
+
   String _generateBookingCode() {
     // Generate a booking code format: WDL-XXXXXX
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final code = (timestamp % 1000000).toString().padLeft(6, '0');
     return 'WDL-$code';
   }
-  
+
   void viewTicket() {
     // Navigate to ticket detail page or show PDF
-    AppSnackbar.showInfo(
-      message: 'Đang mở vé điện tử...',
-    );
-    
+    AppSnackbar.showInfo(message: 'Đang mở vé điện tử...');
+
     // TODO: Implement ticket view
     // Could open a PDF viewer or navigate to a detailed ticket page
   }
-  
+
   void shareBooking() {
     final shareText = '''
 🎉 Đặt phòng thành công!
@@ -79,22 +77,17 @@ Tổng tiền: $totalAmount VND
 ---
 Đặt phòng qua Wanderlust App
     ''';
-    
-    Share.share(
-      shareText,
-      subject: 'Thông tin đặt phòng - $bookingCode',
-    );
+
+    Share.share(shareText, subject: 'Thông tin đặt phòng - $bookingCode');
   }
-  
+
   void backToHome() {
     // Clear navigation stack and go to main page
     Get.offAllNamed('/main-navigation');
   }
-  
+
   void copyBookingCode() {
     Clipboard.setData(ClipboardData(text: bookingCode));
-    AppSnackbar.showSuccess(
-      message: 'Đã sao chép mã đặt phòng',
-    );
+    AppSnackbar.showSuccess(message: 'Đã sao chép mã đặt phòng');
   }
 }

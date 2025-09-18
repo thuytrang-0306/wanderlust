@@ -13,20 +13,20 @@ class AddPrivateLocationController extends BaseController {
   final TextEditingController addressController = TextEditingController();
   final TextEditingController longitudeController = TextEditingController();
   final TextEditingController latitudeController = TextEditingController();
-  
+
   // Observable values
   final RxString locationName = ''.obs;
   final RxString address = ''.obs;
   final RxString longitude = ''.obs;
   final RxString latitude = ''.obs;
   final RxBool isValid = false.obs;
-  
+
   // Map values
   final RxDouble selectedLat = 10.8231.obs;
   final RxDouble selectedLng = 106.6297.obs;
   final Rx<LocationPoint?> selectedLocation = Rx<LocationPoint?>(null);
   late MapController mapController;
-  
+
   @override
   void onInit() {
     super.onInit();
@@ -35,7 +35,7 @@ class AddPrivateLocationController extends BaseController {
     longitudeController.text = '106.6297';
     latitudeController.text = '10.8231';
   }
-  
+
   @override
   void onClose() {
     nameController.dispose();
@@ -45,47 +45,48 @@ class AddPrivateLocationController extends BaseController {
     mapController.dispose();
     super.onClose();
   }
-  
+
   void updateName(String value) {
     locationName.value = value;
     _validateForm();
   }
-  
+
   void updateAddress(String value) {
     address.value = value;
     _validateForm();
   }
-  
+
   void updateLongitude(String value) {
     longitude.value = value;
     _validateForm();
   }
-  
+
   void updateLatitude(String value) {
     latitude.value = value;
     _validateForm();
   }
-  
+
   void _validateForm() {
-    isValid.value = nameController.text.isNotEmpty &&
-                   addressController.text.isNotEmpty &&
-                   longitudeController.text.isNotEmpty &&
-                   latitudeController.text.isNotEmpty;
+    isValid.value =
+        nameController.text.isNotEmpty &&
+        addressController.text.isNotEmpty &&
+        longitudeController.text.isNotEmpty &&
+        latitudeController.text.isNotEmpty;
   }
-  
+
   void onMapTap(LatLng latLng) {
     // Update selected coordinates
     selectedLat.value = latLng.latitude;
     selectedLng.value = latLng.longitude;
-    
+
     // Update text fields
     latitudeController.text = latLng.latitude.toStringAsFixed(6);
     longitudeController.text = latLng.longitude.toStringAsFixed(6);
-    
+
     // Update observable values
     latitude.value = latLng.latitude.toString();
     longitude.value = latLng.longitude.toString();
-    
+
     // Update selected location
     selectedLocation.value = LocationPoint(
       id: 'selected',
@@ -93,19 +94,16 @@ class AddPrivateLocationController extends BaseController {
       latitude: latLng.latitude,
       longitude: latLng.longitude,
     );
-    
+
     _validateForm();
   }
-  
+
   void saveLocation() {
     if (!isValid.value) {
-      AppSnackbar.showError(
-        title: 'Lỗi',
-        message: 'Vui lòng điền đầy đủ thông tin',
-      );
+      AppSnackbar.showError(title: 'Lỗi', message: 'Vui lòng điền đầy đủ thông tin');
       return;
     }
-    
+
     // Create location data
     final locationData = {
       'name': nameController.text.trim(),
@@ -115,41 +113,32 @@ class AddPrivateLocationController extends BaseController {
       'type': 'private',
       'addedAt': DateTime.now(),
     };
-    
+
     // Save to Firestore if needed in the future
     // For now, just return the data to the previous screen
     // which will handle the persistence
-    
-    AppSnackbar.showSuccess(
-      title: 'Thành công',
-      message: 'Đã thêm địa điểm riêng tư',
-    );
-    
+
+    AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã thêm địa điểm riêng tư');
+
     // Return data to previous page for processing
     Get.back(result: locationData);
   }
-  
+
   void navigateToCurrentLocation() async {
     final locationService = LocationService.to;
-    
-    AppSnackbar.showInfo(
-      title: 'Thông báo',
-      message: 'Đang lấy vị trí hiện tại...',
-    );
-    
+
+    AppSnackbar.showInfo(title: 'Thông báo', message: 'Đang lấy vị trí hiện tại...');
+
     final position = await locationService.getCurrentLocation();
-    
+
     if (position != null) {
       // Update map center to current location
-      mapController.move(
-        LatLng(position.latitude, position.longitude),
-        15.0,
-      );
-      
+      mapController.move(LatLng(position.latitude, position.longitude), 15.0);
+
       // Update location fields
       latitudeController.text = position.latitude.toStringAsFixed(6);
       longitudeController.text = position.longitude.toStringAsFixed(6);
-      
+
       // Update selected location
       selectedLat.value = position.latitude;
       selectedLng.value = position.longitude;
@@ -159,13 +148,10 @@ class AddPrivateLocationController extends BaseController {
         latitude: position.latitude,
         longitude: position.longitude,
       );
-      
+
       _validateForm();
-      
-      AppSnackbar.showSuccess(
-        title: 'Thành công',
-        message: 'Đã cập nhật vị trí hiện tại',
-      );
+
+      AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã cập nhật vị trí hiện tại');
     }
   }
 }

@@ -10,28 +10,20 @@ class AddNotePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(AddNoteController());
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.chevron_left,
-            color: AppColors.primary,
-            size: 32.sp,
-          ),
+          icon: Icon(Icons.chevron_left, color: AppColors.primary, size: 32.sp),
           onPressed: () => Get.back(),
         ),
         centerTitle: true,
         title: Text(
           'Ghi chú',
-          style: TextStyle(
-            color: AppColors.primary,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: AppColors.primary, fontSize: 18.sp, fontWeight: FontWeight.w600),
         ),
         actions: [
           TextButton(
@@ -64,11 +56,7 @@ class AddNotePage extends StatelessWidget {
           ),
           decoration: InputDecoration(
             hintText: 'Nhập ghi chú của bạn...',
-            hintStyle: TextStyle(
-              fontSize: 16.sp,
-              color: const Color(0xFF9CA3AF),
-              height: 1.6,
-            ),
+            hintStyle: TextStyle(fontSize: 16.sp, color: const Color(0xFF9CA3AF), height: 1.6),
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,

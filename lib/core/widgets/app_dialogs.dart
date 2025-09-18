@@ -3,13 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
-import 'package:wanderlust/core/constants/app_spacing.dart';
 
 class AppDialogs {
-  static void showLoading({
-    String? message,
-    bool barrierDismissible = false,
-  }) {
+  static void showLoading({String? message, bool barrierDismissible = false}) {
     Get.dialog(
       PopScope(
         canPop: barrierDismissible,
@@ -29,11 +25,7 @@ class AppDialogs {
                 ),
                 if (message != null) ...[
                   SizedBox(height: 16.h),
-                  Text(
-                    message,
-                    style: AppTypography.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
+                  Text(message, style: AppTypography.bodyMedium, textAlign: TextAlign.center),
                 ],
               ],
             ),
@@ -44,13 +36,13 @@ class AppDialogs {
       barrierColor: AppColors.black.withOpacity(0.5),
     );
   }
-  
+
   static void hideLoading() {
     if (Get.isDialogOpen ?? false) {
       Get.back();
     }
   }
-  
+
   static Future<bool> showConfirm({
     String? title,
     required String message,
@@ -62,56 +54,43 @@ class AppDialogs {
   }) async {
     final result = await Get.dialog<bool>(
       AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        title: title != null
-            ? Row(
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, color: AppColors.primary, size: 24.sp),
-                    SizedBox(width: 8.w),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        title:
+            title != null
+                ? Row(
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, color: AppColors.primary, size: 24.sp),
+                      SizedBox(width: 8.w),
+                    ],
+                    Expanded(child: Text(title, style: AppTypography.heading5)),
                   ],
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: AppTypography.heading5,
-                    ),
-                  ),
-                ],
-              )
-            : null,
-        content: Text(
-          message,
-          style: AppTypography.bodyMedium,
-        ),
+                )
+                : null,
+        content: Text(message, style: AppTypography.bodyMedium),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
             child: Text(
               cancelText ?? 'Cancel',
-              style: AppTypography.button.copyWith(
-                color: AppColors.grey,
-              ),
+              style: AppTypography.button.copyWith(color: AppColors.grey),
             ),
           ),
           TextButton(
             onPressed: () => Get.back(result: true),
             child: Text(
               confirmText ?? 'Confirm',
-              style: AppTypography.button.copyWith(
-                color: confirmColor ?? AppColors.primary,
-              ),
+              style: AppTypography.button.copyWith(color: confirmColor ?? AppColors.primary),
             ),
           ),
         ],
       ),
       barrierDismissible: barrierDismissible,
     );
-    
+
     return result ?? false;
   }
-  
+
   static void showAlert({
     String? title,
     required String message,
@@ -123,12 +102,10 @@ class AppDialogs {
   }) {
     final color = _getColorForType(type);
     final iconData = icon ?? _getIconForType(type);
-    
+
     Get.dialog(
       AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
         title: Row(
           children: [
             Container(
@@ -138,57 +115,35 @@ class AppDialogs {
                 color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                iconData,
-                color: color,
-                size: 24.sp,
-              ),
+              child: Icon(iconData, color: color, size: 24.sp),
             ),
             SizedBox(width: 12.w),
-            Expanded(
-              child: Text(
-                title ?? _getTitleForType(type),
-                style: AppTypography.heading6,
-              ),
-            ),
+            Expanded(child: Text(title ?? _getTitleForType(type), style: AppTypography.heading6)),
           ],
         ),
-        content: Text(
-          message,
-          style: AppTypography.bodyMedium,
-        ),
+        content: Text(message, style: AppTypography.bodyMedium),
         actions: [
           TextButton(
             onPressed: () {
               Get.back();
               onPressed?.call();
             },
-            child: Text(
-              buttonText ?? 'OK',
-              style: AppTypography.button.copyWith(
-                color: color,
-              ),
-            ),
+            child: Text(buttonText ?? 'OK', style: AppTypography.button.copyWith(color: color)),
           ),
         ],
       ),
       barrierDismissible: barrierDismissible,
     );
   }
-  
+
   static void showSuccess({
     String? title,
     required String message,
     VoidCallback? onDismiss,
     Duration? autoHideDuration,
   }) {
-    showAlert(
-      title: title,
-      message: message,
-      type: AlertType.success,
-      onPressed: onDismiss,
-    );
-    
+    showAlert(title: title, message: message, type: AlertType.success, onPressed: onDismiss);
+
     if (autoHideDuration != null) {
       Future.delayed(autoHideDuration, () {
         if (Get.isDialogOpen ?? false) {
@@ -197,12 +152,8 @@ class AppDialogs {
       });
     }
   }
-  
-  static void showError({
-    String? title,
-    required String message,
-    VoidCallback? onRetry,
-  }) {
+
+  static void showError({String? title, required String message, VoidCallback? onRetry}) {
     showAlert(
       title: title,
       message: message,
@@ -211,23 +162,12 @@ class AppDialogs {
       onPressed: onRetry,
     );
   }
-  
-  static void showInfo({
-    String? title,
-    required String message,
-  }) {
-    showAlert(
-      title: title,
-      message: message,
-      type: AlertType.info,
-    );
+
+  static void showInfo({String? title, required String message}) {
+    showAlert(title: title, message: message, type: AlertType.info);
   }
-  
-  static void showWarning({
-    String? title,
-    required String message,
-    VoidCallback? onContinue,
-  }) {
+
+  static void showWarning({String? title, required String message, VoidCallback? onContinue}) {
     showAlert(
       title: title,
       message: message,
@@ -236,7 +176,7 @@ class AppDialogs {
       onPressed: onContinue,
     );
   }
-  
+
   static Future<T?> showCustom<T>({
     required Widget child,
     bool barrierDismissible = true,
@@ -244,18 +184,13 @@ class AppDialogs {
   }) {
     return Get.dialog<T>(
       Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        child: Padding(
-          padding: padding ?? EdgeInsets.all(16.w),
-          child: child,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        child: Padding(padding: padding ?? EdgeInsets.all(16.w), child: child),
       ),
       barrierDismissible: barrierDismissible,
     );
   }
-  
+
   static Future<String?> showInput({
     String? title,
     String? hint,
@@ -268,12 +203,10 @@ class AppDialogs {
   }) async {
     final controller = TextEditingController(text: initialValue);
     final formKey = GlobalKey<FormState>();
-    
+
     final result = await Get.dialog<String>(
       AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
         title: title != null ? Text(title, style: AppTypography.heading6) : null,
         content: Form(
           key: formKey,
@@ -281,9 +214,7 @@ class AppDialogs {
             controller: controller,
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textHint,
-              ),
+              hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textHint),
             ),
             validator: validator,
             keyboardType: keyboardType,
@@ -296,9 +227,7 @@ class AppDialogs {
             onPressed: () => Get.back(),
             child: Text(
               cancelText ?? 'Cancel',
-              style: AppTypography.button.copyWith(
-                color: AppColors.grey,
-              ),
+              style: AppTypography.button.copyWith(color: AppColors.grey),
             ),
           ),
           TextButton(
@@ -309,19 +238,17 @@ class AppDialogs {
             },
             child: Text(
               confirmText ?? 'OK',
-              style: AppTypography.button.copyWith(
-                color: AppColors.primary,
-              ),
+              style: AppTypography.button.copyWith(color: AppColors.primary),
             ),
           ),
         ],
       ),
     );
-    
+
     controller.dispose();
     return result;
   }
-  
+
   static Color _getColorForType(AlertType type) {
     switch (type) {
       case AlertType.success:
@@ -334,7 +261,7 @@ class AppDialogs {
         return AppColors.info;
     }
   }
-  
+
   static IconData _getIconForType(AlertType type) {
     switch (type) {
       case AlertType.success:
@@ -347,7 +274,7 @@ class AppDialogs {
         return Icons.info_outline;
     }
   }
-  
+
   static String _getTitleForType(AlertType type) {
     switch (type) {
       case AlertType.success:

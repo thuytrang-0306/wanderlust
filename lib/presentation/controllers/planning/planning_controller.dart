@@ -10,20 +10,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 class PlanningController extends BaseController {
   // Services
   final TripService _tripService = Get.find<TripService>();
-  
+
   // Data
   final RxList<TripModel> allTrips = <TripModel>[].obs;
   final RxList<TripModel> upcomingTrips = <TripModel>[].obs;
   final RxList<TripModel> ongoingTrips = <TripModel>[].obs;
   final RxList<TripModel> pastTrips = <TripModel>[].obs;
-  
+
   // UI State
   final RxInt selectedTab = 0.obs; // 0: All, 1: Upcoming, 2: Ongoing, 3: Past
   final RxBool isLoadingTrips = true.obs;
-  
+
   // Add reactive state getter
   Rx<ViewState> get state => Rx<ViewState>(viewState);
-  
+
   // Filtered trips based on selected tab
   List<TripModel> get displayedTrips {
     switch (selectedTab.value) {
@@ -37,10 +37,10 @@ class PlanningController extends BaseController {
         return allTrips;
     }
   }
-  
+
   // User info
   final Rx<User?> currentUser = FirebaseAuth.instance.currentUser.obs;
-  
+
   // Stats
   int get totalTrips => allTrips.length;
   int get totalDestinations => allTrips.map((t) => t.destination).toSet().length;
@@ -50,31 +50,34 @@ class PlanningController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    
+
     // Listen to real-time updates only - no need to call loadTrips separately
-    _tripService.streamUserTrips().listen((trips) {
-      allTrips.value = trips;
-      _categorizeTrips(trips);
-      
-      // Update loading state
-      if (isLoadingTrips.value) {
-        isLoadingTrips.value = false;
-        if (trips.isEmpty) {
-          setEmpty();
-        } else {
-          setSuccess();
+    _tripService.streamUserTrips().listen(
+      (trips) {
+        allTrips.value = trips;
+        _categorizeTrips(trips);
+
+        // Update loading state
+        if (isLoadingTrips.value) {
+          isLoadingTrips.value = false;
+          if (trips.isEmpty) {
+            setEmpty();
+          } else {
+            setSuccess();
+          }
         }
-      }
-      
-      LoggerService.i('Stream updated with ${trips.length} trips');
-    }, onError: (error) {
-      LoggerService.e('Error streaming trips', error: error);
-      setError('Không thể tải danh sách chuyến đi');
-      isLoadingTrips.value = false;
-      // Fallback to loading static data if stream fails
-      loadTrips();
-    });
-    
+
+        LoggerService.i('Stream updated with ${trips.length} trips');
+      },
+      onError: (error) {
+        LoggerService.e('Error streaming trips', error: error);
+        setError('Không thể tải danh sách chuyến đi');
+        isLoadingTrips.value = false;
+        // Fallback to loading static data if stream fails
+        loadTrips();
+      },
+    );
+
     // Set initial loading state
     isLoadingTrips.value = true;
     setLoading();
@@ -92,15 +95,15 @@ class PlanningController extends BaseController {
     try {
       isLoadingTrips.value = true;
       setLoading();
-      
+
       final trips = await _tripService.getUserTrips();
-      
+
       // Simply load the trips without creating sample data
       allTrips.value = trips;
       _categorizeTrips(trips);
-      
+
       LoggerService.i('Loaded ${trips.length} trips from Firestore');
-      
+
       if (trips.isEmpty) {
         setEmpty();
       } else {
@@ -116,18 +119,14 @@ class PlanningController extends BaseController {
 
   void _categorizeTrips(List<TripModel> trips) {
     final now = DateTime.now();
-    
-    upcomingTrips.value = trips.where((trip) => 
-      trip.startDate.isAfter(now) && trip.status != 'cancelled'
-    ).toList();
-    
-    ongoingTrips.value = trips.where((trip) => 
-      trip.isOngoing && trip.status != 'cancelled'
-    ).toList();
-    
-    pastTrips.value = trips.where((trip) => 
-      trip.isPast || trip.status == 'cancelled'
-    ).toList();
+
+    upcomingTrips.value =
+        trips.where((trip) => trip.startDate.isAfter(now) && trip.status != 'cancelled').toList();
+
+    ongoingTrips.value =
+        trips.where((trip) => trip.isOngoing && trip.status != 'cancelled').toList();
+
+    pastTrips.value = trips.where((trip) => trip.isPast || trip.status == 'cancelled').toList();
   }
 
   void changeTab(int index) {
@@ -136,7 +135,7 @@ class PlanningController extends BaseController {
 
   void createNewTrip() async {
     final result = await Get.toNamed('/trip-edit');
-    
+
     // Reload trips if a new trip was created
     if (result == true) {
       LoggerService.i('Reloading trips after creation');
@@ -146,7 +145,7 @@ class PlanningController extends BaseController {
 
   void editTrip(TripModel trip) async {
     final result = await Get.toNamed('/trip-edit', arguments: {'trip': trip});
-    
+
     // Reload trips if updated
     if (result == true) {
       LoggerService.i('Reloading trips after edit');
@@ -164,46 +163,34 @@ class PlanningController extends BaseController {
       final confirm = await Get.dialog<bool>(
         AlertDialog(
           title: const Text('Xóa chuyến đi'),
-          content: const Text('Bạn có chắc muốn xóa chuyến đi này? Tất cả dữ liệu sẽ bị xóa vĩnh viễn.'),
+          content: const Text(
+            'Bạn có chắc muốn xóa chuyến đi này? Tất cả dữ liệu sẽ bị xóa vĩnh viễn.',
+          ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(result: false),
-              child: const Text('Hủy'),
-            ),
+            TextButton(onPressed: () => Get.back(result: false), child: const Text('Hủy')),
             TextButton(
               onPressed: () => Get.back(result: true),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Xóa'),
             ),
           ],
         ),
       );
-      
+
       if (confirm != true) return;
-      
+
       setLoading();
       final success = await _tripService.deleteTrip(tripId);
-      
+
       if (success) {
-        AppSnackbar.showSuccess(
-          title: 'Thành công',
-          message: 'Đã xóa chuyến đi',
-        );
+        AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã xóa chuyến đi');
         await loadTrips();
       } else {
-        AppSnackbar.showError(
-          title: 'Lỗi',
-          message: 'Không thể xóa chuyến đi',
-        );
+        AppSnackbar.showError(title: 'Lỗi', message: 'Không thể xóa chuyến đi');
       }
     } catch (e) {
       LoggerService.e('Error deleting trip', error: e);
-      AppSnackbar.showError(
-        title: 'Lỗi',
-        message: 'Có lỗi xảy ra',
-      );
+      AppSnackbar.showError(title: 'Lỗi', message: 'Có lỗi xảy ra');
     } finally {
       setIdle();
     }
@@ -212,18 +199,12 @@ class PlanningController extends BaseController {
   Future<void> updateTripStatus(String tripId, String status) async {
     try {
       final success = await _tripService.updateTrip(tripId, {'status': status});
-      
+
       if (success) {
-        AppSnackbar.showSuccess(
-          title: 'Thành công',
-          message: 'Đã cập nhật trạng thái',
-        );
+        AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã cập nhật trạng thái');
         await loadTrips();
       } else {
-        AppSnackbar.showError(
-          title: 'Lỗi',
-          message: 'Không thể cập nhật trạng thái',
-        );
+        AppSnackbar.showError(title: 'Lỗi', message: 'Không thể cập nhật trạng thái');
       }
     } catch (e) {
       LoggerService.e('Error updating trip status', error: e);
@@ -268,31 +249,23 @@ class PlanningController extends BaseController {
             style: TextStyle(color: Colors.red),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(result: false),
-              child: const Text('Hủy'),
-            ),
+            TextButton(onPressed: () => Get.back(result: false), child: const Text('Hủy')),
             TextButton(
               onPressed: () => Get.back(result: true),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('XÓA TẤT CẢ'),
             ),
           ],
         ),
       );
-      
+
       if (confirm != true) return;
-      
+
       setLoading();
       final success = await _tripService.deleteAllUserTrips();
-      
+
       if (success) {
-        AppSnackbar.showSuccess(
-          title: 'Thành công',
-          message: 'Đã xóa tất cả chuyến đi',
-        );
+        AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã xóa tất cả chuyến đi');
         // Clear local data
         allTrips.clear();
         upcomingTrips.clear();
@@ -300,17 +273,11 @@ class PlanningController extends BaseController {
         pastTrips.clear();
         setEmpty();
       } else {
-        AppSnackbar.showError(
-          title: 'Lỗi',
-          message: 'Không thể xóa chuyến đi',
-        );
+        AppSnackbar.showError(title: 'Lỗi', message: 'Không thể xóa chuyến đi');
       }
     } catch (e) {
       LoggerService.e('Error clearing all trips', error: e);
-      AppSnackbar.showError(
-        title: 'Lỗi',
-        message: 'Có lỗi xảy ra',
-      );
+      AppSnackbar.showError(title: 'Lỗi', message: 'Có lỗi xảy ra');
     } finally {
       setIdle();
     }

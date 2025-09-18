@@ -12,28 +12,20 @@ class AddPrivateLocationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(AddPrivateLocationController());
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.chevron_left,
-            color: AppColors.primary,
-            size: 32.sp,
-          ),
+          icon: Icon(Icons.chevron_left, color: AppColors.primary, size: 32.sp),
           onPressed: () => Get.back(),
         ),
         centerTitle: true,
         title: Text(
           'Địa điểm riêng tư',
-          style: TextStyle(
-            color: AppColors.primary,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: AppColors.primary, fontSize: 18.sp, fontWeight: FontWeight.w600),
         ),
         actions: [
           TextButton(
@@ -65,9 +57,9 @@ class AddPrivateLocationPage extends StatelessWidget {
                   hintText: 'Điền tên của địa điểm riêng tư',
                   onChanged: (value) => controller.updateName(value),
                 ),
-                
+
                 SizedBox(height: 20.h),
-                
+
                 // Address field
                 AppTextField(
                   label: 'Địa chỉ',
@@ -78,28 +70,27 @@ class AddPrivateLocationPage extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Map section - Expanded to fill available space
           Expanded(
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: 20.w),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                  width: 1,
-                ),
+                border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16.r),
                 child: Stack(
                   children: [
                     // Interactive Map
-                    Obx(() => AppMap.locationPicker(
-                      onLocationSelected: controller.onMapTap,
-                      initialLocation: controller.selectedLocation.value,
-                    )),
-                    
+                    Obx(
+                      () => AppMap.locationPicker(
+                        onLocationSelected: controller.onMapTap,
+                        initialLocation: controller.selectedLocation.value,
+                      ),
+                    ),
+
                     // Navigation button
                     Positioned(
                       bottom: 20.h,
@@ -120,11 +111,7 @@ class AddPrivateLocationPage extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(
-                            Icons.navigation_rounded,
-                            color: Colors.white,
-                            size: 28.sp,
-                          ),
+                          child: Icon(Icons.navigation_rounded, color: Colors.white, size: 28.sp),
                         ),
                       ),
                     ),
@@ -133,7 +120,7 @@ class AddPrivateLocationPage extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Bottom section with info text and coordinates
           Padding(
             padding: EdgeInsets.all(20.w),
@@ -143,15 +130,11 @@ class AddPrivateLocationPage extends StatelessWidget {
                 // Map instruction text
                 Text(
                   'Bạn có thể nhấn giữ vào bản đồ để chọn mới địa điểm của mình',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: const Color(0xFF6B7280),
-                    height: 1.4,
-                  ),
+                  style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280), height: 1.4),
                 ),
-                
+
                 SizedBox(height: 20.h),
-                
+
                 // Coordinates in row
                 Row(
                   children: [
@@ -196,4 +179,3 @@ class AddPrivateLocationPage extends StatelessWidget {
     );
   }
 }
-  

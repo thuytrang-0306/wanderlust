@@ -5,7 +5,6 @@ import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/presentation/controllers/account/account_controller.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class AccountPage extends GetView<AccountController> {
   const AccountPage({super.key});
@@ -30,34 +29,34 @@ class AccountPage extends GetView<AccountController> {
                         height: 60.h,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.primary.withOpacity(0.2),
-                            width: 2,
-                          ),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(30.r),
-                          child: Obx(() => controller.hasAvatar
-                              ? Image.memory(
-                                  controller.avatarBytes.value!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => Container(
-                                    color: AppColors.neutral100,
-                                    child: Icon(
-                                      Icons.person,
-                                      size: 30.sp,
-                                      color: AppColors.neutral400,
+                          child: Obx(
+                            () =>
+                                controller.hasAvatar
+                                    ? Image.memory(
+                                      controller.avatarBytes.value!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) => Container(
+                                            color: AppColors.neutral100,
+                                            child: Icon(
+                                              Icons.person,
+                                              size: 30.sp,
+                                              color: AppColors.neutral400,
+                                            ),
+                                          ),
+                                    )
+                                    : Container(
+                                      color: AppColors.primary.withOpacity(0.1),
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 30.sp,
+                                        color: AppColors.primary,
+                                      ),
                                     ),
-                                  ),
-                                )
-                              : Container(
-                                  color: AppColors.primary.withOpacity(0.1),
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 30.sp,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
                           ),
                         ),
                       ),
@@ -73,47 +72,45 @@ class AccountPage extends GetView<AccountController> {
                               color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(
-                              Icons.camera_alt,
-                              color: Colors.white,
-                              size: 12.sp,
-                            ),
+                            child: Icon(Icons.camera_alt, color: Colors.white, size: 12.sp),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  
+
                   SizedBox(width: AppSpacing.s4),
-                  
+
                   // User Info
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Obx(() => Text(
-                          controller.userName,
-                          style: AppTypography.bodyL.copyWith(
-                            color: AppColors.neutral900,
-                            fontWeight: FontWeight.w600,
+                        Obx(
+                          () => Text(
+                            controller.userName,
+                            style: AppTypography.bodyL.copyWith(
+                              color: AppColors.neutral900,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        )),
+                        ),
                         SizedBox(height: 2.h),
-                        Obx(() => Text(
-                          controller.userEmail,
-                          style: AppTypography.bodyS.copyWith(
-                            color: AppColors.neutral600,
+                        Obx(
+                          () => Text(
+                            controller.userEmail,
+                            style: AppTypography.bodyS.copyWith(color: AppColors.neutral600),
                           ),
-                        )),
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             Divider(height: 1, color: AppColors.neutral100),
-            
+
             // Menu List
             Expanded(
               child: ListView(
@@ -140,20 +137,22 @@ class AccountPage extends GetView<AccountController> {
                     title: 'Lịch sử',
                     onTap: () => controller.navigateToTripHistory(),
                   ),
-                  
+
                   SizedBox(height: AppSpacing.s4),
-                  
+
                   // Settings Section
                   _buildSectionTitle('Cài đặt'),
                   _buildMenuItem(
                     icon: Icons.notifications_none,
                     title: 'Thông báo',
-                    trailing: Obx(() => Switch(
-                      value: controller.notificationsEnabled.value,
-                      onChanged: controller.toggleNotifications,
-                      activeColor: AppColors.primary,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    )),
+                    trailing: Obx(
+                      () => Switch(
+                        value: controller.notificationsEnabled.value,
+                        onChanged: controller.toggleNotifications,
+                        activeColor: AppColors.primary,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
                   ),
                   _buildMenuItem(
                     icon: Icons.language,
@@ -164,16 +163,18 @@ class AccountPage extends GetView<AccountController> {
                   _buildMenuItem(
                     icon: Icons.dark_mode_outlined,
                     title: 'Chế độ tối',
-                    trailing: Obx(() => Switch(
-                      value: controller.darkModeEnabled.value,
-                      onChanged: controller.toggleDarkMode,
-                      activeColor: AppColors.primary,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    )),
+                    trailing: Obx(
+                      () => Switch(
+                        value: controller.darkModeEnabled.value,
+                        onChanged: controller.toggleDarkMode,
+                        activeColor: AppColors.primary,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
                   ),
-                  
+
                   SizedBox(height: AppSpacing.s4),
-                  
+
                   // Support Section
                   _buildSectionTitle('Hỗ trợ'),
                   _buildMenuItem(
@@ -186,9 +187,9 @@ class AccountPage extends GetView<AccountController> {
                     title: 'Về chúng tôi',
                     onTap: () => controller.navigateToAbout(),
                   ),
-                  
+
                   SizedBox(height: AppSpacing.s6),
-                  
+
                   // Logout Button
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
@@ -212,19 +213,17 @@ class AccountPage extends GetView<AccountController> {
                       ),
                     ),
                   ),
-                  
+
                   SizedBox(height: AppSpacing.s4),
-                  
+
                   // Version
                   Center(
                     child: Text(
                       'Phiên bản 1.0.0',
-                      style: AppTypography.bodyXS.copyWith(
-                        color: AppColors.neutral400,
-                      ),
+                      style: AppTypography.bodyXS.copyWith(color: AppColors.neutral400),
                     ),
                   ),
-                  
+
                   SizedBox(height: AppSpacing.s6),
                 ],
               ),
@@ -234,7 +233,7 @@ class AccountPage extends GetView<AccountController> {
       ),
     );
   }
-  
+
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: EdgeInsets.only(
@@ -252,7 +251,7 @@ class AccountPage extends GetView<AccountController> {
       ),
     );
   }
-  
+
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
@@ -263,34 +262,20 @@ class AccountPage extends GetView<AccountController> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.s5,
-          vertical: AppSpacing.s3,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s3),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 24.sp,
-              color: AppColors.neutral700,
-            ),
+            Icon(icon, size: 24.sp, color: AppColors.neutral700),
             SizedBox(width: AppSpacing.s4),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: AppTypography.bodyM.copyWith(
-                      color: AppColors.neutral900,
-                    ),
-                  ),
+                  Text(title, style: AppTypography.bodyM.copyWith(color: AppColors.neutral900)),
                   if (subtitle != null)
                     Text(
                       subtitle,
-                      style: AppTypography.bodyXS.copyWith(
-                        color: AppColors.neutral500,
-                      ),
+                      style: AppTypography.bodyXS.copyWith(color: AppColors.neutral500),
                     ),
                 ],
               ),
@@ -298,11 +283,7 @@ class AccountPage extends GetView<AccountController> {
             if (trailing != null)
               trailing
             else if (onTap != null)
-              Icon(
-                Icons.chevron_right,
-                size: 20.sp,
-                color: AppColors.neutral400,
-              ),
+              Icon(Icons.chevron_right, size: 20.sp, color: AppColors.neutral400),
           ],
         ),
       ),

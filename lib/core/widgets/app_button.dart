@@ -4,18 +4,12 @@ import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 
-enum ButtonType {
-  primary,
-  secondary,
-  outline,
-  text,
-  danger,
-}
+enum ButtonType { primary, secondary, outline, text, danger }
 
 enum ButtonSize {
-  small,   // 40h
-  medium,  // 48h  
-  large,   // 56h
+  small, // 40h
+  medium, // 48h
+  large, // 56h
 }
 
 class AppButton extends StatelessWidget {
@@ -205,42 +199,37 @@ class AppButton extends StatelessWidget {
     }
 
     // Build button content
-    Widget buttonContent = isLoading
-        ? SizedBox(
-            width: 24.w,
-            height: 24.w,
-            child: CircularProgressIndicator(
-              color: fgColor,
-              strokeWidth: 2,
-            ),
-          )
-        : Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(
-                  icon,
-                  size: 20.sp,
-                  color: fgColor,
+    Widget buttonContent =
+        isLoading
+            ? SizedBox(
+              width: 24.w,
+              height: 24.w,
+              child: CircularProgressIndicator(color: fgColor, strokeWidth: 2),
+            )
+            : Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 20.sp, color: fgColor),
+                  SizedBox(width: AppSpacing.s2),
+                ],
+                Flexible(
+                  child: Text(
+                    text,
+                    style:
+                        textStyle ??
+                        AppTypography.button.copyWith(
+                          color: fgColor,
+                          fontSize: size == ButtonSize.small ? 14.sp : 16.sp,
+                          fontWeight: AppTypography.semiBold,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                SizedBox(width: AppSpacing.s2),
               ],
-              Flexible(
-                child: Text(
-                  text,
-                  style: textStyle ??
-                      AppTypography.button.copyWith(
-                        color: fgColor,
-                        fontSize: size == ButtonSize.small ? 14.sp : 16.sp,
-                        fontWeight: AppTypography.semiBold,
-                      ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          );
+            );
 
     // Use child if provided (for custom content)
     if (child != null && !isLoading) {
@@ -256,20 +245,20 @@ class AppButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius ?? 28.r),
         child: Container(
           height: buttonHeight,
-          padding: padding ??
+          padding:
+              padding ??
               EdgeInsets.symmetric(
                 horizontal: AppSpacing.s5,
                 vertical: 12.h, // As per your requirement
               ),
           decoration: BoxDecoration(
-            border: borderColor != null
-                ? Border.all(
-                    color: isButtonDisabled
-                        ? borderColor.withValues(alpha: 0.5)
-                        : borderColor,
-                    width: 1.5,
-                  )
-                : null,
+            border:
+                borderColor != null
+                    ? Border.all(
+                      color: isButtonDisabled ? borderColor.withValues(alpha: 0.5) : borderColor,
+                      width: 1.5,
+                    )
+                    : null,
             borderRadius: BorderRadius.circular(borderRadius ?? 28.r),
           ),
           alignment: Alignment.center,
@@ -280,10 +269,7 @@ class AppButton extends StatelessWidget {
 
     // Apply full width if needed
     if (fullWidth) {
-      return SizedBox(
-        width: double.infinity,
-        child: button,
-      );
+      return SizedBox(width: double.infinity, child: button);
     }
 
     return button;
@@ -314,7 +300,7 @@ class AppIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double buttonSize = size ?? 48.w;
-    
+
     Widget button = Material(
       color: backgroundColor ?? AppColors.white,
       shape: const CircleBorder(),
@@ -325,29 +311,23 @@ class AppIconButton extends StatelessWidget {
           width: buttonSize,
           height: buttonSize,
           alignment: Alignment.center,
-          child: isLoading
-              ? SizedBox(
-                  width: 20.w,
-                  height: 20.w,
-                  child: CircularProgressIndicator(
-                    color: iconColor ?? AppColors.primary,
-                    strokeWidth: 2,
-                  ),
-                )
-              : Icon(
-                  icon,
-                  size: buttonSize * 0.5,
-                  color: iconColor ?? AppColors.primary,
-                ),
+          child:
+              isLoading
+                  ? SizedBox(
+                    width: 20.w,
+                    height: 20.w,
+                    child: CircularProgressIndicator(
+                      color: iconColor ?? AppColors.primary,
+                      strokeWidth: 2,
+                    ),
+                  )
+                  : Icon(icon, size: buttonSize * 0.5, color: iconColor ?? AppColors.primary),
         ),
       ),
     );
 
     if (tooltip != null) {
-      return Tooltip(
-        message: tooltip!,
-        child: button,
-      );
+      return Tooltip(message: tooltip!, child: button);
     }
 
     return button;

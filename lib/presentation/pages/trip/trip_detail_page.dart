@@ -4,8 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
-import 'package:wanderlust/core/constants/app_typography.dart';
-import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/presentation/controllers/trip/trip_detail_controller.dart';
 
 class TripDetailPage extends StatelessWidget {
@@ -14,7 +12,7 @@ class TripDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(TripDetailController());
-    
+
     return Scaffold(
       backgroundColor: AppColors.neutral100,
       body: Stack(
@@ -29,29 +27,32 @@ class TripDetailPage extends StatelessWidget {
                 automaticallyImplyLeading: false,
                 backgroundColor: Colors.transparent,
                 flexibleSpace: FlexibleSpaceBar(
-                  background: Obx(() => Container(
-                    height: 207.h,
-                    child: controller.tripImage.value.isNotEmpty
-                        ? AppImage(
-                            imageData: controller.tripImage.value,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                          )
-                        : Container(
-                            color: AppColors.primary.withOpacity(0.8),
-                            child: Center(
-                              child: Icon(
-                                Icons.travel_explore,
-                                size: 50.sp,
-                                color: Colors.white.withOpacity(0.7),
+                  background: Obx(
+                    () => SizedBox(
+                      height: 207.h,
+                      child:
+                          controller.tripImage.value.isNotEmpty
+                              ? AppImage(
+                                imageData: controller.tripImage.value,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                              )
+                              : Container(
+                                color: AppColors.primary.withOpacity(0.8),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.travel_explore,
+                                    size: 50.sp,
+                                    color: Colors.white.withOpacity(0.7),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                  )),
+                    ),
+                  ),
                 ),
               ),
-              
+
               // White card content
               SliverToBoxAdapter(
                 child: Transform.translate(
@@ -129,11 +130,11 @@ class TripDetailPage extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              
+
                               SizedBox(height: 16.h),
-                              
+
                               // Tab navigation
-                              Container(
+                              SizedBox(
                                 height: 40.h,
                                 child: Row(
                                   children: List.generate(
@@ -141,30 +142,34 @@ class TripDetailPage extends StatelessWidget {
                                     (index) => Expanded(
                                       child: GestureDetector(
                                         onTap: () => controller.selectDay(index),
-                                        child: Obx(() => Container(
-                                          decoration: BoxDecoration(
-                                            border: Border(
-                                              bottom: BorderSide(
-                                                color: controller.selectedDay.value == index
-                                                  ? AppColors.primary
-                                                  : Colors.transparent,
-                                                width: 2,
+                                        child: Obx(
+                                          () => Container(
+                                            decoration: BoxDecoration(
+                                              border: Border(
+                                                bottom: BorderSide(
+                                                  color:
+                                                      controller.selectedDay.value == index
+                                                          ? AppColors.primary
+                                                          : Colors.transparent,
+                                                  width: 2,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                'Ngày ${index + 1}',
+                                                style: TextStyle(
+                                                  fontSize: 15.sp,
+                                                  fontWeight: FontWeight.w500,
+                                                  color:
+                                                      controller.selectedDay.value == index
+                                                          ? AppColors.primary
+                                                          : const Color(0xFF6B7280),
+                                                ),
                                               ),
                                             ),
                                           ),
-                                          child: Center(
-                                            child: Text(
-                                              'Ngày ${index + 1}',
-                                              style: TextStyle(
-                                                fontSize: 15.sp,
-                                                fontWeight: FontWeight.w500,
-                                                color: controller.selectedDay.value == index
-                                                  ? AppColors.primary
-                                                  : const Color(0xFF6B7280),
-                                              ),
-                                            ),
-                                          ),
-                                        )),
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -173,7 +178,7 @@ class TripDetailPage extends StatelessWidget {
                             ],
                           ),
                         ),
-                        
+
                         // Content area
                         Padding(
                           padding: EdgeInsets.all(20.w),
@@ -192,7 +197,7 @@ class TripDetailPage extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(height: 8.h),
-                                
+
                                 // Date and time row
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -213,9 +218,9 @@ class TripDetailPage extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                
+
                                 SizedBox(height: 32.h),
-                                
+
                                 // Check if day has items
                                 if (controller.dayHasItems(controller.selectedDay.value))
                                   _buildTimelineView(controller)
@@ -225,8 +230,8 @@ class TripDetailPage extends StatelessWidget {
                             );
                           }),
                         ),
-                        
-                        // Bottom padding 
+
+                        // Bottom padding
                         SizedBox(height: 20.h),
                       ],
                     ),
@@ -235,60 +240,44 @@ class TripDetailPage extends StatelessWidget {
               ),
             ],
           ),
-          
+
           // Floating action buttons
           Positioned(
             top: MediaQuery.of(context).padding.top + 8.h,
             left: 16.w,
-            child: _buildBlurButton(
-              icon: Icons.chevron_left,
-              onTap: () => Get.back(),
-            ),
+            child: _buildBlurButton(icon: Icons.chevron_left, onTap: () => Get.back()),
           ),
           Positioned(
             top: MediaQuery.of(context).padding.top + 8.h,
             right: 16.w,
-            child: _buildBlurButton(
-              icon: Icons.edit_outlined,
-              onTap: controller.editTrip,
-            ),
+            child: _buildBlurButton(icon: Icons.edit_outlined, onTap: controller.editTrip),
           ),
         ],
       ),
     );
   }
-  
-  Widget _buildBlurButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
+
+  Widget _buildBlurButton({required IconData icon, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 40.w,
         height: 40.w,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.3),
-        ),
+        decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.3)),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20.r),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
             child: Container(
               color: Colors.white.withOpacity(0.3),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: 24.sp,
-              ),
+              child: Icon(icon, color: Colors.white, size: 24.sp),
             ),
           ),
         ),
       ),
     );
   }
-  
+
   Widget _buildEmptyState(TripDetailController controller) {
     return Column(
       children: [
@@ -303,10 +292,7 @@ class TripDetailPage extends StatelessWidget {
               // Mountain background
               Positioned(
                 bottom: 0,
-                child: CustomPaint(
-                  size: Size(300.w, 120.h),
-                  painter: _MountainPainter(),
-                ),
+                child: CustomPaint(size: Size(300.w, 120.h), painter: _MountainPainter()),
               ),
               // Car illustration
               Positioned(
@@ -366,41 +352,29 @@ class TripDetailPage extends StatelessWidget {
               Positioned(
                 left: 40.w,
                 bottom: 10.h,
-                child: Icon(
-                  Icons.park,
-                  size: 40.sp,
-                  color: const Color(0xFF10B981),
-                ),
+                child: Icon(Icons.park, size: 40.sp, color: const Color(0xFF10B981)),
               ),
               Positioned(
                 right: 40.w,
                 bottom: 10.h,
-                child: Icon(
-                  Icons.park,
-                  size: 50.sp,
-                  color: const Color(0xFF059669),
-                ),
+                child: Icon(Icons.park, size: 50.sp, color: const Color(0xFF059669)),
               ),
             ],
           ),
         ),
-        
+
         // Empty state text
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 40.w),
           child: Text(
             'Bạn chưa có điểm đến nào, hãy thêm để hoàn thiện chuyến đi!',
-            style: TextStyle(
-              fontSize: 16.sp,
-              color: const Color(0xFF374151),
-              height: 1.5,
-            ),
+            style: TextStyle(fontSize: 16.sp, color: const Color(0xFF374151), height: 1.5),
             textAlign: TextAlign.center,
           ),
         ),
-        
+
         SizedBox(height: 32.h),
-        
+
         // Action buttons
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -423,10 +397,13 @@ class TripDetailPage extends StatelessWidget {
                 icon: Icons.note_add_outlined,
                 text: 'Thêm ghi chú ngày ${controller.selectedDay.value + 1}',
                 onTap: () {
-                  Get.toNamed('/add-note', arguments: {
-                    'dayNumber': controller.selectedDay.value + 1,
-                    'existingNote': controller.getDayNote(controller.selectedDay.value),
-                  })?.then((result) {
+                  Get.toNamed(
+                    '/add-note',
+                    arguments: {
+                      'dayNumber': controller.selectedDay.value + 1,
+                      'existingNote': controller.getDayNote(controller.selectedDay.value),
+                    },
+                  )?.then((result) {
                     if (result != null) {
                       controller.updateDayNote(result);
                     }
@@ -452,7 +429,7 @@ class TripDetailPage extends StatelessWidget {
       ],
     );
   }
-  
+
   Widget _buildActionButton({
     required IconData icon,
     required String text,
@@ -466,18 +443,11 @@ class TripDetailPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: const Color(0xFFE5E7EB),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 20.sp,
-              color: const Color(0xFF6B7280),
-            ),
+            Icon(icon, size: 20.sp, color: const Color(0xFF6B7280)),
             SizedBox(width: 12.w),
             Text(
               text,
@@ -492,26 +462,25 @@ class TripDetailPage extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildTimelineView(TripDetailController controller) {
     return Column(
-      children: List.generate(
-        controller.getLocationsForDay(controller.selectedDay.value).length,
-        (index) {
-          final location = controller.getLocationsForDay(controller.selectedDay.value)[index];
-          return _buildTimelineItem(
-            time: location['time'],
-            title: location['title'],
-            address: location['address'],
-            description: location['description'],
-            image: location['image'],
-            isLast: index == controller.getLocationsForDay(controller.selectedDay.value).length - 1,
-          );
-        },
-      ),
+      children: List.generate(controller.getLocationsForDay(controller.selectedDay.value).length, (
+        index,
+      ) {
+        final location = controller.getLocationsForDay(controller.selectedDay.value)[index];
+        return _buildTimelineItem(
+          time: location['time'],
+          title: location['title'],
+          address: location['address'],
+          description: location['description'],
+          image: location['image'],
+          isLast: index == controller.getLocationsForDay(controller.selectedDay.value).length - 1,
+        );
+      }),
     );
   }
-  
+
   Widget _buildTimelineItem({
     required String time,
     required String title,
@@ -529,38 +498,26 @@ class TripDetailPage extends StatelessWidget {
             Container(
               width: 12.w,
               height: 12.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primary,
-              ),
+              decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.primary),
             ),
-            if (!isLast)
-              Container(
-                width: 2.w,
-                height: 100.h,
-                color: const Color(0xFFE5E7EB),
-              ),
+            if (!isLast) Container(width: 2.w, height: 100.h, color: const Color(0xFFE5E7EB)),
           ],
         ),
-        
+
         SizedBox(width: 12.w),
-        
+
         // Time
         Container(
           padding: EdgeInsets.only(top: 0),
           width: 50.w,
           child: Text(
             time,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.black,
-            ),
+            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.black),
           ),
         ),
-        
+
         SizedBox(width: 12.w),
-        
+
         // Location card
         Expanded(
           child: Container(
@@ -569,10 +526,7 @@ class TripDetailPage extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
             ),
             child: Row(
               children: [
@@ -592,7 +546,7 @@ class TripDetailPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                
+
                 // Content
                 Expanded(
                   child: Column(
@@ -618,10 +572,7 @@ class TripDetailPage extends StatelessWidget {
                           Expanded(
                             child: Text(
                               address,
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                color: const Color(0xFF6B7280),
-                              ),
+                              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280)),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -632,19 +583,12 @@ class TripDetailPage extends StatelessWidget {
                         SizedBox(height: 4.h),
                         Row(
                           children: [
-                            Icon(
-                              Icons.notes,
-                              size: 14.sp,
-                              color: const Color(0xFF6B7280),
-                            ),
+                            Icon(Icons.notes, size: 14.sp, color: const Color(0xFF6B7280)),
                             SizedBox(width: 4.w),
                             Expanded(
                               child: Text(
                                 description,
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: const Color(0xFF6B7280),
-                                ),
+                                style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280)),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -655,14 +599,10 @@ class TripDetailPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // More button
                 IconButton(
-                  icon: Icon(
-                    Icons.more_horiz,
-                    size: 20.sp,
-                    color: const Color(0xFF6B7280),
-                  ),
+                  icon: Icon(Icons.more_horiz, size: 20.sp, color: const Color(0xFF6B7280)),
                   onPressed: () {},
                 ),
               ],
@@ -679,37 +619,35 @@ class _MountainPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint();
-    
+
     // First mountain layer (lighter)
     paint.color = const Color(0xFF93C5FD);
     final path1 = Path();
     path1.moveTo(0, size.height);
     path1.lineTo(0, size.height * 0.4);
     path1.quadraticBezierTo(
-      size.width * 0.25, size.height * 0.2,
-      size.width * 0.5, size.height * 0.5,
+      size.width * 0.25,
+      size.height * 0.2,
+      size.width * 0.5,
+      size.height * 0.5,
     );
-    path1.quadraticBezierTo(
-      size.width * 0.75, size.height * 0.3,
-      size.width, size.height * 0.6,
-    );
+    path1.quadraticBezierTo(size.width * 0.75, size.height * 0.3, size.width, size.height * 0.6);
     path1.lineTo(size.width, size.height);
     path1.close();
     canvas.drawPath(path1, paint);
-    
+
     // Second mountain layer (darker)
     paint.color = const Color(0xFF60A5FA);
     final path2 = Path();
     path2.moveTo(0, size.height);
     path2.lineTo(0, size.height * 0.6);
     path2.quadraticBezierTo(
-      size.width * 0.3, size.height * 0.4,
-      size.width * 0.6, size.height * 0.7,
+      size.width * 0.3,
+      size.height * 0.4,
+      size.width * 0.6,
+      size.height * 0.7,
     );
-    path2.quadraticBezierTo(
-      size.width * 0.8, size.height * 0.5,
-      size.width, size.height * 0.8,
-    );
+    path2.quadraticBezierTo(size.width * 0.8, size.height * 0.5, size.width, size.height * 0.8);
     path2.lineTo(size.width, size.height);
     path2.close();
     canvas.drawPath(path2, paint);

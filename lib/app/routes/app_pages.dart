@@ -38,17 +38,10 @@ part 'app_routes.dart';
 
 class AppPages {
   AppPages._();
-  
+
   static final routes = [
-    GetPage(
-      name: Routes.ONBOARDING,
-      page: () => const OnboardingPage(),
-    ),
-    GetPage(
-      name: Routes.LOGIN,
-      page: () => const LoginPage(),
-      transition: Transition.rightToLeft,
-    ),
+    GetPage(name: Routes.ONBOARDING, page: () => const OnboardingPage()),
+    GetPage(name: Routes.LOGIN, page: () => const LoginPage(), transition: Transition.rightToLeft),
     GetPage(
       name: Routes.REGISTER,
       page: () => const RegisterPage(),
@@ -64,10 +57,7 @@ class AppPages {
       page: () => const VerifyEmailPage(),
       transition: Transition.rightToLeft,
     ),
-    GetPage(
-      name: Routes.MAIN_NAVIGATION,
-      page: () => const MainNavigationPage(),
-    ),
+    GetPage(name: Routes.MAIN_NAVIGATION, page: () => const MainNavigationPage()),
     GetPage(
       name: Routes.TRIP_EDIT,
       page: () => const TripEditPage(),

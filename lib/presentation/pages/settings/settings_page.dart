@@ -14,10 +14,7 @@ class SettingsPage extends GetView<SettingsController> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(
-          'Cài đặt',
-          style: AppTypography.heading5,
-        ),
+        title: Text('Cài đặt', style: AppTypography.heading5),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0.5,
@@ -31,7 +28,7 @@ class SettingsPage extends GetView<SettingsController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: AppSpacing.s4),
-            
+
             // Account Settings
             _buildSectionTitle('Tài khoản'),
             _buildSettingsSection([
@@ -60,9 +57,9 @@ class SettingsPage extends GetView<SettingsController> {
                 onTap: controller.navigateToPrivacy,
               ),
             ]),
-            
+
             SizedBox(height: AppSpacing.s6),
-            
+
             // App Settings
             _buildSectionTitle('Ứng dụng'),
             _buildSettingsSection([
@@ -71,11 +68,13 @@ class SettingsPage extends GetView<SettingsController> {
                 title: 'Thông báo',
                 subtitle: 'Quản lý thông báo từ ứng dụng',
                 onTap: controller.navigateToNotificationSettings,
-                trailing: Obx(() => Switch(
-                  value: controller.notificationsEnabled.value,
-                  onChanged: controller.toggleNotifications,
-                  activeColor: AppColors.primary,
-                )),
+                trailing: Obx(
+                  () => Switch(
+                    value: controller.notificationsEnabled.value,
+                    onChanged: controller.toggleNotifications,
+                    activeColor: AppColors.primary,
+                  ),
+                ),
               ),
               _buildSettingItem(
                 icon: Icons.language,
@@ -87,11 +86,13 @@ class SettingsPage extends GetView<SettingsController> {
                 icon: Icons.dark_mode_outlined,
                 title: 'Chế độ tối',
                 subtitle: 'Chuyển đổi giao diện tối/sáng',
-                trailing: Obx(() => Switch(
-                  value: controller.darkModeEnabled.value,
-                  onChanged: controller.toggleDarkMode,
-                  activeColor: AppColors.primary,
-                )),
+                trailing: Obx(
+                  () => Switch(
+                    value: controller.darkModeEnabled.value,
+                    onChanged: controller.toggleDarkMode,
+                    activeColor: AppColors.primary,
+                  ),
+                ),
               ),
               _buildSettingItem(
                 icon: Icons.download_outlined,
@@ -100,9 +101,9 @@ class SettingsPage extends GetView<SettingsController> {
                 onTap: controller.navigateToDownloads,
               ),
             ]),
-            
+
             SizedBox(height: AppSpacing.s6),
-            
+
             // Preferences
             _buildSectionTitle('Tùy chọn'),
             _buildSettingsSection([
@@ -128,16 +129,18 @@ class SettingsPage extends GetView<SettingsController> {
                 icon: Icons.wifi_outlined,
                 title: 'Chế độ offline',
                 subtitle: 'Sử dụng ứng dụng khi không có mạng',
-                trailing: Obx(() => Switch(
-                  value: controller.offlineModeEnabled.value,
-                  onChanged: controller.toggleOfflineMode,
-                  activeColor: AppColors.primary,
-                )),
+                trailing: Obx(
+                  () => Switch(
+                    value: controller.offlineModeEnabled.value,
+                    onChanged: controller.toggleOfflineMode,
+                    activeColor: AppColors.primary,
+                  ),
+                ),
               ),
             ]),
-            
+
             SizedBox(height: AppSpacing.s6),
-            
+
             // Support
             _buildSectionTitle('Hỗ trợ'),
             _buildSettingsSection([
@@ -166,9 +169,9 @@ class SettingsPage extends GetView<SettingsController> {
                 onTap: controller.rateApp,
               ),
             ]),
-            
+
             SizedBox(height: AppSpacing.s6),
-            
+
             // About
             _buildSectionTitle('Thông tin'),
             _buildSettingsSection([
@@ -197,17 +200,17 @@ class SettingsPage extends GetView<SettingsController> {
                 onTap: controller.showLicenses,
               ),
             ]),
-            
+
             SizedBox(height: AppSpacing.s6),
-            
+
             // Clear Data
             _buildDangerSection(),
-            
+
             SizedBox(height: AppSpacing.s8),
-            
+
             // Version Info
             _buildVersionInfo(),
-            
+
             SizedBox(height: AppSpacing.s8),
           ],
         ),
@@ -217,10 +220,7 @@ class SettingsPage extends GetView<SettingsController> {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.s5,
-        vertical: AppSpacing.s3,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s3),
       child: Text(
         title,
         style: AppTypography.bodySmall.copyWith(
@@ -235,21 +235,17 @@ class SettingsPage extends GetView<SettingsController> {
     return Container(
       color: Colors.white,
       child: Column(
-        children: items.map((item) {
-          final isLast = items.last == item;
-          return Column(
-            children: [
-              item,
-              if (!isLast)
-                Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: AppColors.neutral200,
-                  indent: 56.w,
-                ),
-            ],
-          );
-        }).toList(),
+        children:
+            items.map((item) {
+              final isLast = items.last == item;
+              return Column(
+                children: [
+                  item,
+                  if (!isLast)
+                    Divider(height: 1, thickness: 1, color: AppColors.neutral200, indent: 56.w),
+                ],
+              );
+            }).toList(),
       ),
     );
   }
@@ -264,10 +260,7 @@ class SettingsPage extends GetView<SettingsController> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.s5,
-          vertical: AppSpacing.s4,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s4),
         child: Row(
           children: [
             Container(
@@ -277,11 +270,7 @@ class SettingsPage extends GetView<SettingsController> {
                 color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8.r),
               ),
-              child: Icon(
-                icon,
-                size: 20.sp,
-                color: AppColors.primary,
-              ),
+              child: Icon(icon, size: 20.sp, color: AppColors.primary),
             ),
             SizedBox(width: AppSpacing.s3),
             Expanded(
@@ -290,17 +279,13 @@ class SettingsPage extends GetView<SettingsController> {
                 children: [
                   Text(
                     title,
-                    style: AppTypography.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
                   ),
                   if (subtitle != null) ...[
                     SizedBox(height: 2.h),
                     Text(
                       subtitle,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                     ),
                   ],
                 ],
@@ -309,11 +294,7 @@ class SettingsPage extends GetView<SettingsController> {
             if (trailing != null)
               trailing
             else
-              Icon(
-                Icons.chevron_right,
-                size: 24.sp,
-                color: AppColors.grey,
-              ),
+              Icon(Icons.chevron_right, size: 24.sp, color: AppColors.grey),
           ],
         ),
       ),
@@ -339,10 +320,7 @@ class SettingsPage extends GetView<SettingsController> {
               InkWell(
                 onTap: controller.clearAllData,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s5,
-                    vertical: AppSpacing.s4,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s4),
                   child: Row(
                     children: [
                       Container(
@@ -352,11 +330,7 @@ class SettingsPage extends GetView<SettingsController> {
                           color: AppColors.error.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
-                        child: Icon(
-                          Icons.delete_forever,
-                          size: 20.sp,
-                          color: AppColors.error,
-                        ),
+                        child: Icon(Icons.delete_forever, size: 20.sp, color: AppColors.error),
                       ),
                       SizedBox(width: AppSpacing.s3),
                       Expanded(
@@ -380,11 +354,7 @@ class SettingsPage extends GetView<SettingsController> {
                           ],
                         ),
                       ),
-                      Icon(
-                        Icons.chevron_right,
-                        size: 24.sp,
-                        color: AppColors.grey,
-                      ),
+                      Icon(Icons.chevron_right, size: 24.sp, color: AppColors.grey),
                     ],
                   ),
                 ),
@@ -400,28 +370,19 @@ class SettingsPage extends GetView<SettingsController> {
     return Center(
       child: Column(
         children: [
-          Image.asset(
-            'assets/images/logo.png',
-            width: 60.w,
-            height: 60.w,
-          ),
+          Image.asset('assets/images/logo.png', width: 60.w, height: 60.w),
           SizedBox(height: AppSpacing.s3),
-          Text(
-            'Wanderlust',
-            style: AppTypography.heading6,
-          ),
+          Text('Wanderlust', style: AppTypography.heading6),
           SizedBox(height: AppSpacing.s1),
-          Obx(() => Text(
-            'Phiên bản ${controller.appVersion.value}',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondary,
+          Obx(
+            () => Text(
+              'Phiên bản ${controller.appVersion.value}',
+              style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
             ),
-          )),
+          ),
           Text(
             'Build ${controller.buildNumber.value}',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),

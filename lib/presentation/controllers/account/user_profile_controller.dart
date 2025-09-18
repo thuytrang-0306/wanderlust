@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:wanderlust/data/services/user_profile_service.dart';
 import 'package:wanderlust/data/models/user_profile_model.dart';
@@ -16,26 +15,26 @@ import 'package:wanderlust/core/utils/logger_service.dart';
 class UserProfileController extends BaseController {
   final UserProfileService _profileService = Get.find<UserProfileService>();
   final UnifiedImageService _imageService = Get.find<UnifiedImageService>();
-  
+
   // User profile
   final Rxn<UserProfileModel> userProfile = Rxn<UserProfileModel>();
   final Rxn<Uint8List> avatarBytes = Rxn<Uint8List>();
   final Rxn<Uint8List> coverPhotoBytes = Rxn<Uint8List>();
   final RxBool isLoadingAvatar = false.obs;
   final RxBool isLoadingCover = false.obs;
-  
+
   // Stats
   final totalTrips = 0.obs;
   final totalBookings = 0.obs;
   final totalReviews = 0.obs;
   final totalPoints = 0.obs;
   final activeTripsCount = 0.obs;
-  
+
   // Settings
   final notificationsEnabled = true.obs;
   final currentLanguage = 'Tiếng Việt'.obs;
   final appVersion = '1.0.0'.obs;
-  
+
   // Getters for easy access
   String get userName => userProfile.value?.displayName ?? 'User';
   String get userEmail => userProfile.value?.email ?? '';
@@ -43,12 +42,12 @@ class UserProfileController extends BaseController {
   String get userLocation => userProfile.value?.location ?? '';
   bool get hasAvatar => avatarBytes.value != null;
   bool get hasCoverPhoto => coverPhotoBytes.value != null;
-  
+
   @override
   void onInit() {
     super.onInit();
     loadUserData();
-    
+
     // Stream profile changes
     _profileService.streamCurrentUserProfile().listen((profile) {
       if (profile != null) {
@@ -59,14 +58,14 @@ class UserProfileController extends BaseController {
       }
     });
   }
-  
+
   void loadUserData() async {
     try {
       setLoading();
-      
+
       // Load profile from Firestore
       final profile = await _profileService.getCurrentUserProfile();
-      
+
       if (profile != null) {
         userProfile.value = profile;
         _loadAvatarBytes(profile);
@@ -82,7 +81,7 @@ class UserProfileController extends BaseController {
           setError('Could not initialize profile');
         }
       }
-      
+
       // Load settings from local storage
       _loadLocalSettings();
     } catch (e) {
@@ -90,7 +89,7 @@ class UserProfileController extends BaseController {
       setError('Error loading profile');
     }
   }
-  
+
   void _loadAvatarBytes(UserProfileModel profile) {
     // Load avatar bytes if exists (prefer thumbnail for performance)
     if (profile.avatarThumbnail != null) {
@@ -102,13 +101,13 @@ class UserProfileController extends BaseController {
     }
     update(); // Notify GetBuilder listeners
   }
-  
+
   void _loadCoverBytes(UserProfileModel profile) {
     if (profile.coverPhoto != null) {
       coverPhotoBytes.value = _imageService.base64ToImage(profile.coverPhoto);
     }
   }
-  
+
   void _loadLocalSettings() {
     // Load notification settings with default true
     final savedNotifications = StorageService.to.read('notifications_enabled');
@@ -119,7 +118,7 @@ class UserProfileController extends BaseController {
       notificationsEnabled.value = true;
       StorageService.to.write('notifications_enabled', true);
     }
-    
+
     // Load language settings with default Vietnamese
     final savedLanguage = StorageService.to.read('app_language');
     if (savedLanguage != null) {
@@ -130,7 +129,7 @@ class UserProfileController extends BaseController {
       StorageService.to.write('app_language', 'vi');
     }
   }
-  
+
   void loadStats() {
     // Load stats from user profile
     if (userProfile.value != null) {
@@ -143,69 +142,57 @@ class UserProfileController extends BaseController {
       activeTripsCount.value = 0; // TODO: Calculate from TripService
     }
   }
-  
+
   void changeAvatar() async {
     try {
       // Show source selection dialog
       final source = await _showImageSourceDialog();
       if (source == null) return;
-      
+
       isLoadingAvatar.value = true;
       AppSnackbar.showInfo(message: 'Đang xử lý ảnh...');
-      
+
       // Update avatar using UserProfileService
       final success = await _profileService.updateAvatar(source);
-      
+
       if (success) {
         // Profile will be updated via stream
-        AppSnackbar.showSuccess(
-          message: 'Cập nhật ảnh đại diện thành công!',
-        );
+        AppSnackbar.showSuccess(message: 'Cập nhật ảnh đại diện thành công!');
       } else {
-        AppSnackbar.showError(
-          message: 'Không thể cập nhật ảnh đại diện',
-        );
+        AppSnackbar.showError(message: 'Không thể cập nhật ảnh đại diện');
       }
     } catch (e) {
       LoggerService.e('Error changing avatar', error: e);
-      AppSnackbar.showError(
-        message: 'Có lỗi xảy ra',
-      );
+      AppSnackbar.showError(message: 'Có lỗi xảy ra');
     } finally {
       isLoadingAvatar.value = false;
     }
   }
-  
+
   void changeCoverPhoto() async {
     try {
       final source = await _showImageSourceDialog();
       if (source == null) return;
-      
+
       isLoadingCover.value = true;
       AppSnackbar.showInfo(message: 'Đang xử lý ảnh...');
-      
+
       // Update cover photo using UserProfileService
       final success = await _profileService.updateCoverPhoto(source);
-      
+
       if (success) {
-        AppSnackbar.showSuccess(
-          message: 'Cập nhật ảnh bìa thành công!',
-        );
+        AppSnackbar.showSuccess(message: 'Cập nhật ảnh bìa thành công!');
       } else {
-        AppSnackbar.showError(
-          message: 'Không thể cập nhật ảnh bìa',
-        );
+        AppSnackbar.showError(message: 'Không thể cập nhật ảnh bìa');
       }
     } catch (e) {
       LoggerService.e('Error changing cover photo', error: e);
-      AppSnackbar.showError(
-        message: 'Có lỗi xảy ra',
-      );
+      AppSnackbar.showError(message: 'Có lỗi xảy ra');
     } finally {
       isLoadingCover.value = false;
     }
   }
-  
+
   void removeAvatar() async {
     final confirm = await AppDialogs.showConfirm(
       title: 'Xóa ảnh đại diện',
@@ -213,13 +200,13 @@ class UserProfileController extends BaseController {
       confirmText: 'Xóa',
       cancelText: 'Hủy',
     );
-    
+
     if (!confirm) return;
-    
+
     try {
       isLoadingAvatar.value = true;
       final success = await _profileService.removeAvatar();
-      
+
       if (success) {
         avatarBytes.value = null;
         AppSnackbar.showSuccess(message: 'Đã xóa ảnh đại diện');
@@ -233,7 +220,7 @@ class UserProfileController extends BaseController {
       isLoadingAvatar.value = false;
     }
   }
-  
+
   Future<ImageSource?> _showImageSourceDialog() async {
     return await Get.bottomSheet<ImageSource>(
       Container(
@@ -245,10 +232,7 @@ class UserProfileController extends BaseController {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Chọn nguồn ảnh',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            Text('Chọn nguồn ảnh', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             SizedBox(height: 20),
             ListTile(
               leading: Icon(Icons.camera_alt),
@@ -267,46 +251,42 @@ class UserProfileController extends BaseController {
       backgroundColor: Colors.transparent,
     );
   }
-  
+
   void navigateToMyTrips() {
     Get.toNamed('/my-trips');
   }
-  
+
   void navigateToSaved() {
     Get.toNamed('/saved-collections');
   }
-  
+
   void navigateToBookingHistory() {
     Get.toNamed('/booking-history');
   }
-  
+
   void navigateToMyReviews() {
     Get.toNamed('/my-reviews');
   }
-  
+
   void navigateToEditProfile() {
     Get.toNamed('/edit-profile');
   }
-  
+
   void navigateToSecurity() {
     Get.toNamed('/security-settings');
   }
-  
+
   void navigateToNotificationSettings() {
     Get.toNamed('/notification-settings');
   }
-  
+
   void toggleNotifications(bool value) {
     notificationsEnabled.value = value;
     StorageService.to.write('notifications_enabled', value);
-    
-    AppSnackbar.showInfo(
-      message: value 
-        ? 'Đã bật thông báo' 
-        : 'Đã tắt thông báo',
-    );
+
+    AppSnackbar.showInfo(message: value ? 'Đã bật thông báo' : 'Đã tắt thông báo');
   }
-  
+
   void changeLanguage() {
     Get.dialog(
       AlertDialog(
@@ -322,9 +302,7 @@ class UserProfileController extends BaseController {
                 currentLanguage.value = 'Tiếng Việt';
                 StorageService.to.write('app_language', 'vi');
                 Get.back();
-                AppSnackbar.showSuccess(
-                  message: 'Đã chuyển sang Tiếng Việt',
-                );
+                AppSnackbar.showSuccess(message: 'Đã chuyển sang Tiếng Việt');
               },
             ),
             RadioListTile<String>(
@@ -335,9 +313,7 @@ class UserProfileController extends BaseController {
                 currentLanguage.value = 'English';
                 StorageService.to.write('app_language', 'en');
                 Get.back();
-                AppSnackbar.showSuccess(
-                  message: 'Changed to English',
-                );
+                AppSnackbar.showSuccess(message: 'Changed to English');
               },
             ),
           ],
@@ -345,23 +321,23 @@ class UserProfileController extends BaseController {
       ),
     );
   }
-  
+
   void navigateToHelp() {
     Get.toNamed('/help-center');
   }
-  
+
   void navigateToContact() {
     Get.toNamed('/contact-support');
   }
-  
+
   void navigateToAbout() {
     Get.toNamed('/about');
   }
-  
+
   void navigateToSettings() {
     Get.toNamed('/settings');
   }
-  
+
   void logout() async {
     final confirm = await AppDialogs.showConfirm(
       title: 'Đăng xuất',
@@ -369,33 +345,29 @@ class UserProfileController extends BaseController {
       confirmText: 'Đăng xuất',
       cancelText: 'Hủy',
     );
-    
+
     if (confirm) {
       try {
         AppDialogs.showLoading(message: 'Đang đăng xuất...');
-        
+
         // Sign out from Firebase
         await FirebaseAuth.instance.signOut();
-        
+
         // Clear local storage
         await StorageService.to.clearAll();
-        
+
         // Clear image cache
         _imageService.clearCache();
-        
+
         AppDialogs.hideLoading();
-        
+
         // Navigate to login
         Get.offAllNamed('/login');
-        
-        AppSnackbar.showInfo(
-          message: 'Đã đăng xuất thành công',
-        );
+
+        AppSnackbar.showInfo(message: 'Đã đăng xuất thành công');
       } catch (e) {
         AppDialogs.hideLoading();
-        AppSnackbar.showError(
-          message: 'Không thể đăng xuất: $e',
-        );
+        AppSnackbar.showError(message: 'Không thể đăng xuất: $e');
       }
     }
   }

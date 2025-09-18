@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AppTheme {
   AppTheme._();
-  
+
   static ThemeData get lightTheme => ThemeData(
     useMaterial3: true,
     colorScheme: const ColorScheme.light(
@@ -20,7 +20,7 @@ class AppTheme {
     ),
     scaffoldBackgroundColor: AppColors.background,
     fontFamily: 'Gilroy',
-    
+
     // AppBar Theme
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.white,
@@ -29,7 +29,7 @@ class AppTheme {
       iconTheme: const IconThemeData(color: AppColors.textPrimary),
       titleTextStyle: AppTypography.h3,
     ),
-    
+
     // Elevated Button Theme
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -37,13 +37,11 @@ class AppTheme {
         foregroundColor: AppColors.white,
         elevation: 0,
         minimumSize: Size(double.infinity, 48.h),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
         textStyle: AppTypography.button,
       ),
     ),
-    
+
     // Text Button Theme
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
@@ -51,20 +49,18 @@ class AppTheme {
         textStyle: AppTypography.button,
       ),
     ),
-    
+
     // Outlined Button Theme
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.primary,
         minimumSize: Size(double.infinity, 48.h),
         side: const BorderSide(color: AppColors.primary),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
         textStyle: AppTypography.button,
       ),
     ),
-    
+
     // Input Decoration Theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -88,17 +84,15 @@ class AppTheme {
       ),
       hintStyle: AppTypography.inputHint,
     ),
-    
+
     // Card Theme
     cardTheme: CardTheme(
       color: AppColors.white,
       elevation: 2,
       shadowColor: AppColors.black.withOpacity(0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
     ),
-    
+
     // Bottom Navigation Bar Theme
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: AppColors.white,
@@ -108,22 +102,17 @@ class AppTheme {
       unselectedLabelStyle: AppTypography.labelSmall,
       type: BottomNavigationBarType.fixed,
     ),
-    
+
     // Dialog Theme
     dialogTheme: DialogTheme(
       backgroundColor: AppColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.r),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
     ),
-    
+
     // Divider Theme
-    dividerTheme: const DividerThemeData(
-      color: AppColors.greyLight,
-      thickness: 1,
-    ),
+    dividerTheme: const DividerThemeData(color: AppColors.greyLight, thickness: 1),
   );
-  
+
   static ThemeData get darkTheme => ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
@@ -139,7 +128,7 @@ class AppTheme {
     ),
     scaffoldBackgroundColor: const Color(0xFF121212),
     fontFamily: 'Gilroy',
-    
+
     // Similar configurations for dark theme...
     // You can customize these later based on your dark mode design
   );

@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
-import 'package:wanderlust/core/constants/app_spacing.dart';
 
-enum SocialPlatform {
-  google,
-  facebook,
-  apple,
-  twitter,
-}
+enum SocialPlatform { google, facebook, apple, twitter }
 
 class SocialLoginButtons extends StatelessWidget {
   final VoidCallback? onGooglePressed;
@@ -27,11 +21,7 @@ class SocialLoginButtons extends StatelessWidget {
     this.onFacebookPressed,
     this.onApplePressed,
     this.onTwitterPressed,
-    this.platforms = const [
-      SocialPlatform.google,
-      SocialPlatform.facebook,
-      SocialPlatform.apple,
-    ],
+    this.platforms = const [SocialPlatform.google, SocialPlatform.facebook, SocialPlatform.apple],
     this.isLoading = false,
     this.alignment = MainAxisAlignment.center,
     this.spacing = 24,
@@ -100,10 +90,7 @@ class SocialLoginButtons extends StatelessWidget {
       }
     }
 
-    return Row(
-      mainAxisAlignment: alignment,
-      children: spacedButtons,
-    );
+    return Row(mainAxisAlignment: alignment, children: spacedButtons);
   }
 }
 
@@ -133,34 +120,22 @@ class SocialLoginButton extends StatelessWidget {
           width: size * 0.5,
           height: size * 0.5,
           errorBuilder: (context, error, stackTrace) {
-            return Icon(
-              Icons.g_mobiledata,
-              size: size * 0.6,
-              color: Colors.red,
-            );
+            return Icon(Icons.g_mobiledata, size: size * 0.6, color: Colors.red);
           },
         );
         tooltip = 'Đăng nhập với Google';
         break;
-      
+
       case SocialPlatform.facebook:
-        icon = Icon(
-          Icons.facebook,
-          size: size * 0.6,
-          color: const Color(0xFF1877F2),
-        );
+        icon = Icon(Icons.facebook, size: size * 0.6, color: const Color(0xFF1877F2));
         tooltip = 'Đăng nhập với Facebook';
         break;
-      
+
       case SocialPlatform.apple:
-        icon = Icon(
-          Icons.apple,
-          size: size * 0.6,
-          color: AppColors.black,
-        );
+        icon = Icon(Icons.apple, size: size * 0.6, color: AppColors.black);
         tooltip = 'Đăng nhập với Apple';
         break;
-      
+
       case SocialPlatform.twitter:
         icon = Icon(
           Icons.close, // Replace with Twitter icon when available
@@ -184,12 +159,7 @@ class SocialLoginButton extends StatelessWidget {
             height: size.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: showBorder
-                  ? Border.all(
-                      color: AppColors.neutral200,
-                      width: 1,
-                    )
-                  : null,
+              border: showBorder ? Border.all(color: AppColors.neutral200, width: 1) : null,
             ),
             child: Center(child: icon),
           ),

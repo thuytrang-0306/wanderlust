@@ -33,7 +33,7 @@ class BookingModel {
   final double refundAmount;
   final DateTime createdAt;
   final DateTime updatedAt;
-  
+
   BookingModel({
     required this.id,
     required this.userId,
@@ -67,57 +67,71 @@ class BookingModel {
     required this.createdAt,
     required this.updatedAt,
   });
-  
+
   // Display helpers
   String get displayPrice {
     final formatter = totalPrice.toStringAsFixed(0);
     return '$formatter $currency';
   }
-  
+
   String get displayStatus {
     switch (status) {
-      case 'pending': return 'Chờ xác nhận';
-      case 'confirmed': return 'Đã xác nhận';
-      case 'cancelled': return 'Đã hủy';
-      case 'completed': return 'Hoàn thành';
-      default: return status;
+      case 'pending':
+        return 'Chờ xác nhận';
+      case 'confirmed':
+        return 'Đã xác nhận';
+      case 'cancelled':
+        return 'Đã hủy';
+      case 'completed':
+        return 'Hoàn thành';
+      default:
+        return status;
     }
   }
-  
+
   String get displayPaymentStatus {
     switch (paymentStatus) {
-      case 'pending': return 'Chờ thanh toán';
-      case 'paid': return 'Đã thanh toán';
-      case 'refunded': return 'Đã hoàn tiền';
-      default: return paymentStatus;
+      case 'pending':
+        return 'Chờ thanh toán';
+      case 'paid':
+        return 'Đã thanh toán';
+      case 'refunded':
+        return 'Đã hoàn tiền';
+      default:
+        return paymentStatus;
     }
   }
-  
+
   String get displayPaymentMethod {
     switch (paymentMethod) {
-      case 'credit_card': return 'Thẻ tín dụng';
-      case 'bank_transfer': return 'Chuyển khoản';
-      case 'cash': return 'Tiền mặt';
-      case 'e_wallet': return 'Ví điện tử';
-      default: return paymentMethod;
+      case 'credit_card':
+        return 'Thẻ tín dụng';
+      case 'bank_transfer':
+        return 'Chuyển khoản';
+      case 'cash':
+        return 'Tiền mặt';
+      case 'e_wallet':
+        return 'Ví điện tử';
+      default:
+        return paymentMethod;
     }
   }
-  
+
   int get nights {
     if (checkOut != null) {
       return checkOut!.difference(checkIn).inDays;
     }
     return 0;
   }
-  
+
   bool get canCancel {
     return status == 'pending' || status == 'confirmed';
   }
-  
+
   bool get canRefund {
     return paymentStatus == 'paid' && status == 'cancelled';
   }
-  
+
   // From Firestore
   factory BookingModel.fromFirestore(Map<String, dynamic> data, String docId) {
     return BookingModel(
@@ -131,9 +145,7 @@ class BookingModel {
       itemName: data['itemName'] ?? '',
       itemImage: data['itemImage'] ?? '',
       checkIn: (data['checkIn'] as Timestamp).toDate(),
-      checkOut: data['checkOut'] != null 
-          ? (data['checkOut'] as Timestamp).toDate()
-          : null,
+      checkOut: data['checkOut'] != null ? (data['checkOut'] as Timestamp).toDate() : null,
       quantity: data['quantity'] ?? 1,
       adults: data['adults'] ?? 1,
       children: data['children'] ?? 0,
@@ -146,21 +158,20 @@ class BookingModel {
       paymentStatus: data['paymentStatus'] ?? 'pending',
       paymentMethod: data['paymentMethod'] ?? 'cash',
       paymentId: data['paymentId'],
-      customerInfo: CustomerInfo.fromMap(
-        data['customerInfo'] ?? CustomerInfo.empty().toMap()
-      ),
+      customerInfo: CustomerInfo.fromMap(data['customerInfo'] ?? CustomerInfo.empty().toMap()),
       metadata: data['metadata'] ?? {},
       specialRequests: data['specialRequests'],
       cancellationReason: data['cancellationReason'],
-      cancellationDate: data['cancellationDate'] != null 
-          ? (data['cancellationDate'] as Timestamp).toDate()
-          : null,
+      cancellationDate:
+          data['cancellationDate'] != null
+              ? (data['cancellationDate'] as Timestamp).toDate()
+              : null,
       refundAmount: (data['refundAmount'] ?? 0).toDouble(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
-  
+
   // To Firestore
   Map<String, dynamic> toFirestore() {
     return {
@@ -190,9 +201,7 @@ class BookingModel {
       'metadata': metadata,
       'specialRequests': specialRequests,
       'cancellationReason': cancellationReason,
-      'cancellationDate': cancellationDate != null 
-          ? Timestamp.fromDate(cancellationDate!)
-          : null,
+      'cancellationDate': cancellationDate != null ? Timestamp.fromDate(cancellationDate!) : null,
       'refundAmount': refundAmount,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
@@ -214,7 +223,7 @@ class CustomerInfo {
   final DateTime? dateOfBirth;
   final String gender;
   final String nationality;
-  
+
   CustomerInfo({
     required this.fullName,
     required this.email,
@@ -229,7 +238,7 @@ class CustomerInfo {
     required this.gender,
     required this.nationality,
   });
-  
+
   factory CustomerInfo.fromMap(Map<String, dynamic> map) {
     return CustomerInfo(
       fullName: map['fullName'] ?? '',
@@ -241,14 +250,12 @@ class CustomerInfo {
       postalCode: map['postalCode'] ?? '',
       idNumber: map['idNumber'] ?? '',
       idType: map['idType'] ?? 'cccd',
-      dateOfBirth: map['dateOfBirth'] != null 
-          ? (map['dateOfBirth'] as Timestamp).toDate()
-          : null,
+      dateOfBirth: map['dateOfBirth'] != null ? (map['dateOfBirth'] as Timestamp).toDate() : null,
       gender: map['gender'] ?? '',
       nationality: map['nationality'] ?? 'Vietnamese',
     );
   }
-  
+
   Map<String, dynamic> toMap() {
     return {
       'fullName': fullName,
@@ -260,14 +267,12 @@ class CustomerInfo {
       'postalCode': postalCode,
       'idNumber': idNumber,
       'idType': idType,
-      'dateOfBirth': dateOfBirth != null 
-          ? Timestamp.fromDate(dateOfBirth!)
-          : null,
+      'dateOfBirth': dateOfBirth != null ? Timestamp.fromDate(dateOfBirth!) : null,
       'gender': gender,
       'nationality': nationality,
     };
   }
-  
+
   static CustomerInfo empty() {
     return CustomerInfo(
       fullName: '',
@@ -298,7 +303,7 @@ class PaymentInfo {
   final DateTime? paymentDate;
   final String status; // pending, processing, success, failed
   final String? failureReason;
-  
+
   PaymentInfo({
     required this.method,
     this.transactionId,
@@ -312,7 +317,7 @@ class PaymentInfo {
     required this.status,
     this.failureReason,
   });
-  
+
   factory PaymentInfo.fromMap(Map<String, dynamic> map) {
     return PaymentInfo(
       method: map['method'] ?? 'cash',
@@ -323,14 +328,12 @@ class PaymentInfo {
       bankAccount: map['bankAccount'],
       eWalletType: map['eWalletType'],
       eWalletPhone: map['eWalletPhone'],
-      paymentDate: map['paymentDate'] != null 
-          ? (map['paymentDate'] as Timestamp).toDate()
-          : null,
+      paymentDate: map['paymentDate'] != null ? (map['paymentDate'] as Timestamp).toDate() : null,
       status: map['status'] ?? 'pending',
       failureReason: map['failureReason'],
     );
   }
-  
+
   Map<String, dynamic> toMap() {
     return {
       'method': method,
@@ -341,9 +344,7 @@ class PaymentInfo {
       'bankAccount': bankAccount,
       'eWalletType': eWalletType,
       'eWalletPhone': eWalletPhone,
-      'paymentDate': paymentDate != null 
-          ? Timestamp.fromDate(paymentDate!)
-          : null,
+      'paymentDate': paymentDate != null ? Timestamp.fromDate(paymentDate!) : null,
       'status': status,
       'failureReason': failureReason,
     };

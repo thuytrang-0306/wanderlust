@@ -1,23 +1,18 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 class AppException implements Exception {
   final String message;
   final String? code;
   final dynamic originalError;
-  
-  AppException({
-    required this.message,
-    this.code,
-    this.originalError,
-  });
-  
+
+  AppException({required this.message, this.code, this.originalError});
+
   @override
   String toString() => message;
-  
+
   factory AppException.fromFirebaseAuth(FirebaseAuthException e) {
     String message = 'Authentication error occurred';
-    
+
     switch (e.code) {
       case 'user-not-found':
         message = 'No user found with this email';
@@ -52,17 +47,13 @@ class AppException implements Exception {
       default:
         message = e.message ?? 'Authentication error occurred';
     }
-    
-    return AppException(
-      message: message,
-      code: e.code,
-      originalError: e,
-    );
+
+    return AppException(message: message, code: e.code, originalError: e);
   }
-  
+
   factory AppException.fromFirestore(FirebaseException e) {
     String message = 'Database error occurred';
-    
+
     switch (e.code) {
       case 'permission-denied':
         message = 'You don\'t have permission to perform this action';
@@ -109,14 +100,10 @@ class AppException implements Exception {
       default:
         message = e.message ?? 'Database error occurred';
     }
-    
-    return AppException(
-      message: message,
-      code: e.code,
-      originalError: e,
-    );
+
+    return AppException(message: message, code: e.code, originalError: e);
   }
-  
+
   factory AppException.fromError(dynamic error) {
     if (error is FirebaseAuthException) {
       return AppException.fromFirebaseAuth(error);
@@ -125,50 +112,31 @@ class AppException implements Exception {
     } else if (error is AppException) {
       return error;
     } else {
-      return AppException(
-        message: error.toString(),
-        originalError: error,
-      );
+      return AppException(message: error.toString(), originalError: error);
     }
   }
 }
 
 class NetworkException extends AppException {
   NetworkException({String? message})
-      : super(
-          message: message ?? 'Network connection error',
-          code: 'network-error',
-        );
+    : super(message: message ?? 'Network connection error', code: 'network-error');
 }
 
 class ValidationException extends AppException {
-  ValidationException({required String message})
-      : super(
-          message: message,
-          code: 'validation-error',
-        );
+  ValidationException({required super.message}) : super(code: 'validation-error');
 }
 
 class NotFoundException extends AppException {
   NotFoundException({String? message})
-      : super(
-          message: message ?? 'Requested data not found',
-          code: 'not-found',
-        );
+    : super(message: message ?? 'Requested data not found', code: 'not-found');
 }
 
 class UnauthorizedException extends AppException {
   UnauthorizedException({String? message})
-      : super(
-          message: message ?? 'Unauthorized access',
-          code: 'unauthorized',
-        );
+    : super(message: message ?? 'Unauthorized access', code: 'unauthorized');
 }
 
 class ServerException extends AppException {
   ServerException({String? message})
-      : super(
-          message: message ?? 'Server error occurred',
-          code: 'server-error',
-        );
+    : super(message: message ?? 'Server error occurred', code: 'server-error');
 }

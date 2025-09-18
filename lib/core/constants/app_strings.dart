@@ -2,12 +2,12 @@
 /// Support for localization can be added later
 class AppStrings {
   AppStrings._();
-  
+
   // ============= APP INFO =============
   static const String appName = 'Wanderlust';
   static const String appTagline = 'Discover Your Next Adventure';
   static const String appVersion = '1.0.0';
-  
+
   // ============= COMMON =============
   static const String ok = 'OK';
   static const String cancel = 'Cancel';
@@ -35,7 +35,7 @@ class AppStrings {
   static const String viewMore = 'View More';
   static const String loading = 'Loading...';
   static const String pleaseWait = 'Please wait...';
-  
+
   // ============= AUTH =============
   static const String login = 'Login';
   static const String signup = 'Sign Up';
@@ -56,13 +56,13 @@ class AppStrings {
   static const String male = 'Male';
   static const String female = 'Female';
   static const String other = 'Other';
-  
+
   // Social Login
   static const String loginWithGoogle = 'Continue with Google';
   static const String loginWithFacebook = 'Continue with Facebook';
   static const String loginWithApple = 'Continue with Apple';
   static const String orLoginWith = 'Or login with';
-  
+
   // ============= NAVIGATION =============
   static const String home = 'Home';
   static const String explore = 'Explore';
@@ -70,7 +70,7 @@ class AppStrings {
   static const String profile = 'Profile';
   static const String settings = 'Settings';
   static const String notifications = 'Notifications';
-  
+
   // ============= HOME =============
   static const String welcomeBack = 'Welcome back';
   static const String whereToGo = 'Where do you want to go?';
@@ -80,7 +80,7 @@ class AppStrings {
   static const String topRated = 'Top Rated';
   static const String trending = 'Trending Now';
   static const String categories = 'Categories';
-  
+
   // ============= EXPLORE =============
   static const String searchDestinations = 'Search destinations...';
   static const String allCategories = 'All Categories';
@@ -92,7 +92,7 @@ class AppStrings {
   static const String islands = 'Islands';
   static const String lakes = 'Lakes';
   static const String historical = 'Historical';
-  
+
   // ============= BOOKING =============
   static const String myBookings = 'My Bookings';
   static const String upcoming = 'Upcoming';
@@ -107,7 +107,7 @@ class AppStrings {
   static const String children = 'Children';
   static const String totalPrice = 'Total Price';
   static const String perNight = 'per night';
-  
+
   // ============= PROFILE =============
   static const String myProfile = 'My Profile';
   static const String editProfile = 'Edit Profile';
@@ -120,7 +120,7 @@ class AppStrings {
   static const String about = 'About';
   static const String termsConditions = 'Terms & Conditions';
   static const String privacyPolicy = 'Privacy Policy';
-  
+
   // ============= ERRORS =============
   static const String errorGeneral = 'Something went wrong. Please try again.';
   static const String errorNetwork = 'No internet connection. Please check your network.';
@@ -134,7 +134,7 @@ class AppStrings {
   static const String errorPasswordMismatch = 'Passwords do not match.';
   static const String errorFieldRequired = 'This field is required.';
   static const String errorInvalidPhone = 'Please enter a valid phone number.';
-  
+
   // ============= SUCCESS MESSAGES =============
   static const String successGeneral = 'Success!';
   static const String successSaved = 'Saved successfully.';
@@ -143,7 +143,7 @@ class AppStrings {
   static const String successLogout = 'Logged out successfully.';
   static const String successBooking = 'Booking confirmed!';
   static const String successPasswordReset = 'Password reset link sent to your email.';
-  
+
   // ============= EMPTY STATES =============
   static const String emptyGeneral = 'No data available';
   static const String emptySearch = 'No results found';
@@ -151,16 +151,19 @@ class AppStrings {
   static const String emptyWishlist = 'Your wishlist is empty';
   static const String emptyReviews = 'No reviews yet';
   static const String emptyNotifications = 'No notifications';
-  
+
   // ============= ONBOARDING =============
   static const String onboardingTitle1 = 'Discover Amazing Places';
   static const String onboardingTitle2 = 'Plan Your Perfect Trip';
   static const String onboardingTitle3 = 'Travel with Confidence';
-  static const String onboardingDesc1 = 'Explore destinations around the world and find your next adventure';
-  static const String onboardingDesc2 = 'Create detailed itineraries and manage all your bookings in one place';
-  static const String onboardingDesc3 = 'Get insider tips, real reviews, and 24/7 support for worry-free travel';
+  static const String onboardingDesc1 =
+      'Explore destinations around the world and find your next adventure';
+  static const String onboardingDesc2 =
+      'Create detailed itineraries and manage all your bookings in one place';
+  static const String onboardingDesc3 =
+      'Get insider tips, real reviews, and 24/7 support for worry-free travel';
   static const String getStarted = 'Get Started';
-  
+
   // ============= SETTINGS =============
   static const String language = 'Language';
   static const String darkMode = 'Dark Mode';

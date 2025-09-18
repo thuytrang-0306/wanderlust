@@ -12,7 +12,7 @@ class OnboardingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(OnboardingController());
-    
+
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
@@ -36,7 +36,7 @@ class OnboardingPage extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Main content
             Expanded(
               child: PageView.builder(
@@ -52,20 +52,12 @@ class OnboardingPage extends StatelessWidget {
                         // Image - centered and responsive
                         Container(
                           height: 0.35.sh,
-                          constraints: BoxConstraints(
-                            maxHeight: 280.h,
-                            minHeight: 200.h,
-                          ),
-                          child: Center(
-                            child: Image.asset(
-                              page.image,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
+                          constraints: BoxConstraints(maxHeight: 280.h, minHeight: 200.h),
+                          child: Center(child: Image.asset(page.image, fit: BoxFit.contain)),
                         ),
-                        
+
                         SizedBox(height: AppSpacing.s10),
-                        
+
                         // Title - centered
                         Text(
                           page.title,
@@ -75,9 +67,9 @@ class OnboardingPage extends StatelessWidget {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        
+
                         SizedBox(height: AppSpacing.s3),
-                        
+
                         // Subtitle - centered with padding
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
@@ -98,7 +90,7 @@ class OnboardingPage extends StatelessWidget {
                 },
               ),
             ),
-            
+
             // Bottom section: dots and buttons with 67h padding from bottom
             Container(
               padding: EdgeInsets.only(
@@ -110,32 +102,35 @@ class OnboardingPage extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min, // Important: minimize height
                 children: [
                   // Page indicators (3 dots)
-                  Obx(() => Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      controller.onboardingPages.length,
-                      (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: EdgeInsets.symmetric(horizontal: AppSpacing.s1),
-                        height: 8.h,
-                        width: controller.currentPage.value == index ? 24.w : 8.w,
-                        decoration: BoxDecoration(
-                          color: controller.currentPage.value == index
-                              ? AppColors.primary
-                              : AppColors.neutral300,
-                          borderRadius: BorderRadius.circular(4.r),
+                  Obx(
+                    () => Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        controller.onboardingPages.length,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: EdgeInsets.symmetric(horizontal: AppSpacing.s1),
+                          height: 8.h,
+                          width: controller.currentPage.value == index ? 24.w : 8.w,
+                          decoration: BoxDecoration(
+                            color:
+                                controller.currentPage.value == index
+                                    ? AppColors.primary
+                                    : AppColors.neutral300,
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
                         ),
                       ),
                     ),
-                  )),
-                  
+                  ),
+
                   SizedBox(height: AppSpacing.s6),
-                  
+
                   // Action buttons
                   Obx(() {
-                    final isLast = controller.currentPage.value == 
-                        controller.onboardingPages.length - 1;
-                    
+                    final isLast =
+                        controller.currentPage.value == controller.onboardingPages.length - 1;
+
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -144,9 +139,7 @@ class OnboardingPage extends StatelessWidget {
                           width: double.infinity,
                           height: 48.h, // Reduced from 56 for better fit
                           child: ElevatedButton(
-                            onPressed: isLast 
-                                ? controller.navigateToRegister 
-                                : controller.nextPage,
+                            onPressed: isLast ? controller.navigateToRegister : controller.nextPage,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               shape: RoundedRectangleBorder(
@@ -156,15 +149,13 @@ class OnboardingPage extends StatelessWidget {
                             ),
                             child: Text(
                               isLast ? 'Tạo tài khoản' : 'Tiếp theo',
-                              style: AppTypography.button.copyWith(
-                                color: AppColors.white,
-                              ),
+                              style: AppTypography.button.copyWith(color: AppColors.white),
                             ),
                           ),
                         ),
-                        
+
                         SizedBox(height: AppSpacing.s3),
-                        
+
                         // Secondary button
                         SizedBox(
                           width: double.infinity,
@@ -172,19 +163,14 @@ class OnboardingPage extends StatelessWidget {
                           child: OutlinedButton(
                             onPressed: controller.navigateToLogin,
                             style: OutlinedButton.styleFrom(
-                              side: BorderSide(
-                                color: AppColors.primary,
-                                width: 1.5,
-                              ),
+                              side: BorderSide(color: AppColors.primary, width: 1.5),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(AppSpacing.s6),
                               ),
                             ),
                             child: Text(
                               'Đăng nhập',
-                              style: AppTypography.button.copyWith(
-                                color: AppColors.primary,
-                              ),
+                              style: AppTypography.button.copyWith(color: AppColors.primary),
                             ),
                           ),
                         ),

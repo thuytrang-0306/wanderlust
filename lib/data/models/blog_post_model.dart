@@ -70,9 +70,7 @@ class BlogPostModel {
       status: PostStatus.fromString(data['status'] ?? 'draft'),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      publishedAt: data['publishedAt'] != null 
-          ? (data['publishedAt'] as Timestamp).toDate() 
-          : null,
+      publishedAt: data['publishedAt'] != null ? (data['publishedAt'] as Timestamp).toDate() : null,
     );
   }
 
@@ -97,9 +95,7 @@ class BlogPostModel {
       'status': status.value,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
-      'publishedAt': publishedAt != null 
-          ? Timestamp.fromDate(publishedAt!) 
-          : null,
+      'publishedAt': publishedAt != null ? Timestamp.fromDate(publishedAt!) : null,
     };
   }
 
@@ -107,7 +103,7 @@ class BlogPostModel {
   String get formattedDate {
     final now = DateTime.now();
     final diff = now.difference(publishedAt ?? createdAt);
-    
+
     if (diff.inDays == 0) {
       if (diff.inHours == 0) {
         if (diff.inMinutes == 0) {
@@ -151,7 +147,8 @@ class BlogPostModel {
 
   // Generate slug from title
   String get slug {
-    return title.toLowerCase()
+    return title
+        .toLowerCase()
         .replaceAll(RegExp(r'[^\w\s-]'), '')
         .replaceAll(RegExp(r'[\s_-]+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
@@ -165,14 +162,11 @@ enum PostStatus {
 
   final String value;
   final String displayName;
-  
+
   const PostStatus(this.value, this.displayName);
 
   static PostStatus fromString(String value) {
-    return PostStatus.values.firstWhere(
-      (e) => e.value == value,
-      orElse: () => PostStatus.draft,
-    );
+    return PostStatus.values.firstWhere((e) => e.value == value, orElse: () => PostStatus.draft);
   }
 }
 

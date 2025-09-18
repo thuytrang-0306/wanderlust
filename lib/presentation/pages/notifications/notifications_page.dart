@@ -12,7 +12,7 @@ class NotificationsPage extends GetView<NotificationsController> {
   @override
   Widget build(BuildContext context) {
     Get.lazyPut(() => NotificationsController());
-    
+
     return Scaffold(
       body: Column(
         children: [
@@ -24,20 +24,22 @@ class NotificationsPage extends GetView<NotificationsController> {
                 if (controller.notifications.isEmpty) {
                   return _buildEmptyState();
                 }
-                
+
                 return SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (controller.todayNotifications.isNotEmpty) ...[
                         _buildSectionHeader('Hôm nay'),
-                        ...controller.todayNotifications
-                            .map((notification) => _buildNotificationItem(notification)),
+                        ...controller.todayNotifications.map(
+                          (notification) => _buildNotificationItem(notification),
+                        ),
                       ],
                       if (controller.weekNotifications.isNotEmpty) ...[
                         _buildSectionHeader('7 ngày qua'),
-                        ...controller.weekNotifications
-                            .map((notification) => _buildNotificationItem(notification)),
+                        ...controller.weekNotifications.map(
+                          (notification) => _buildNotificationItem(notification),
+                        ),
                       ],
                     ],
                   ),
@@ -65,10 +67,7 @@ class NotificationsPage extends GetView<NotificationsController> {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.s5,
-            vertical: AppSpacing.s4,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s4),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -84,11 +83,7 @@ class NotificationsPage extends GetView<NotificationsController> {
                 onTap: () {
                   // Settings action
                 },
-                child: Icon(
-                  Icons.settings_outlined,
-                  color: AppColors.primary,
-                  size: 24.sp,
-                ),
+                child: Icon(Icons.settings_outlined, color: AppColors.primary, size: 24.sp),
               ),
             ],
           ),
@@ -101,10 +96,7 @@ class NotificationsPage extends GetView<NotificationsController> {
     return Container(
       color: const Color(0xFFF5F7F8),
       width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.s5,
-        vertical: AppSpacing.s3,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s3),
       child: Text(
         title,
         style: TextStyle(
@@ -124,10 +116,7 @@ class NotificationsPage extends GetView<NotificationsController> {
           controller.markAsRead(notification.id);
         },
         child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.s5,
-            vertical: AppSpacing.s4,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s4),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -137,36 +126,27 @@ class NotificationsPage extends GetView<NotificationsController> {
                 height: 44.w,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 0.5,
-                  ),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
                 ),
                 child: ClipOval(
                   child: CachedNetworkImage(
                     imageUrl: notification.avatar,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: AppColors.neutral200,
-                      child: Icon(
-                        Icons.person,
-                        color: AppColors.neutral400,
-                        size: 20.sp,
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: AppColors.neutral200,
-                      child: Icon(
-                        Icons.person,
-                        color: AppColors.neutral400,
-                        size: 20.sp,
-                      ),
-                    ),
+                    placeholder:
+                        (context, url) => Container(
+                          color: AppColors.neutral200,
+                          child: Icon(Icons.person, color: AppColors.neutral400, size: 20.sp),
+                        ),
+                    errorWidget:
+                        (context, url, error) => Container(
+                          color: AppColors.neutral200,
+                          child: Icon(Icons.person, color: AppColors.neutral400, size: 20.sp),
+                        ),
                   ),
                 ),
               ),
               SizedBox(width: AppSpacing.s3),
-              
+
               // Content
               Expanded(
                 child: Column(
@@ -208,7 +188,7 @@ class NotificationsPage extends GetView<NotificationsController> {
                   ],
                 ),
               ),
-              
+
               // Unread indicator
               if (notification.isUnread) ...[
                 SizedBox(width: AppSpacing.s2),
@@ -216,10 +196,7 @@ class NotificationsPage extends GetView<NotificationsController> {
                   width: 8.w,
                   height: 8.w,
                   margin: EdgeInsets.only(top: 6.h),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
+                  decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                 ),
               ],
             ],
@@ -234,11 +211,7 @@ class NotificationsPage extends GetView<NotificationsController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.notifications_none_outlined,
-            size: 80.sp,
-            color: AppColors.neutral300,
-          ),
+          Icon(Icons.notifications_none_outlined, size: 80.sp, color: AppColors.neutral300),
           SizedBox(height: AppSpacing.s4),
           Text(
             'Không có thông báo',
@@ -251,10 +224,7 @@ class NotificationsPage extends GetView<NotificationsController> {
           SizedBox(height: AppSpacing.s2),
           Text(
             'Bạn sẽ nhận được thông báo khi có hoạt động mới',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.neutral500,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: AppColors.neutral500),
             textAlign: TextAlign.center,
           ),
         ],

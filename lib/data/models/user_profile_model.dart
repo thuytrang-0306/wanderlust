@@ -19,7 +19,7 @@ class UserProfileModel {
   final bool isPremium;
   final UserStats stats;
   final UserSettings? settings;
-  
+
   UserProfileModel({
     required this.id,
     required this.email,
@@ -40,7 +40,7 @@ class UserProfileModel {
     required this.stats,
     this.settings,
   });
-  
+
   factory UserProfileModel.fromJson(Map<String, dynamic> json, String id) {
     return UserProfileModel(
       id: id,
@@ -60,12 +60,10 @@ class UserProfileModel {
       isVerified: json['isVerified'] ?? false,
       isPremium: json['isPremium'] ?? false,
       stats: UserStats.fromJson(json['stats'] ?? {}),
-      settings: json['settings'] != null 
-          ? UserSettings.fromJson(json['settings']) 
-          : null,
+      settings: json['settings'] != null ? UserSettings.fromJson(json['settings']) : null,
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{
       'email': email,
@@ -80,7 +78,7 @@ class UserProfileModel {
       'stats': stats.toJson(),
       'searchableDisplayName': _createSearchableTokens(displayName),
     };
-    
+
     if (phoneNumber != null) data['phoneNumber'] = phoneNumber;
     if (photoUrl != null) data['photoUrl'] = photoUrl;
     if (avatar != null) data['avatar'] = avatar;
@@ -88,38 +86,38 @@ class UserProfileModel {
     if (coverPhoto != null) data['coverPhoto'] = coverPhoto;
     if (lastActive != null) data['lastActive'] = Timestamp.fromDate(lastActive!);
     if (settings != null) data['settings'] = settings!.toJson();
-    
+
     return data;
   }
-  
+
   // Create searchable tokens for name search
   List<String> _createSearchableTokens(String name) {
     final tokens = <String>{};
     final nameLower = name.toLowerCase();
-    
+
     // Add full name
     tokens.add(nameLower);
-    
+
     // Add each word
     final words = nameLower.split(' ');
     tokens.addAll(words);
-    
+
     // Add progressive substrings
     for (final word in words) {
       for (int i = 1; i <= word.length; i++) {
         tokens.add(word.substring(0, i));
       }
     }
-    
+
     return tokens.toList();
   }
-  
+
   // Get display avatar (base64 thumbnail or URL)
   String? get displayAvatar => avatarThumbnail ?? avatar ?? photoUrl;
-  
+
   // Check if user has custom avatar
   bool get hasCustomAvatar => avatar != null && avatar!.isNotEmpty;
-  
+
   // Get initials for avatar placeholder
   String get initials {
     final parts = displayName.split(' ');
@@ -128,7 +126,7 @@ class UserProfileModel {
     }
     return displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
   }
-  
+
   UserProfileModel copyWith({
     String? email,
     String? displayName,
@@ -178,7 +176,7 @@ class UserStats {
   final int followingCount;
   final int savedCount;
   final int collectionsCount;
-  
+
   UserStats({
     required this.tripsCount,
     required this.reviewsCount,
@@ -188,7 +186,7 @@ class UserStats {
     this.savedCount = 0,
     this.collectionsCount = 0,
   });
-  
+
   factory UserStats.fromJson(Map<String, dynamic> json) {
     return UserStats(
       tripsCount: json['tripsCount'] ?? 0,
@@ -200,7 +198,7 @@ class UserStats {
       collectionsCount: json['collectionsCount'] ?? 0,
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'tripsCount': tripsCount,
@@ -222,7 +220,7 @@ class UserSettings {
   final String currency;
   final String theme;
   final PrivacySettings privacy;
-  
+
   UserSettings({
     this.notificationsEnabled = true,
     this.emailNotifications = true,
@@ -232,7 +230,7 @@ class UserSettings {
     this.theme = 'light',
     required this.privacy,
   });
-  
+
   factory UserSettings.fromJson(Map<String, dynamic> json) {
     return UserSettings(
       notificationsEnabled: json['notificationsEnabled'] ?? true,
@@ -244,7 +242,7 @@ class UserSettings {
       privacy: PrivacySettings.fromJson(json['privacy'] ?? {}),
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'notificationsEnabled': notificationsEnabled,
@@ -265,7 +263,7 @@ class PrivacySettings {
   final bool showLocation;
   final bool allowMessages;
   final bool allowFollowers;
-  
+
   PrivacySettings({
     this.profilePublic = true,
     this.showEmail = false,
@@ -274,7 +272,7 @@ class PrivacySettings {
     this.allowMessages = true,
     this.allowFollowers = true,
   });
-  
+
   factory PrivacySettings.fromJson(Map<String, dynamic> json) {
     return PrivacySettings(
       profilePublic: json['profilePublic'] ?? true,
@@ -285,7 +283,7 @@ class PrivacySettings {
       allowFollowers: json['allowFollowers'] ?? true,
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'profilePublic': profilePublic,

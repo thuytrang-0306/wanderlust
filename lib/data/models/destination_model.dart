@@ -59,12 +59,8 @@ class DestinationModel {
       tags: List<String>.from(json['tags'] ?? []),
       featured: json['featured'] ?? false,
       popular: json['popular'] ?? false,
-      createdAt: json['createdAt'] != null
-          ? (json['createdAt'] as Timestamp).toDate()
-          : null,
-      updatedAt: json['updatedAt'] != null
-          ? (json['updatedAt'] as Timestamp).toDate()
-          : null,
+      createdAt: json['createdAt'] != null ? (json['createdAt'] as Timestamp).toDate() : null,
+      updatedAt: json['updatedAt'] != null ? (json['updatedAt'] as Timestamp).toDate() : null,
     );
   }
 
@@ -85,9 +81,8 @@ class DestinationModel {
       'tags': tags,
       'featured': featured,
       'popular': popular,
-      'createdAt': createdAt != null
-          ? Timestamp.fromDate(createdAt!)
-          : FieldValue.serverTimestamp(),
+      'createdAt':
+          createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }

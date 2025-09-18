@@ -27,7 +27,7 @@ import 'package:wanderlust/data/services/booking_service.dart';
 Future<void> _registerDataServices() async {
   // Core services
   Get.put(UnifiedImageService());
-  
+
   // Data services
   final blogService = Get.put(BlogService());
   final destinationService = Get.put(DestinationService());
@@ -37,16 +37,16 @@ Future<void> _registerDataServices() async {
   final userProfileService = Get.put(UserProfileService());
   final accommodationService = Get.put(AccommodationService());
   final bookingService = Get.put(BookingService());
-  
+
   LoggerService.i('Data services registered');
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Logger
   LoggerService.init();
-  
+
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -54,33 +54,31 @@ void main() async {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
-  
+
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   // Load environment variables
   await dotenv.load(fileName: '.env');
-  
+
   // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   // Initialize services
   await Get.putAsync(() => StorageService().init());
   await Get.putAsync(() => FirebaseService().init());
   Get.put(ConnectivityService());
   Get.put(ImageService());
-  
+
   // Register data services
   await _registerDataServices();
-  
+
   // Determine initial route based on app state
   final String initialRoute = _getInitialRoute();
-  
+
   runApp(WanderlustApp(initialRoute: initialRoute));
 }
 
@@ -88,12 +86,12 @@ String _getInitialRoute() {
   final storage = Get.find<StorageService>();
   final hasSeenOnboarding = storage.read('hasSeenOnboarding') ?? false;
   final currentUser = FirebaseAuth.instance.currentUser;
-  
+
   LoggerService.d('App Initialization Check:');
   LoggerService.d('- Has seen onboarding: $hasSeenOnboarding');
   LoggerService.d('- Current user: ${currentUser?.email}');
   LoggerService.d('- Email verified: ${currentUser?.emailVerified}');
-  
+
   // Decision tree for initial route
   if (!hasSeenOnboarding) {
     // First time user - show onboarding
@@ -119,9 +117,9 @@ String _getInitialRoute() {
 
 class WanderlustApp extends StatelessWidget {
   final String initialRoute;
-  
+
   const WanderlustApp({super.key, required this.initialRoute});
-  
+
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(

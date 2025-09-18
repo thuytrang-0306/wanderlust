@@ -19,52 +19,47 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
-  
+
   @override
   void initState() {
     super.initState();
     _setupAnimations();
     _navigateToNext();
   }
-  
+
   void _setupAnimations() {
-    _animationController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
+    _animationController = AnimationController(duration: const Duration(seconds: 2), vsync: this);
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeIn),
+      ),
     );
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeIn),
-    ));
-    
-    _scaleAnimation = Tween<double>(
-      begin: 0.5,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
-    ));
-    
+
+    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
+      ),
+    );
+
     _animationController.forward();
   }
-  
+
   void _navigateToNext() async {
     await Future.delayed(const Duration(seconds: 2));
-    
+
     // Production flow logic
     final storage = Get.find<StorageService>();
     final hasSeenOnboarding = storage.read('hasSeenOnboarding') ?? false;
     final currentUser = FirebaseAuth.instance.currentUser;
-    
+
     LoggerService.d('Navigation Check:');
     LoggerService.d('- Has seen onboarding: $hasSeenOnboarding');
     LoggerService.d('- Current user: ${currentUser?.email}');
     LoggerService.d('- Email verified: ${currentUser?.emailVerified}');
-    
+
     // Decision tree for navigation
     if (!hasSeenOnboarding) {
       // First time user - show onboarding
@@ -87,22 +82,20 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       Get.offAllNamed(Routes.LOGIN);
     }
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.primaryGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -127,11 +120,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                           ),
                         ],
                       ),
-                      child: Icon(
-                        Icons.explore,
-                        size: 60.sp,
-                        color: AppColors.primary,
-                      ),
+                      child: Icon(Icons.explore, size: 60.sp, color: AppColors.primary),
                     ),
                   ),
                 );

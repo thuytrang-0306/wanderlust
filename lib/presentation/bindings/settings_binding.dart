@@ -4,8 +4,6 @@ import 'package:wanderlust/presentation/controllers/settings/settings_controller
 class SettingsBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<SettingsController>(
-      () => SettingsController(),
-    );
+    Get.lazyPut<SettingsController>(() => SettingsController());
   }
 }

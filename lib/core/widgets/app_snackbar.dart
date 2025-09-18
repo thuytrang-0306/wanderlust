@@ -5,12 +5,7 @@ import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 
-enum SnackbarType {
-  success,
-  error,
-  warning,
-  info,
-}
+enum SnackbarType { success, error, warning, info }
 
 class AppSnackbar {
   // Private constructor to prevent instantiation
@@ -100,13 +95,7 @@ class AppSnackbar {
       duration: duration,
       margin: EdgeInsets.all(AppSpacing.s4),
       borderRadius: AppSpacing.s3,
-      icon: icon != null
-          ? Icon(
-              icon,
-              color: textColor ?? AppColors.white,
-              size: 24.sp,
-            )
-          : null,
+      icon: icon != null ? Icon(icon, color: textColor ?? AppColors.white, size: 24.sp) : null,
       mainButton: mainButton,
       shouldIconPulse: false,
       animationDuration: const Duration(milliseconds: 500),
@@ -158,28 +147,16 @@ class AppSnackbar {
       borderRadius: AppSpacing.s3,
       icon: Padding(
         padding: EdgeInsets.only(left: AppSpacing.s3),
-        child: Icon(
-          icon,
-          color: textColor,
-          size: 28.sp,
-        ),
+        child: Icon(icon, color: textColor, size: 28.sp),
       ),
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.s4,
-        vertical: AppSpacing.s3,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s3),
       titleText: Text(
         title,
-        style: AppTypography.bodyL.copyWith(
-          color: textColor,
-          fontWeight: AppTypography.semiBold,
-        ),
+        style: AppTypography.bodyL.copyWith(color: textColor, fontWeight: AppTypography.semiBold),
       ),
       messageText: Text(
         message,
-        style: AppTypography.bodyM.copyWith(
-          color: textColor.withValues(alpha: 0.9),
-        ),
+        style: AppTypography.bodyM.copyWith(color: textColor.withValues(alpha: 0.9)),
       ),
       shouldIconPulse: false,
       animationDuration: const Duration(milliseconds: 500),

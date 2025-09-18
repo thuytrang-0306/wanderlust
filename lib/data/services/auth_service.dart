@@ -7,38 +7,35 @@ import 'package:wanderlust/data/models/user_model.dart';
 
 class AuthService extends GetxService {
   static AuthService get to => Get.find();
-  
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   // Observable user
   final Rxn<User> _firebaseUser = Rxn<User>();
   final Rxn<UserModel> _userModel = Rxn<UserModel>();
-  
+
   User? get currentUser => _firebaseUser.value;
   UserModel? get userModel => _userModel.value;
   bool get isAuthenticated => currentUser != null;
-  
+
   @override
   void onInit() {
     super.onInit();
     // Listen to auth state changes
     _firebaseUser.bindStream(_auth.authStateChanges());
-    
+
     // When auth state changes, fetch user data
     ever(_firebaseUser, _setUserModel);
   }
-  
+
   // Fetch user model from Firestore
   void _setUserModel(User? user) async {
     if (user != null) {
       try {
         final doc = await _firestore.collection('users').doc(user.uid).get();
         if (doc.exists) {
-          _userModel.value = UserModel.fromJson({
-            'id': doc.id,
-            ...doc.data()!,
-          });
+          _userModel.value = UserModel.fromJson({'id': doc.id, ...doc.data()!});
         }
       } catch (e) {
         LoggerUtils.logErrorSafely('Error fetching user model', e);
@@ -47,7 +44,7 @@ class AuthService extends GetxService {
       _userModel.value = null;
     }
   }
-  
+
   // Sign up with email and password
   Future<bool> signUpWithEmail({
     required String email,
@@ -60,21 +57,17 @@ class AuthService extends GetxService {
         email: email,
         password: password,
       );
-      
+
       if (credential.user != null) {
         // Update display name
         await credential.user!.updateDisplayName(fullName);
-        
+
         // Create user document in Firestore
-        await _createUserDocument(
-          uid: credential.user!.uid,
-          email: email,
-          fullName: fullName,
-        );
-        
+        await _createUserDocument(uid: credential.user!.uid, email: email, fullName: fullName);
+
         // Send verification email
         await credential.user!.sendEmailVerification();
-        
+
         return true;
       }
       return false;
@@ -87,18 +80,12 @@ class AuthService extends GetxService {
       return false;
     }
   }
-  
+
   // Sign in with email and password
-  Future<bool> signInWithEmail({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> signInWithEmail({required String email, required String password}) async {
     try {
-      final credential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      
+      final credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+
       if (credential.user != null) {
         // Update last active
         await _updateLastActive(credential.user!.uid);
@@ -114,7 +101,7 @@ class AuthService extends GetxService {
       return false;
     }
   }
-  
+
   // Sign out
   Future<void> signOut() async {
     try {
@@ -125,7 +112,7 @@ class AuthService extends GetxService {
       Get.snackbar('Error', 'Không thể đăng xuất. Vui lòng thử lại.');
     }
   }
-  
+
   // Reset password
   Future<bool> resetPassword(String email) async {
     try {
@@ -140,7 +127,7 @@ class AuthService extends GetxService {
       return false;
     }
   }
-  
+
   // Create user document in Firestore
   Future<void> _createUserDocument({
     required String uid,
@@ -149,7 +136,7 @@ class AuthService extends GetxService {
   }) async {
     try {
       final userDoc = _firestore.collection('users').doc(uid);
-      
+
       final userData = {
         'uid': uid,
         'email': email,
@@ -167,25 +154,20 @@ class AuthService extends GetxService {
         'totalFollowing': 0,
         'language': 'vi',
         'currency': 'VND',
-        'notificationSettings': {
-          'push': true,
-          'email': true,
-          'sms': false,
-          'marketing': false,
-        },
+        'notificationSettings': {'push': true, 'email': true, 'sms': false, 'marketing': false},
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'lastActive': FieldValue.serverTimestamp(),
         'isVerified': false,
         'role': 'user',
       };
-      
+
       await userDoc.set(userData);
     } catch (e) {
       LoggerUtils.logErrorSafely('Error creating user document', e);
     }
   }
-  
+
   // Update last active timestamp
   Future<void> _updateLastActive(String uid) async {
     try {
@@ -196,11 +178,11 @@ class AuthService extends GetxService {
       LoggerService.e('Error updating last active', error: e);
     }
   }
-  
+
   // Handle Firebase Auth exceptions
   void _handleAuthException(FirebaseAuthException e) {
     String message = '';
-    
+
     switch (e.code) {
       case 'weak-password':
         message = 'Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn.';
@@ -226,7 +208,7 @@ class AuthService extends GetxService {
       default:
         message = 'Đã xảy ra lỗi: ${e.message}';
     }
-    
+
     Get.snackbar('Lỗi', message);
     LoggerService.e('Auth exception: ${e.code}', error: e.message);
   }

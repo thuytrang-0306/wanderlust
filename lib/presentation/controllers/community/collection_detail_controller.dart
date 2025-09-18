@@ -5,7 +5,7 @@ import 'package:wanderlust/presentation/pages/community/collection_detail_page.d
 class CollectionDetailController extends BaseController {
   final RxString collectionName = ''.obs;
   final RxList<SavedPostModel> posts = <SavedPostModel>[].obs;
-  
+
   @override
   void onInit() {
     super.onInit();
@@ -15,7 +15,7 @@ class CollectionDetailController extends BaseController {
       loadPosts(args['collectionId']);
     }
   }
-  
+
   void loadPosts(String collectionId) {
     // Mock data - in real app, load from database based on collectionId
     posts.value = [
@@ -26,11 +26,9 @@ class CollectionDetailController extends BaseController {
         timeAgo: '2 giờ trước',
         location: 'Hà Giang',
         title: 'Chia sẻ kinh nghiệm du lịch Hà Giang',
-        content: 'Nội dung bài viết đang được tải. Khám phá vùng đất tuyệt đẹp này cùng những kinh nghiệm thú vị...',
-        images: [
-          '',
-          '',
-        ],
+        content:
+            'Nội dung bài viết đang được tải. Khám phá vùng đất tuyệt đẹp này cùng những kinh nghiệm thú vị...',
+        images: ['', ''],
         likeCount: 5000,
         commentCount: 700,
       ),
@@ -41,20 +39,19 @@ class CollectionDetailController extends BaseController {
         timeAgo: 'Hôm qua',
         location: 'Nha Trang',
         title: 'Hướng dẫn du lịch Nha Trang',
-        content: 'Nội dung bài viết đang được tải. Trải nghiệm tuyệt vời tại biển Nha Trang cùng những địa điểm tham quan nổi tiếng...',
-        images: [
-          '',
-        ],
+        content:
+            'Nội dung bài viết đang được tải. Trải nghiệm tuyệt vời tại biển Nha Trang cùng những địa điểm tham quan nổi tiếng...',
+        images: [''],
         likeCount: 3200,
         commentCount: 450,
       ),
     ];
   }
-  
+
   void openBlogDetail(SavedPostModel post) {
     Get.toNamed('/blog-detail', arguments: {'postId': post.id});
   }
-  
+
   void toggleBookmark(String postId) {
     // Show confirmation dialog
     Get.defaultDialog(

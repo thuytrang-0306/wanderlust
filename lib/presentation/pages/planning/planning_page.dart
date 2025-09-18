@@ -17,7 +17,7 @@ class PlanningPage extends GetView<PlanningController> {
   Widget build(BuildContext context) {
     // Controller is already initialized in MainNavigationBinding
     // Get.lazyPut(() => PlanningController());
-    
+
     return Scaffold(
       body: Stack(
         children: [
@@ -38,12 +38,12 @@ class PlanningPage extends GetView<PlanningController> {
                     if (controller.viewState == ViewState.error) {
                       return _buildErrorState();
                     }
-                    
+
                     // Handle empty state
                     if (controller.displayedTrips.isEmpty) {
                       return _buildEmptyState();
                     }
-                    
+
                     // Show trips list
                     return RefreshIndicator(
                       onRefresh: controller.loadTrips,
@@ -66,12 +66,7 @@ class PlanningPage extends GetView<PlanningController> {
             ],
           ),
           // Floating Action Button
-          Positioned(
-            bottom: 20.h,
-            left: 0,
-            right: 0,
-            child: _buildCreateTripButton(),
-          ),
+          Positioned(bottom: 20.h, left: 0, right: 0, child: _buildCreateTripButton()),
         ],
       ),
     );
@@ -83,19 +78,13 @@ class PlanningPage extends GetView<PlanningController> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFE8E0FF),
-            Color(0xFFF5F0FF),
-          ],
+          colors: [Color(0xFFE8E0FF), Color(0xFFF5F0FF)],
         ),
       ),
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.s5,
-            vertical: AppSpacing.s4,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -108,27 +97,25 @@ class PlanningPage extends GetView<PlanningController> {
                 ),
               ),
               SizedBox(height: AppSpacing.s2),
-              Obx(() => Row(
-                children: [
-                  _buildStatCard(
-                    Icons.luggage,
-                    '${controller.totalTrips}',
-                    'Chuyến đi',
-                  ),
-                  SizedBox(width: AppSpacing.s3),
-                  _buildStatCard(
-                    Icons.location_on,
-                    '${controller.totalDestinations}',
-                    'Điểm đến',
-                  ),
-                  SizedBox(width: AppSpacing.s3),
-                  _buildStatCard(
-                    Icons.account_balance_wallet,
-                    '${(controller.totalBudget / 1000000).toStringAsFixed(1)}M',
-                    'Ngân sách',
-                  ),
-                ],
-              )),
+              Obx(
+                () => Row(
+                  children: [
+                    _buildStatCard(Icons.luggage, '${controller.totalTrips}', 'Chuyến đi'),
+                    SizedBox(width: AppSpacing.s3),
+                    _buildStatCard(
+                      Icons.location_on,
+                      '${controller.totalDestinations}',
+                      'Điểm đến',
+                    ),
+                    SizedBox(width: AppSpacing.s3),
+                    _buildStatCard(
+                      Icons.account_balance_wallet,
+                      '${(controller.totalBudget / 1000000).toStringAsFixed(1)}M',
+                      'Ngân sách',
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -138,21 +125,14 @@ class PlanningPage extends GetView<PlanningController> {
 
   Widget _buildStatCard(IconData icon, String value, String label) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.s3,
-        vertical: AppSpacing.s2,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s3, vertical: AppSpacing.s2),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 18.sp,
-            color: AppColors.primary,
-          ),
+          Icon(icon, size: 18.sp, color: AppColors.primary),
           SizedBox(width: AppSpacing.s2),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,13 +145,7 @@ class PlanningPage extends GetView<PlanningController> {
                   color: AppColors.neutral800,
                 ),
               ),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: AppColors.neutral500,
-                ),
-              ),
+              Text(label, style: TextStyle(fontSize: 11.sp, color: AppColors.neutral500)),
             ],
           ),
         ],
@@ -182,36 +156,35 @@ class PlanningPage extends GetView<PlanningController> {
   Widget _buildTabBar() {
     return Container(
       color: const Color(0xFFF5F7F8),
-      padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.s4,
-        vertical: AppSpacing.s3,
-      ),
-      child: Obx(() => Row(
-        children: List.generate(4, (index) {
-          final isSelected = controller.selectedTab.value == index;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => controller.changeTab(index),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.s2),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  controller.getTabTitle(index),
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? Colors.white : AppColors.neutral600,
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s3),
+      child: Obx(
+        () => Row(
+          children: List.generate(4, (index) {
+            final isSelected = controller.selectedTab.value == index;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => controller.changeTab(index),
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.s2),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
-                  textAlign: TextAlign.center,
+                  child: Text(
+                    controller.getTabTitle(index),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      color: isSelected ? Colors.white : AppColors.neutral600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-            ),
-          );
-        }),
-      )),
+            );
+          }),
+        ),
+      ),
     );
   }
 
@@ -219,7 +192,7 @@ class PlanningPage extends GetView<PlanningController> {
     final dateFormat = DateFormat('dd/MM');
     final startDate = dateFormat.format(trip.startDate);
     final endDate = dateFormat.format(trip.endDate);
-    
+
     return GestureDetector(
       onTap: () => controller.viewTripDetail(trip),
       child: Container(
@@ -241,25 +214,26 @@ class PlanningPage extends GetView<PlanningController> {
             children: [
               // Background Image - Support both base64 and URL
               Positioned.fill(
-                child: trip.coverImage.isNotEmpty
-                    ? AppImage(
-                        imageData: trip.coverImage,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                      )
-                    : Container(
-                        color: AppColors.neutral200,
-                        child: Center(
-                          child: Icon(
-                            Icons.travel_explore,
-                            size: 40.sp,
-                            color: AppColors.neutral400,
+                child:
+                    trip.coverImage.isNotEmpty
+                        ? AppImage(
+                          imageData: trip.coverImage,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        )
+                        : Container(
+                          color: AppColors.neutral200,
+                          child: Center(
+                            child: Icon(
+                              Icons.travel_explore,
+                              size: 40.sp,
+                              color: AppColors.neutral400,
+                            ),
                           ),
                         ),
-                      ),
               ),
-              
+
               // Gradient Overlay
               Positioned.fill(
                 child: Container(
@@ -267,16 +241,13 @@ class PlanningPage extends GetView<PlanningController> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.7),
-                      ],
+                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
                       stops: const [0.3, 1.0],
                     ),
                   ),
                 ),
               ),
-              
+
               // Content
               Positioned.fill(
                 child: Padding(
@@ -291,10 +262,7 @@ class PlanningPage extends GetView<PlanningController> {
                         children: [
                           // Status Badge
                           Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppSpacing.s3,
-                              vertical: 6.h,
-                            ),
+                            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s3, vertical: 6.h),
                             decoration: BoxDecoration(
                               color: _getStatusColor(trip),
                               borderRadius: BorderRadius.circular(20.r),
@@ -310,11 +278,7 @@ class PlanningPage extends GetView<PlanningController> {
                           ),
                           // More Options
                           PopupMenuButton<String>(
-                            icon: Icon(
-                              Icons.more_vert,
-                              color: Colors.white,
-                              size: 24.sp,
-                            ),
+                            icon: Icon(Icons.more_vert, color: Colors.white, size: 24.sp),
                             onSelected: (value) {
                               switch (value) {
                                 case 'edit':
@@ -328,27 +292,19 @@ class PlanningPage extends GetView<PlanningController> {
                                   break;
                               }
                             },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                value: 'edit',
-                                child: Text('Chỉnh sửa'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'share',
-                                child: Text('Chia sẻ'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Text(
-                                  'Xóa',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                              ),
-                            ],
+                            itemBuilder:
+                                (context) => [
+                                  const PopupMenuItem(value: 'edit', child: Text('Chỉnh sửa')),
+                                  const PopupMenuItem(value: 'share', child: Text('Chia sẻ')),
+                                  const PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text('Xóa', style: TextStyle(color: Colors.red)),
+                                  ),
+                                ],
                           ),
                         ],
                       ),
-                      
+
                       // Bottom Content
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,7 +387,7 @@ class PlanningPage extends GetView<PlanningController> {
                   ),
                 ),
               ),
-              
+
               // Budget Progress Bar (optional)
               if (trip.budget > 0)
                 Positioned(
@@ -445,9 +401,7 @@ class PlanningPage extends GetView<PlanningController> {
                       alignment: Alignment.centerLeft,
                       widthFactor: trip.budgetProgress.clamp(0.0, 1.0),
                       child: Container(
-                        color: trip.isOverBudget 
-                          ? Colors.red 
-                          : const Color(0xFF10B981),
+                        color: trip.isOverBudget ? Colors.red : const Color(0xFF10B981),
                       ),
                     ),
                   ),
@@ -475,10 +429,7 @@ class PlanningPage extends GetView<PlanningController> {
           onTap: controller.createNewTrip,
           borderRadius: BorderRadius.circular(30.r),
           child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.s5,
-              vertical: AppSpacing.s3,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s3),
             decoration: BoxDecoration(
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(30.r),
@@ -493,11 +444,7 @@ class PlanningPage extends GetView<PlanningController> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.add_circle_outline,
-                  color: Colors.white,
-                  size: 20.sp,
-                ),
+                Icon(Icons.add_circle_outline, color: Colors.white, size: 20.sp),
                 SizedBox(width: AppSpacing.s2),
                 Text(
                   'Tạo lịch trình mới',
@@ -522,16 +469,10 @@ class PlanningPage extends GetView<PlanningController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.explore_outlined,
-              size: 80.sp,
-              color: AppColors.neutral300,
-            ),
+            Icon(Icons.explore_outlined, size: 80.sp, color: AppColors.neutral300),
             SizedBox(height: AppSpacing.s4),
             Text(
-              controller.selectedTab.value == 0 
-                ? 'Chưa có chuyến đi nào'
-                : _getEmptyMessage(),
+              controller.selectedTab.value == 0 ? 'Chưa có chuyến đi nào' : _getEmptyMessage(),
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,
@@ -541,10 +482,7 @@ class PlanningPage extends GetView<PlanningController> {
             SizedBox(height: AppSpacing.s2),
             Text(
               'Bắt đầu lên kế hoạch cho chuyến đi của bạn',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.neutral500,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: AppColors.neutral500),
               textAlign: TextAlign.center,
             ),
           ],
@@ -592,11 +530,7 @@ class PlanningPage extends GetView<PlanningController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64.sp,
-              color: AppColors.error,
-            ),
+            Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
             SizedBox(height: AppSpacing.s4),
             Text(
               'Có lỗi xảy ra',
@@ -609,10 +543,7 @@ class PlanningPage extends GetView<PlanningController> {
             SizedBox(height: AppSpacing.s2),
             Text(
               controller.errorMessage ?? 'Không thể tải danh sách chuyến đi',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.neutral500,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: AppColors.neutral500),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: AppSpacing.s4),
@@ -620,9 +551,7 @@ class PlanningPage extends GetView<PlanningController> {
               onPressed: controller.loadTrips,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
               ),
               child: const Text('Thử lại'),
             ),

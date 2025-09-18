@@ -13,7 +13,7 @@ class EmptyStateWidget extends StatelessWidget {
   final String? buttonText;
   final VoidCallback? onButtonPressed;
   final Widget? customIcon;
-  
+
   const EmptyStateWidget({
     super.key,
     this.icon,
@@ -24,7 +24,7 @@ class EmptyStateWidget extends StatelessWidget {
     this.onButtonPressed,
     this.customIcon,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -37,18 +37,14 @@ class EmptyStateWidget extends StatelessWidget {
             SizedBox(height: 24.h),
             Text(
               title,
-              style: AppTypography.heading5.copyWith(
-                color: AppColors.textPrimary,
-              ),
+              style: AppTypography.heading5.copyWith(color: AppColors.textPrimary),
               textAlign: TextAlign.center,
             ),
             if (subtitle != null) ...[
               SizedBox(height: 8.h),
               Text(
                 subtitle!,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -66,45 +62,30 @@ class EmptyStateWidget extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildIcon() {
     if (customIcon != null) {
       return customIcon!;
     }
-    
+
     if (icon != null && icon!.endsWith('.svg')) {
       return SvgPicture.asset(
         icon!,
         width: 120.w,
         height: 120.w,
-        colorFilter: ColorFilter.mode(
-          AppColors.grey,
-          BlendMode.srcIn,
-        ),
+        colorFilter: ColorFilter.mode(AppColors.grey, BlendMode.srcIn),
       );
     }
-    
+
     if (icon != null) {
-      return Image.asset(
-        icon!,
-        width: 120.w,
-        height: 120.w,
-        fit: BoxFit.contain,
-      );
+      return Image.asset(icon!, width: 120.w, height: 120.w, fit: BoxFit.contain);
     }
-    
+
     return Container(
       width: 120.w,
       height: 120.w,
-      decoration: BoxDecoration(
-        color: AppColors.greyLight,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        iconData ?? Icons.inbox_outlined,
-        size: 60.sp,
-        color: AppColors.grey,
-      ),
+      decoration: BoxDecoration(color: AppColors.greyLight, shape: BoxShape.circle),
+      child: Icon(iconData ?? Icons.inbox_outlined, size: 60.sp, color: AppColors.grey),
     );
   }
 }
@@ -120,17 +101,16 @@ class EmptyStates {
       onButtonPressed: onRetry,
     );
   }
-  
+
   static Widget noSearchResults({String? query}) {
     return EmptyStateWidget(
       iconData: Icons.search_off,
       title: 'No results found',
-      subtitle: query != null 
-        ? 'No results found for "$query"'
-        : 'Try adjusting your search criteria',
+      subtitle:
+          query != null ? 'No results found for "$query"' : 'Try adjusting your search criteria',
     );
   }
-  
+
   static Widget noFavorites({VoidCallback? onExplore}) {
     return EmptyStateWidget(
       iconData: Icons.favorite_border,
@@ -140,7 +120,7 @@ class EmptyStates {
       onButtonPressed: onExplore,
     );
   }
-  
+
   static Widget noBookings({VoidCallback? onBook}) {
     return EmptyStateWidget(
       iconData: Icons.calendar_today,
@@ -150,7 +130,7 @@ class EmptyStates {
       onButtonPressed: onBook,
     );
   }
-  
+
   static Widget noNotifications() {
     return const EmptyStateWidget(
       iconData: Icons.notifications_none,
@@ -158,7 +138,7 @@ class EmptyStates {
       subtitle: 'You\'re all caught up!',
     );
   }
-  
+
   static Widget noInternet({VoidCallback? onRetry}) {
     return EmptyStateWidget(
       iconData: Icons.wifi_off,

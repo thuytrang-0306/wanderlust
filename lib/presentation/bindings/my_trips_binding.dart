@@ -4,8 +4,6 @@ import 'package:wanderlust/presentation/controllers/trips/my_trips_controller.da
 class MyTripsBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<MyTripsController>(
-      () => MyTripsController(),
-    );
+    Get.lazyPut<MyTripsController>(() => MyTripsController());
   }
 }
