@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
+import 'package:wanderlust/core/widgets/app_map.dart';
+import 'package:wanderlust/data/models/location_point.dart';
 import 'package:wanderlust/presentation/controllers/combo/combo_detail_controller.dart';
 
 class ComboDetailPage extends GetView<ComboDetailController> {
@@ -71,7 +73,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
         child: Container(
           margin: EdgeInsets.all(8.w),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -88,7 +90,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
             margin: EdgeInsets.all(8.w),
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               shape: BoxShape.circle,
             ),
             child: Obx(() => Icon(
@@ -327,55 +329,41 @@ class ComboDetailPage extends GetView<ComboDetailController> {
   }
   
   Widget _buildMap() {
+    // Sample waypoints for tour route (TP.HCM -> Nha Trang)
+    final waypoints = [
+      LocationPoint(
+        id: '1',
+        name: 'TP.HCM',
+        latitude: 10.8231,
+        longitude: 106.6297,
+        type: 'transport',
+      ),
+      LocationPoint(
+        id: '2',
+        name: 'Phan Thiết',
+        latitude: 10.9289,
+        longitude: 108.1024,
+        type: 'attraction',
+      ),
+      LocationPoint(
+        id: '3',
+        name: 'Nha Trang',
+        latitude: 12.2388,
+        longitude: 109.1967,
+        type: 'hotel',
+      ),
+    ];
+
     return Container(
       height: 200.h,
       margin: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.r),
-        color: const Color(0xFFF0F4FF),
-      ),
       child: Stack(
         children: [
-          // Map placeholder
-          ClipRRect(
+          // Real Map with route display
+          AppMap.routeDisplay(
+            waypoints: waypoints,
+            height: 200.h,
             borderRadius: BorderRadius.circular(12.r),
-            child: CachedNetworkImage(
-              imageUrl: 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/108.2772,12.6578,11,0/600x400?access_token=YOUR_MAPBOX_TOKEN',
-              fit: BoxFit.cover,
-              errorWidget: (context, url, error) => Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.r),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFFE8E0FF),
-                      const Color(0xFFF5F0FF),
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.map_outlined,
-                        size: 48.sp,
-                        color: AppColors.primary.withOpacity(0.5),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        'Bản đồ lịch trình',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
           ),
           
           // Navigation button
@@ -389,7 +377,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -634,7 +622,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
             width: 40.w,
             height: 40.h,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -694,7 +682,7 @@ class ComboDetailPage extends GetView<ComboDetailController> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               offset: const Offset(0, -2),
               blurRadius: 10,
             ),

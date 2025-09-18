@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
+import 'package:wanderlust/core/services/location_service.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
+import 'package:wanderlust/data/models/location_point.dart';
 
 class AddPrivateLocationController extends BaseController {
   // Text controllers
@@ -20,10 +24,13 @@ class AddPrivateLocationController extends BaseController {
   // Map values
   final RxDouble selectedLat = 10.8231.obs;
   final RxDouble selectedLng = 106.6297.obs;
+  final Rx<LocationPoint?> selectedLocation = Rx<LocationPoint?>(null);
+  late MapController mapController;
   
   @override
   void onInit() {
     super.onInit();
+    mapController = MapController();
     // Set default coordinates (Ho Chi Minh City)
     longitudeController.text = '106.6297';
     latitudeController.text = '10.8231';
@@ -35,6 +42,7 @@ class AddPrivateLocationController extends BaseController {
     addressController.dispose();
     longitudeController.dispose();
     latitudeController.dispose();
+    mapController.dispose();
     super.onClose();
   }
   
@@ -65,18 +73,26 @@ class AddPrivateLocationController extends BaseController {
                    latitudeController.text.isNotEmpty;
   }
   
-  void onMapLongPress(double lat, double lng) {
+  void onMapTap(LatLng latLng) {
     // Update selected coordinates
-    selectedLat.value = lat;
-    selectedLng.value = lng;
+    selectedLat.value = latLng.latitude;
+    selectedLng.value = latLng.longitude;
     
     // Update text fields
-    latitudeController.text = lat.toStringAsFixed(6);
-    longitudeController.text = lng.toStringAsFixed(6);
+    latitudeController.text = latLng.latitude.toStringAsFixed(6);
+    longitudeController.text = latLng.longitude.toStringAsFixed(6);
     
     // Update observable values
-    latitude.value = lat.toString();
-    longitude.value = lng.toString();
+    latitude.value = latLng.latitude.toString();
+    longitude.value = latLng.longitude.toString();
+    
+    // Update selected location
+    selectedLocation.value = LocationPoint(
+      id: 'selected',
+      name: 'Selected Location',
+      latitude: latLng.latitude,
+      longitude: latLng.longitude,
+    );
     
     _validateForm();
   }
@@ -100,23 +116,56 @@ class AddPrivateLocationController extends BaseController {
       'addedAt': DateTime.now(),
     };
     
-    // TODO: Save to database/repository
+    // Save to Firestore if needed in the future
+    // For now, just return the data to the previous screen
+    // which will handle the persistence
     
     AppSnackbar.showSuccess(
       title: 'Thành công',
       message: 'Đã thêm địa điểm riêng tư',
     );
     
-    // Return data to previous page
+    // Return data to previous page for processing
     Get.back(result: locationData);
   }
   
-  void navigateToCurrentLocation() {
-    // TODO: Get current location and center map
-    // For now, just show a message
+  void navigateToCurrentLocation() async {
+    final locationService = LocationService.to;
+    
     AppSnackbar.showInfo(
       title: 'Thông báo',
       message: 'Đang lấy vị trí hiện tại...',
     );
+    
+    final position = await locationService.getCurrentLocation();
+    
+    if (position != null) {
+      // Update map center to current location
+      mapController.move(
+        LatLng(position.latitude, position.longitude),
+        15.0,
+      );
+      
+      // Update location fields
+      latitudeController.text = position.latitude.toStringAsFixed(6);
+      longitudeController.text = position.longitude.toStringAsFixed(6);
+      
+      // Update selected location
+      selectedLat.value = position.latitude;
+      selectedLng.value = position.longitude;
+      selectedLocation.value = LocationPoint(
+        id: 'current',
+        name: 'Vị trí hiện tại',
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+      
+      _validateForm();
+      
+      AppSnackbar.showSuccess(
+        title: 'Thành công',
+        message: 'Đã cập nhật vị trí hiện tại',
+      );
+    }
   }
 }

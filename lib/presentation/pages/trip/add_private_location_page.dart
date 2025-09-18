@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
-import 'package:wanderlust/core/constants/app_spacing.dart';
+import 'package:wanderlust/core/widgets/app_map.dart';
 import 'package:wanderlust/core/widgets/app_text_field.dart';
 import 'package:wanderlust/presentation/controllers/trip/add_private_location_controller.dart';
 
@@ -94,8 +94,11 @@ class AddPrivateLocationPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16.r),
                 child: Stack(
                   children: [
-                    // Map placeholder
-                    _buildMapPlaceholder(),
+                    // Interactive Map
+                    Obx(() => AppMap.locationPicker(
+                      onLocationSelected: controller.onMapTap,
+                      initialLocation: controller.selectedLocation.value,
+                    )),
                     
                     // Navigation button
                     Positioned(
@@ -111,7 +114,7 @@ class AddPrivateLocationPage extends StatelessWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withOpacity(0.3),
+                                color: AppColors.primary.withValues(alpha: 0.3),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -192,117 +195,5 @@ class AddPrivateLocationPage extends StatelessWidget {
       ),
     );
   }
-  
-  Widget _buildMapPlaceholder() {
-    return Container(
-      color: const Color(0xFFF5F5F5),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Placeholder map background
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.map_outlined,
-                  size: 80.sp,
-                  color: Colors.grey[400],
-                ),
-                SizedBox(height: 16.h),
-                Text(
-                  'Bản đồ sẽ hiển thị ở đây',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Simulated route line
-          CustomPaint(
-            painter: _RoutePainter(),
-          ),
-          
-          // Location markers
-          Positioned(
-            top: 100.h,
-            left: 80.w,
-            child: _buildLocationPin(),
-          ),
-          Positioned(
-            bottom: 120.h,
-            right: 100.w,
-            child: _buildLocationPin(isPrimary: true),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildLocationPin({bool isPrimary = false}) {
-    return Container(
-      width: 32.w,
-      height: 32.w,
-      decoration: BoxDecoration(
-        color: isPrimary ? AppColors.primary : Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: AppColors.primary,
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Icon(
-        Icons.location_on,
-        size: 18.sp,
-        color: isPrimary ? Colors.white : AppColors.primary,
-      ),
-    );
-  }
 }
-
-// Custom painter for route line
-class _RoutePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primary.withOpacity(0.5)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    
-    final path = Path();
-    // Draw curved route line
-    path.moveTo(80, 120);
-    path.quadraticBezierTo(
-      size.width * 0.4, size.height * 0.4,
-      size.width * 0.6, size.height * 0.5,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.8, size.height * 0.6,
-      size.width - 100, size.height - 140,
-    );
-    
-    // Draw dashed line effect
-    final dashPaint = Paint()
-      ..color = AppColors.primary
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    
-    // Simple dashed line simulation
-    canvas.drawPath(path, paint);
-  }
   
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

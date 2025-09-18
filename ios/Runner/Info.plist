@@ -47,5 +47,9 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Ứng dụng cần truy cập vị trí của bạn để hiển thị bản đồ và tìm kiếm địa điểm gần bạn</string>
+		<key>NSLocationAlwaysUsageDescription</key>
+		<string>Ứng dụng cần truy cập vị trí của bạn để cung cấp thông tin du lịch phù hợp</string>
 	</dict>
 </plist>

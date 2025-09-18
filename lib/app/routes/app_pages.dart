@@ -31,6 +31,8 @@ import 'package:wanderlust/presentation/bindings/search_filter_binding.dart';
 import 'package:wanderlust/presentation/bindings/settings_binding.dart';
 import 'package:wanderlust/presentation/bindings/my_trips_binding.dart';
 import 'package:wanderlust/presentation/bindings/booking_history_binding.dart';
+import 'package:wanderlust/presentation/bindings/add_private_location_binding.dart';
+import 'package:wanderlust/presentation/bindings/combo_detail_binding.dart';
 
 part 'app_routes.dart';
 
@@ -80,6 +82,7 @@ class AppPages {
     GetPage(
       name: Routes.ADD_PRIVATE_LOCATION,
       page: () => const AddPrivateLocationPage(),
+      binding: AddPrivateLocationBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(
@@ -136,6 +139,7 @@ class AppPages {
     GetPage(
       name: Routes.COMBO_DETAIL,
       page: () => const ComboDetailPage(),
+      binding: ComboDetailBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(
