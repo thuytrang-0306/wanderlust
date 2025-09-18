@@ -14,6 +14,20 @@ import 'package:wanderlust/core/services/image_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:wanderlust/firebase_options.dart';
+import 'package:wanderlust/data/services/blog_service.dart';
+import 'package:wanderlust/data/services/destination_service.dart';
+import 'package:wanderlust/data/services/tour_service.dart';
+import 'package:wanderlust/data/services/image_upload_service.dart';
+
+Future<void> _registerDataServices() async {
+  // Import services
+  final blogService = Get.put(BlogService());
+  final destinationService = Get.put(DestinationService());
+  final tourService = Get.put(TourService());
+  final imageUploadService = Get.put(ImageUploadService());
+  
+  LoggerService.i('Data services registered');
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,6 +62,9 @@ void main() async {
   await Get.putAsync(() => FirebaseService().init());
   Get.put(ConnectivityService());
   Get.put(ImageService());
+  
+  // Register data services
+  await _registerDataServices();
   
   // Determine initial route based on app state
   final String initialRoute = _getInitialRoute();

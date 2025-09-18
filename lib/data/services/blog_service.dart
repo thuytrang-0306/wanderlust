@@ -136,6 +136,24 @@ class BlogService extends GetxService {
         });
   }
   
+  // Get recent posts (non-stream version)
+  Future<List<BlogPostModel>> getRecentPosts({int limit = 10}) async {
+    try {
+      final snapshot = await _postsCollection
+          .where('status', isEqualTo: 'published')
+          .orderBy('publishedAt', descending: true)
+          .limit(limit)
+          .get();
+      
+      return snapshot.docs
+          .map((doc) => BlogPostModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      LoggerService.e('Error getting recent posts', error: e);
+      return [];
+    }
+  }
+  
   // Get trending posts
   Stream<List<BlogPostModel>> getTrendingPosts({int limit = 10}) {
     return _postsCollection
