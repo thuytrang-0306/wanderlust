@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
@@ -29,19 +29,26 @@ class TripDetailPage extends StatelessWidget {
                 automaticallyImplyLeading: false,
                 backgroundColor: Colors.transparent,
                 flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
+                  background: Obx(() => Container(
                     height: 207.h,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: CachedNetworkImageProvider(
-                          controller.tripImage.value.isEmpty 
-                            ? 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800'
-                            : controller.tripImage.value,
-                        ),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+                    child: controller.tripImage.value.isNotEmpty
+                        ? AppImage(
+                            imageData: controller.tripImage.value,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                        : Container(
+                            color: AppColors.primary.withOpacity(0.8),
+                            child: Center(
+                              child: Icon(
+                                Icons.travel_explore,
+                                size: 50.sp,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                            ),
+                          ),
+                  )),
                 ),
               ),
               
@@ -570,15 +577,17 @@ class TripDetailPage extends StatelessWidget {
             child: Row(
               children: [
                 // Image
-                if (image != null)
+                if (image != null && image.isNotEmpty)
                   Container(
                     width: 60.w,
                     height: 60.w,
                     margin: EdgeInsets.only(right: 12.w),
-                    decoration: BoxDecoration(
+                    child: ClipRRect(
                       borderRadius: BorderRadius.circular(8.r),
-                      image: DecorationImage(
-                        image: CachedNetworkImageProvider(image),
+                      child: AppImage(
+                        imageData: image,
+                        width: 60.w,
+                        height: 60.w,
                         fit: BoxFit.cover,
                       ),
                     ),

@@ -175,5 +175,42 @@ class TourService extends GetxService {
             .toList());
   }
 
+  // Get combo tours - tours with multiple destinations or special packages
+  Future<List<TourModel>> getComboTours({int limit = 10}) async {
+    try {
+      final snapshot = await _firestore
+          .collection(_collection)
+          .where('status', isEqualTo: 'active')
+          .where('isCombo', isEqualTo: true)
+          .orderBy('popularity', descending: true)
+          .limit(limit)
+          .get();
+
+      final tours = snapshot.docs
+          .map((doc) => TourModel.fromFirestore(doc.data(), doc.id))
+          .toList();
+      
+      // If no combo tours, try to get tours with duration > 3 days as combos
+      if (tours.isEmpty) {
+        final alternativeSnapshot = await _firestore
+            .collection(_collection)
+            .where('status', isEqualTo: 'active')
+            .where('duration', isGreaterThan: 3)
+            .orderBy('duration', descending: true)
+            .limit(limit)
+            .get();
+        
+        return alternativeSnapshot.docs
+            .map((doc) => TourModel.fromFirestore(doc.data(), doc.id))
+            .toList();
+      }
+      
+      return tours;
+    } catch (e) {
+      LoggerService.e('Error getting combo tours', error: e);
+      return [];
+    }
+  }
+
   // Sample data creation removed for production
 }

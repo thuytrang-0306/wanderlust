@@ -2,69 +2,32 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
+import 'package:wanderlust/data/models/trip_model.dart';
+import 'package:wanderlust/data/services/trip_service.dart';
+import 'package:wanderlust/core/utils/logger_service.dart';
 
 class TripDetailController extends BaseController {
-  // Trip basic info
-  final RxString tripName = 'Trip Nha Trang của tôi'.obs;
-  final RxString tripDateRange = 'T5, 12/1 - CN, 15/1'.obs;
+  // Services
+  final TripService _tripService = Get.find<TripService>();
+  
+  // Trip model
+  final Rx<TripModel?> trip = Rx<TripModel?>(null);
+  
+  // Trip basic info - will be populated from actual trip
+  final RxString tripName = ''.obs;
+  final RxString tripDateRange = ''.obs;
   final RxString tripImage = ''.obs;
-  final RxInt peopleCount = 2.obs;
-  final RxInt totalDays = 4.obs;
+  final RxInt peopleCount = 1.obs;
+  final RxInt totalDays = 1.obs;
   
   // Selected day
   final RxInt selectedDay = 0.obs;
   
-  // Trip data - mock data for now
-  final RxList<Map<String, dynamic>> tripDays = <Map<String, dynamic>>[
-    {
-      'day': 1,
-      'date': DateTime(2024, 1, 12),
-      'startTime': '8am',
-      'locations': [
-        // Empty for day 1 - will show empty state
-      ],
-    },
-    {
-      'day': 2,
-      'date': DateTime(2024, 1, 13),
-      'startTime': '8:00',
-      'locations': [
-        {
-          'time': '08:00',
-          'title': 'Nhà của hth',
-          'address': 'Nhà XY, Khu ZZ',
-          'description': 'Đi đến đây nhớ mua cam gà đồi quà',
-          'image': 'https://i.pravatar.cc/150?img=1',
-        },
-        {
-          'time': '09:00',
-          'title': 'Khách sạn Nha Trang',
-          'address': 'Nha Trang, Khánh Hòa',
-          'description': 'Ghi chú cá nhân',
-          'image': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200',
-        },
-        {
-          'time': '11:00',
-          'title': 'Tháp Bà Ponagar',
-          'address': 'Vĩnh Phước, Nha Trang',
-          'description': 'Ngắm mình thủ giới tại Suối khoáng nóng Tháp Bà',
-          'image': 'https://images.unsplash.com/photo-1557750255-c76072a7aad1?w=200',
-        },
-      ],
-    },
-    {
-      'day': 3,
-      'date': DateTime(2024, 1, 14),
-      'startTime': '7:30',
-      'locations': [],
-    },
-    {
-      'day': 4,
-      'date': DateTime(2024, 1, 15),
-      'startTime': '9:00',
-      'locations': [],
-    },
-  ].obs;
+  // Trip itinerary - will be loaded from backend
+  final RxList<TripItinerary> tripItineraries = <TripItinerary>[].obs;
+  
+  // Trip days generated from date range
+  final RxList<Map<String, dynamic>> tripDays = <Map<String, dynamic>>[].obs;
   
   @override
   void onInit() {
@@ -72,20 +35,99 @@ class TripDetailController extends BaseController {
     // Initialize date formatting for Vietnamese locale
     initializeDateFormatting('vi_VN', null);
     
-    // Get trip data from arguments if passed
+    // Get trip data from arguments
     if (Get.arguments != null) {
-      if (Get.arguments['tripName'] != null) {
-        tripName.value = Get.arguments['tripName'];
+      if (Get.arguments['trip'] != null) {
+        // Load full trip model
+        final TripModel passedTrip = Get.arguments['trip'] as TripModel;
+        loadTrip(passedTrip);
+      } else if (Get.arguments['tripId'] != null) {
+        // Load trip by ID
+        loadTripById(Get.arguments['tripId'] as String);
       }
-      if (Get.arguments['tripImage'] != null) {
-        tripImage.value = Get.arguments['tripImage'];
+    }
+  }
+  
+  // Load trip from passed model
+  void loadTrip(TripModel tripModel) {
+    trip.value = tripModel;
+    
+    // Update UI bindings
+    tripName.value = tripModel.title;
+    tripImage.value = tripModel.coverImage;
+    peopleCount.value = tripModel.travelers.length;
+    totalDays.value = tripModel.duration;
+    
+    // Format date range
+    final DateFormat formatter = DateFormat('E, dd/MM', 'vi_VN');
+    final startStr = formatter.format(tripModel.startDate);
+    final endStr = formatter.format(tripModel.endDate);
+    tripDateRange.value = '$startStr - $endStr';
+    
+    // Generate trip days structure
+    generateTripDays(tripModel);
+    
+    // Load itineraries
+    loadItineraries(tripModel.id);
+  }
+  
+  // Load trip by ID from backend
+  Future<void> loadTripById(String tripId) async {
+    try {
+      setLoading();
+      final trips = await _tripService.getUserTrips();
+      final tripModel = trips.firstWhereOrNull((t) => t.id == tripId);
+      if (tripModel != null) {
+        loadTrip(tripModel);
+      } else {
+        Get.back();
+        Get.snackbar('Lỗi', 'Không tìm thấy chuyến đi');
       }
-      if (Get.arguments['dateRange'] != null) {
-        tripDateRange.value = Get.arguments['dateRange'];
+    } catch (e) {
+      LoggerService.e('Error loading trip', error: e);
+      Get.back();
+      Get.snackbar('Lỗi', 'Không thể tải thông tin chuyến đi');
+    } finally {
+      setLoading();
+    }
+  }
+  
+  // Generate trip days structure
+  void generateTripDays(TripModel tripModel) {
+    tripDays.clear();
+    
+    final startDate = tripModel.startDate;
+    for (int i = 0; i < tripModel.duration; i++) {
+      final dayDate = startDate.add(Duration(days: i));
+      tripDays.add({
+        'day': i + 1,
+        'date': dayDate,
+        'startTime': '8:00',
+        'locations': [], // Will be populated from itineraries
+      });
+    }
+  }
+  
+  // Load itineraries from backend
+  Future<void> loadItineraries(String tripId) async {
+    try {
+      final itineraries = await _tripService.getTripItineraries(tripId);
+      tripItineraries.value = itineraries;
+      
+      // Map itineraries to trip days
+      for (var itinerary in itineraries) {
+        if (itinerary.dayNumber > 0 && itinerary.dayNumber <= tripDays.length) {
+          tripDays[itinerary.dayNumber - 1]['locations'] = itinerary.activities.map((activity) => {
+            'time': activity.time,
+            'title': activity.title,
+            'address': activity.location,
+            'description': activity.notes,
+            'image': '', // No image in current model
+          }).toList();
+        }
       }
-      if (Get.arguments['peopleCount'] != null) {
-        peopleCount.value = Get.arguments['peopleCount'];
-      }
+    } catch (e) {
+      LoggerService.e('Error loading itineraries', error: e);
     }
   }
   

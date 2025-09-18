@@ -5,7 +5,7 @@ import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/presentation/controllers/planning/planning_controller.dart';
 import 'package:wanderlust/data/models/trip_model.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/core/widgets/shimmer_loading.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:intl/intl.dart';
@@ -15,7 +15,8 @@ class PlanningPage extends GetView<PlanningController> {
 
   @override
   Widget build(BuildContext context) {
-    Get.lazyPut(() => PlanningController());
+    // Controller is already initialized in MainNavigationBinding
+    // Get.lazyPut(() => PlanningController());
     
     return Scaffold(
       body: Stack(
@@ -238,19 +239,25 @@ class PlanningPage extends GetView<PlanningController> {
           borderRadius: BorderRadius.circular(16.r),
           child: Stack(
             children: [
-              // Background Image
+              // Background Image - Support both base64 and URL
               Positioned.fill(
-                child: CachedNetworkImage(
-                  imageUrl: trip.coverImage,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: AppColors.neutral200,
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: AppColors.neutral200,
-                    child: const Icon(Icons.image, color: AppColors.neutral400),
-                  ),
-                ),
+                child: trip.coverImage.isNotEmpty
+                    ? AppImage(
+                        imageData: trip.coverImage,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      )
+                    : Container(
+                        color: AppColors.neutral200,
+                        child: Center(
+                          child: Icon(
+                            Icons.travel_explore,
+                            size: 40.sp,
+                            color: AppColors.neutral400,
+                          ),
+                        ),
+                      ),
               ),
               
               // Gradient Overlay

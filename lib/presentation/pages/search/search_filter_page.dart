@@ -12,7 +12,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -45,19 +45,19 @@ class SearchFilterPage extends GetView<SearchFilterController> {
               onChanged: controller.onSearchChanged,
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm địa điểm, khách sạn, tour...',
-                hintStyle: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textHint,
+                hintStyle: AppTypography.bodyM.copyWith(
+                  color: AppColors.textTertiary,
                 ),
                 prefixIcon: Icon(
                   Icons.search,
-                  color: AppColors.grey,
+                  color: AppColors.neutral500,
                   size: 24.sp,
                 ),
                 suffixIcon: Obx(() => controller.searchQuery.value.isNotEmpty
                     ? IconButton(
                         icon: Icon(
                           Icons.clear,
-                          color: AppColors.grey,
+                          color: AppColors.neutral500,
                           size: 20.sp,
                         ),
                         onPressed: controller.clearSearch,
@@ -146,7 +146,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
               SizedBox(width: AppSpacing.s1),
               Text(
                 label,
-                style: AppTypography.bodySmall.copyWith(
+                style: AppTypography.bodyS.copyWith(
                   color: active ? AppColors.primary : AppColors.textPrimary,
                   fontWeight: active ? FontWeight.w600 : FontWeight.w500,
                 ),
@@ -182,7 +182,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
               SizedBox(width: AppSpacing.s1),
               Text(
                 label,
-                style: AppTypography.bodySmall.copyWith(
+                style: AppTypography.bodyS.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w500,
                 ),
@@ -220,7 +220,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
               children: [
                 Text(
                   'Sắp xếp theo',
-                  style: AppTypography.heading5,
+                  style: AppTypography.h3,
                 ),
                 SizedBox(height: AppSpacing.s4),
                 ...sortOptions.entries.map((entry) {
@@ -277,7 +277,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
             SizedBox(width: AppSpacing.s1),
             Text(
               sortOptions[controller.selectedSort.value]!,
-              style: AppTypography.bodySmall.copyWith(
+              style: AppTypography.bodyS.copyWith(
                 color: controller.selectedSort.value != 'default'
                     ? AppColors.primary
                     : AppColors.textPrimary,
@@ -305,13 +305,13 @@ class SearchFilterPage extends GetView<SearchFilterController> {
           Tab(text: 'Nhà hàng'),
         ],
         labelColor: AppColors.primary,
-        unselectedLabelColor: AppColors.grey,
+        unselectedLabelColor: AppColors.neutral500,
         indicatorColor: AppColors.primary,
         indicatorWeight: 3,
-        labelStyle: AppTypography.bodyMedium.copyWith(
+        labelStyle: AppTypography.bodyM.copyWith(
           fontWeight: FontWeight.w600,
         ),
-        unselectedLabelStyle: AppTypography.bodyMedium,
+        unselectedLabelStyle: AppTypography.bodyM,
       ),
     );
   }
@@ -342,7 +342,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
         children: [
           Text(
             'Tìm kiếm phổ biến',
-            style: AppTypography.heading5,
+            style: AppTypography.h3,
           ),
           SizedBox(height: AppSpacing.s4),
           Wrap(
@@ -361,7 +361,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                 child: Chip(
                   label: Text(suggestion),
                   backgroundColor: AppColors.neutral100,
-                  labelStyle: AppTypography.bodySmall,
+                  labelStyle: AppTypography.bodyS,
                 ),
               );
             }).toList(),
@@ -371,7 +371,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
           
           Text(
             'Tìm kiếm gần đây',
-            style: AppTypography.heading5,
+            style: AppTypography.h3,
           ),
           SizedBox(height: AppSpacing.s4),
           
@@ -384,13 +384,13 @@ class SearchFilterPage extends GetView<SearchFilterController> {
               ),
               title: Text(
                 search,
-                style: AppTypography.bodyMedium,
+                style: AppTypography.bodyM,
               ),
               trailing: IconButton(
                 icon: Icon(
                   Icons.close,
                   size: 18.sp,
-                  color: AppColors.grey,
+                  color: AppColors.neutral500,
                 ),
                 onPressed: () => controller.removeRecentSearch(search),
               ),
@@ -469,7 +469,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                     ),
                     child: Text(
                       item['type'],
-                      style: AppTypography.bodySmall.copyWith(
+                      style: AppTypography.bodyS.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                       ),
@@ -508,7 +508,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                 children: [
                   Text(
                     item['name'],
-                    style: AppTypography.heading6,
+                    style: AppTypography.h4,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -520,13 +520,13 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                       Icon(
                         Icons.location_on_outlined,
                         size: 16.sp,
-                        color: AppColors.grey,
+                        color: AppColors.neutral500,
                       ),
                       SizedBox(width: AppSpacing.s1),
                       Expanded(
                         child: Text(
                           item['location'],
-                          style: AppTypography.bodySmall.copyWith(
+                          style: AppTypography.bodyS.copyWith(
                             color: AppColors.textSecondary,
                           ),
                           maxLines: 1,
@@ -551,14 +551,14 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                           SizedBox(width: AppSpacing.s1),
                           Text(
                             item['rating'].toString(),
-                            style: AppTypography.bodySmall.copyWith(
+                            style: AppTypography.bodyS.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           SizedBox(width: AppSpacing.s1),
                           Text(
                             '(${item['reviews']})',
-                            style: AppTypography.bodySmall.copyWith(
+                            style: AppTypography.bodyS.copyWith(
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -571,13 +571,13 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                       if (item['price'] != null) ...[
                         Text(
                           'từ ',
-                          style: AppTypography.bodySmall.copyWith(
+                          style: AppTypography.bodyS.copyWith(
                             color: AppColors.textSecondary,
                           ),
                         ),
                         Text(
                           item['price'],
-                          style: AppTypography.heading6.copyWith(
+                          style: AppTypography.h4.copyWith(
                             color: AppColors.primary,
                           ),
                         ),
@@ -606,12 +606,12 @@ class SearchFilterPage extends GetView<SearchFilterController> {
           SizedBox(height: AppSpacing.s4),
           Text(
             'Không tìm thấy kết quả',
-            style: AppTypography.heading5,
+            style: AppTypography.h3,
           ),
           SizedBox(height: AppSpacing.s2),
           Text(
             'Thử tìm kiếm với từ khóa khác',
-            style: AppTypography.bodyMedium.copyWith(
+            style: AppTypography.bodyM.copyWith(
               color: AppColors.textSecondary,
             ),
           ),

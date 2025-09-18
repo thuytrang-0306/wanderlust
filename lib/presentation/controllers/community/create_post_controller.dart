@@ -144,10 +144,9 @@ class CreatePostController extends GetxController {
       // Convert images to base64
       List<String> uploadedImages = [];
       for (var imageFile in selectedImages) {
-        // This actually returns base64 data URL now
-        final imageData = await _imageUploadService.uploadToCloudinary(
+        // Convert to base64 data URL
+        final imageData = await _imageUploadService.convertToBase64(
           File(imageFile.path),
-          folder: 'blog_posts',
         );
         if (imageData != null) {
           uploadedImages.add(imageData);

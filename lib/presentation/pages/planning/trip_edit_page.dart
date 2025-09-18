@@ -8,6 +8,9 @@ import 'package:wanderlust/core/widgets/app_text_field.dart';
 import 'package:wanderlust/core/widgets/app_date_time_picker.dart';
 import 'package:wanderlust/presentation/controllers/planning/trip_edit_controller.dart';
 import 'package:wanderlust/core/constants/app_assets.dart';
+import 'package:wanderlust/core/widgets/app_image.dart';
+import 'package:wanderlust/data/services/image_upload_service.dart';
+import 'dart:io';
 
 class TripEditPage extends GetView<TripEditController> {
   const TripEditPage({super.key});
@@ -104,41 +107,96 @@ class TripEditPage extends GetView<TripEditController> {
   }
 
   Widget _buildIllustration() {
-    return Container(
-      height: 300.h,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.neutral50,
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Center(
-        child: Image.asset(
-          AppAssets.travel3d,
-          height: 250.h,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            // Fallback illustration if asset not found
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.travel_explore,
-                  size: 100.sp,
-                  color: AppColors.primary.withOpacity(0.5),
-                ),
-                SizedBox(height: AppSpacing.s4),
-                Text(
-                  'Travel Planning',
-                  style: AppTypography.bodyL.copyWith(
-                    color: AppColors.neutral500,
+    return Obx(() {
+      final coverImage = controller.coverImage.value;
+      
+      return GestureDetector(
+        onTap: _selectCoverImage,
+        child: Container(
+          height: 300.h,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.neutral50,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(
+              color: AppColors.neutral200,
+              width: 1,
+            ),
+          ),
+          child: Stack(
+            children: [
+              // Display selected image or placeholder
+              if (coverImage != null && coverImage.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20.r),
+                  child: AppImage(
+                    imageData: coverImage,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              else
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_photo_alternate_outlined,
+                        size: 60.sp,
+                        color: AppColors.primary.withOpacity(0.5),
+                      ),
+                      SizedBox(height: AppSpacing.s3),
+                      Text(
+                        'Nhấn để thêm ảnh bìa',
+                        style: AppTypography.bodyM.copyWith(
+                          color: AppColors.neutral600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.s1),
+                      Text(
+                        'Ảnh sẽ được hiển thị trên lịch trình',
+                        style: AppTypography.bodyS.copyWith(
+                          color: AppColors.neutral500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            );
-          },
+              
+              // Edit button overlay if image exists
+              if (coverImage != null && coverImage.isNotEmpty)
+                Positioned(
+                  top: AppSpacing.s3,
+                  right: AppSpacing.s3,
+                  child: Container(
+                    padding: EdgeInsets.all(AppSpacing.s2),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 20.sp,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
+  }
+  
+  Future<void> _selectCoverImage() async {
+    final imageUploadService = Get.find<ImageUploadService>();
+    final base64Image = await imageUploadService.showImagePickerDialog();
+    
+    if (base64Image != null) {
+      controller.setCoverImage(base64Image);
+    }
   }
 
   Widget _buildForm() {
@@ -153,6 +211,15 @@ class TripEditPage extends GetView<TripEditController> {
           onChanged: (value) => controller.updateField('tripName', value),
           errorText: controller.errors['tripName'],
         )),
+        SizedBox(height: AppSpacing.s5),
+        
+        // Description
+        AppTextField.multiline(
+          label: 'Mô tả',
+          hintText: 'Thêm mô tả cho lịch trình của bạn',
+          controller: controller.descriptionController,
+          maxLines: 3,
+        ),
         SizedBox(height: AppSpacing.s5),
         
         // Destination
@@ -200,7 +267,159 @@ class TripEditPage extends GetView<TripEditController> {
         
         // Number of people
         _buildPeopleSelector(),
+        SizedBox(height: AppSpacing.s5),
+        
+        // Budget
+        AppTextField(
+          label: 'Ngân sách (VND)',
+          hintText: 'Ví dụ: 10000000',
+          controller: controller.budgetController,
+          keyboardType: TextInputType.number,
+        ),
+        SizedBox(height: AppSpacing.s5),
+        
+        // Tags
+        _buildTagsSection(),
+        SizedBox(height: AppSpacing.s5),
+        
+        // Visibility
+        _buildVisibilitySection(),
+        SizedBox(height: AppSpacing.s5),
+        
+        // Notes
+        AppTextField.multiline(
+          label: 'Ghi chú',
+          hintText: 'Thêm ghi chú cho lịch trình',
+          controller: controller.notesController,
+          maxLines: 4,
+        ),
+        SizedBox(height: AppSpacing.s6),
       ],
+    );
+  }
+  
+  Widget _buildTagsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Thẻ tag',
+          style: AppTypography.bodyM.copyWith(
+            color: AppColors.neutral700,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Obx(() => Wrap(
+          spacing: AppSpacing.s2,
+          runSpacing: AppSpacing.s2,
+          children: controller.availableTags.map((tag) {
+            final isSelected = controller.selectedTags.contains(tag);
+            return GestureDetector(
+              onTap: () => controller.toggleTag(tag),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s3,
+                  vertical: AppSpacing.s2,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : Colors.white,
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : AppColors.neutral300,
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  tag,
+                  style: AppTypography.bodyS.copyWith(
+                    color: isSelected ? Colors.white : AppColors.neutral700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        )),
+      ],
+    );
+  }
+  
+  Widget _buildVisibilitySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quyền riêng tư',
+          style: AppTypography.bodyM.copyWith(
+            color: AppColors.neutral700,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Obx(() => Row(
+          children: [
+            _buildVisibilityOption(
+              'private',
+              Icons.lock_outline,
+              'Riêng tư',
+            ),
+            SizedBox(width: AppSpacing.s3),
+            _buildVisibilityOption(
+              'friends',
+              Icons.people_outline,
+              'Bạn bè',
+            ),
+            SizedBox(width: AppSpacing.s3),
+            _buildVisibilityOption(
+              'public',
+              Icons.public,
+              'Công khai',
+            ),
+          ],
+        )),
+      ],
+    );
+  }
+  
+  Widget _buildVisibilityOption(String value, IconData icon, String label) {
+    final isSelected = controller.selectedVisibility.value == value;
+    
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => controller.setVisibility(value),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.s3,
+            vertical: AppSpacing.s3,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : AppColors.neutral300,
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                size: 24.sp,
+                color: isSelected ? AppColors.primary : AppColors.neutral600,
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                label,
+                style: AppTypography.bodyXS.copyWith(
+                  color: isSelected ? AppColors.primary : AppColors.neutral600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

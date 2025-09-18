@@ -71,6 +71,41 @@ class TripService extends GetxService {
     }
   }
 
+  // Get all public trips (for discover page)
+  Future<List<TripModel>> getAllPublicTrips() async {
+    try {
+      // Get all trips with public visibility
+      final snapshot = await _firestore
+          .collection(_tripsCollection)
+          .where('visibility', isEqualTo: 'public')
+          .orderBy('createdAt', descending: true)
+          .limit(20) // Limit to prevent too much data
+          .get();
+
+      final trips = snapshot.docs
+          .map((doc) => TripModel.fromJson(doc.data(), doc.id))
+          .toList();
+      
+      // If no public trips, get all trips for now (for testing)
+      if (trips.isEmpty) {
+        final allSnapshot = await _firestore
+            .collection(_tripsCollection)
+            .orderBy('createdAt', descending: true)
+            .limit(20)
+            .get();
+            
+        return allSnapshot.docs
+            .map((doc) => TripModel.fromJson(doc.data(), doc.id))
+            .toList();
+      }
+      
+      return trips;
+    } catch (e) {
+      LoggerService.e('Error getting public trips', error: e);
+      return [];
+    }
+  }
+
   // Get upcoming trips
   Future<List<TripModel>> getUpcomingTrips() async {
     try {

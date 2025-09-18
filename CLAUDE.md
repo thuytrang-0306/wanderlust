@@ -26,8 +26,8 @@ lib/
 
 ### Backend & Database
 - **Firebase Auth**: User authentication
-- **Cloud Firestore**: NoSQL database
-- **Firebase Storage**: Media storage
+- **Cloud Firestore**: NoSQL database (ONLY database - no other storage)
+- ~~**Firebase Storage**: Media storage~~ **NOT USED - Base64 in Firestore**
 - **Firebase Core**: 3.6.0
 
 ### UI & Design
@@ -81,6 +81,58 @@ Gradients:
 - Base unit: 4px
 - Scale: s0 (0px) to s14 (56px)
 - Semantic: paddingXS (8px) to paddingXXL (32px)
+
+## 🚨 CRITICAL ARCHITECTURE RULES - MUST READ
+
+### ⚠️ IMAGE HANDLING - NO EXTERNAL STORAGE
+**NEVER use external storage services!** This app uses a UNIQUE approach:
+
+1. **ONLY ONE DATABASE**: Firestore - NO Firebase Storage, NO Cloudinary, NO ImgBB, NO external APIs
+2. **ALL IMAGES**: Stored as base64 strings directly in Firestore documents
+3. **PROVEN WORKING**: Successfully implemented for user avatars, blog posts
+4. **AppImage WIDGET**: Already handles both base64 and URLs automatically
+
+#### ✅ CORRECT Image Flow:
+```dart
+// 1. Pick image
+final imageFile = await ImageUploadService.to.pickImageFromGallery();
+
+// 2. Convert to base64 (with compression)
+final base64String = await ImageUploadService.to.convertToBase64(imageFile);
+
+// 3. Save DIRECTLY to Firestore document
+await FirebaseFirestore.instance.collection('trips').doc(id).update({
+  'coverImage': base64String, // Store as base64 string in document
+});
+
+// 4. Display using AppImage widget
+AppImage(imageData: doc['coverImage']) // Automatically handles base64
+```
+
+#### ❌ NEVER DO THIS:
+```dart
+// WRONG - No external storage services
+await FirebaseStorage.instance.ref().putFile(file); // NO!
+await uploadToCloudinary(file); // NO!
+await uploadToImgBB(file); // NO!
+
+// WRONG - Don't store URLs from external services  
+'imageUrl': 'https://cloudinary.com/...' // NO!
+'imageUrl': 'https://firebasestorage.googleapis.com/...' // NO!
+```
+
+### 📏 Base64 Image Size Guidelines:
+- **Avatar**: 300x300px max, ~50KB base64
+- **Cover Image**: 1024x1024px max, ~200KB base64
+- **Thumbnail**: 200x200px max, ~30KB base64
+- **Blog Image**: 800x600px max, ~150KB base64
+
+### 🎯 Why This Architecture:
+- **Simplicity**: One database, no external dependencies
+- **Consistency**: All data in one place
+- **Cost**: No additional storage costs
+- **Offline**: Base64 cached with Firestore documents
+- **Security**: No public URLs, data behind auth
 
 ## 🔧 Development Commands
 

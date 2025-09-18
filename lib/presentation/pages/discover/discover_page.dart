@@ -6,7 +6,7 @@ import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/presentation/controllers/discover/discover_controller.dart';
 import 'package:wanderlust/presentation/controllers/account/user_profile_controller.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class DiscoverPage extends GetView<DiscoverController> {
@@ -17,50 +17,60 @@ class DiscoverPage extends GetView<DiscoverController> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              _buildHeader(),
-              
-              SizedBox(height: AppSpacing.s4),
-              
-              // Hero Banner with Carousel
-              _buildHeroBanner(),
-              
-              SizedBox(height: AppSpacing.s5),
-              
-              // Search Bar
-              _buildSearchBar(),
-              
-              SizedBox(height: AppSpacing.s6),
-              
-              // Hot Destinations
-              _buildHotDestinations(),
-              
-              SizedBox(height: AppSpacing.s6),
-              
-              // Planning Section
-              _buildPlanningSection(),
-              
-              SizedBox(height: AppSpacing.s6),
-              
-              // Explore by Region
-              _buildExploreByRegion(),
-              
-              SizedBox(height: AppSpacing.s6),
-              
-              // Combo Tours Section
-              _buildComboToursSection(),
-              
-              SizedBox(height: AppSpacing.s6),
-              
-              // Blog Section
-              _buildBlogSection(),
-              
-              SizedBox(height: AppSpacing.s8),
-            ],
+        child: RefreshIndicator(
+          onRefresh: controller.loadAllData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                _buildHeader(),
+                
+                SizedBox(height: AppSpacing.s4),
+                
+                // Hero Banner - Only show if we have content
+                _buildHeroBanner(),
+                
+                SizedBox(height: AppSpacing.s5),
+                
+                // Search Bar
+                _buildSearchBar(),
+                
+                SizedBox(height: AppSpacing.s6),
+                
+                // Featured Tours
+                _buildFeaturedTours(),
+                
+                SizedBox(height: AppSpacing.s6),
+                
+                // Planning Section
+                _buildPlanningSection(),
+                
+                SizedBox(height: AppSpacing.s6),
+                
+                // Explore by Region
+                _buildExploreByRegion(),
+                
+                SizedBox(height: AppSpacing.s6),
+                
+                // Combo Tours Section
+                _buildComboToursSection(),
+                
+                SizedBox(height: AppSpacing.s6),
+                
+                // Recent Blogs
+                _buildRecentBlogs(),
+                
+                SizedBox(height: AppSpacing.s6),
+                
+                // Popular Destinations
+                _buildPopularDestinations(),
+                
+                // Bottom padding
+                SizedBox(height: 100.h),
+              ],
+            ),
           ),
         ),
       ),
@@ -68,71 +78,81 @@ class DiscoverPage extends GetView<DiscoverController> {
   }
 
   Widget _buildHeader() {
-    final userController = Get.find<UserProfileController>();
+    final userProfileController = Get.find<UserProfileController>();
     
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
       child: Row(
         children: [
-          // Avatar
-          Obx(() => Container(
-            width: 36.w,
-            height: 36.h,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primary.withOpacity(0.2),
-                width: 1.5,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18.r),
-              child: userController.avatarBytes.value != null
-                ? Image.memory(
-                    userController.avatarBytes.value!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: AppColors.neutral100,
-                      child: Icon(
-                        Icons.person,
-                        size: 20.sp,
-                        color: AppColors.neutral500,
-                      ),
-                    ),
-                  )
-                : Container(
-                    color: AppColors.neutral100,
-                    child: Icon(
-                      Icons.person,
-                      size: 20.sp,
-                      color: AppColors.neutral500,
-                    ),
+          // User Avatar
+          Obx(() {
+            final profile = userProfileController.userProfile.value;
+            return GestureDetector(
+              onTap: () => Get.toNamed('/user-profile'),
+              child: Container(
+                width: 40.w,
+                height: 40.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.3),
+                    width: 2,
                   ),
-            ),
-          )),
+                ),
+                child: ClipOval(
+                  child: profile?.avatar != null && profile!.avatar!.isNotEmpty
+                      ? AppImage.avatar(
+                          imageData: profile.avatar!,
+                          size: 36,
+                        )
+                      : Container(
+                          color: AppColors.primary.withOpacity(0.1),
+                          child: Icon(
+                            Icons.person,
+                            size: 20.sp,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                ),
+              ),
+            );
+          }),
           
           SizedBox(width: AppSpacing.s3),
           
           // Greeting
           Expanded(
-            child: Obx(() => Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${controller.greeting}, ${userController.userName}!',
+                  controller.greeting,
                   style: AppTypography.bodyS.copyWith(
-                    color: AppColors.neutral500,
+                    color: AppColors.textSecondary,
                   ),
                 ),
-                Text(
-                  'Khám phá thế giới tuyệt vời',
-                  style: AppTypography.bodyL.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Obx(() {
+                  final profile = userProfileController.userProfile.value;
+                  return Text(
+                    profile?.displayName ?? controller.userName,
+                    style: AppTypography.bodyL.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  );
+                }),
               ],
-            )),
+            ),
+          ),
+          
+          // Notification Icon
+          IconButton(
+            icon: Icon(
+              Icons.notifications_outlined,
+              color: AppColors.textPrimary,
+              size: 24.sp,
+            ),
+            onPressed: () => Get.toNamed('/notifications'),
           ),
         ],
       ),
@@ -140,106 +160,178 @@ class DiscoverPage extends GetView<DiscoverController> {
   }
 
   Widget _buildHeroBanner() {
-    return Container(
-      height: 200.h,
-      child: Stack(
-        children: [
-          // Banner Carousel
-          PageView.builder(
-            controller: controller.pageController,
-            onPageChanged: controller.onPageChanged,
-            itemCount: 3,
-            itemBuilder: (context, index) {
-              return Container(
-                margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16.r),
-                  image: DecorationImage(
-                    image: CachedNetworkImageProvider(
-                      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-                    ),
-                    fit: BoxFit.cover,
+    return Obx(() {
+      // Show welcome banner if no tours available
+      final tours = controller.featuredTours;
+      
+      if (tours.isEmpty) {
+        // Single welcome banner
+        return Container(
+          height: 200.h,
+          margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16.r),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary,
+                AppColors.primary.withOpacity(0.7),
+              ],
+            ),
+          ),
+          child: Stack(
+            children: [
+              // Pattern decoration
+              Positioned(
+                right: -50.w,
+                top: -50.h,
+                child: Container(
+                  width: 200.w,
+                  height: 200.h,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.1),
                   ),
                 ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16.r),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.7),
-                      ],
+              ),
+              
+              // Content
+              Padding(
+                padding: EdgeInsets.all(AppSpacing.s5),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Chào mừng đến với\nWanderlust',
+                      style: AppTypography.h3.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  padding: EdgeInsets.all(AppSpacing.s5),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Trải nghiệm với những\nchuyến đi nổi bật',
-                        style: AppTypography.h4.copyWith(
-                          color: Colors.white,
+                    SizedBox(height: AppSpacing.s3),
+                    Text(
+                      'Khám phá thế giới cùng chúng tôi',
+                      style: AppTypography.bodyM.copyWith(
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                    SizedBox(height: AppSpacing.s4),
+                    ElevatedButton(
+                      onPressed: controller.onPlanTrip,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppColors.primary,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s5,
+                          vertical: AppSpacing.s3,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Lên kế hoạch ngay',
+                        style: AppTypography.bodyM.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: AppSpacing.s3),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          
-          // Phone Mockup - Fallback to icon if image not available
-          Positioned(
-            right: 30.w,
-            bottom: 20.h,
-            child: Transform.rotate(
-              angle: -0.1,
-              child: Container(
-                width: 60.w,
-                height: 120.h,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Icon(
-                  Icons.phone_iphone,
-                  color: Colors.white.withOpacity(0.8),
-                  size: 40.sp,
+                    ),
+                  ],
                 ),
               ),
-            ),
+            ],
           ),
-          
-          // Page Indicator
-          Positioned(
-            bottom: 20.h,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Obx(() => AnimatedSmoothIndicator(
-                activeIndex: controller.currentPage.value,
-                count: 3,
-                effect: WormEffect(
-                  dotWidth: 8.w,
-                  dotHeight: 8.h,
-                  activeDotColor: Colors.white,
-                  dotColor: Colors.white.withOpacity(0.4),
+        );
+      }
+      
+      // Show tour carousel if available
+      return Container(
+        height: 200.h,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: controller.pageController,
+              onPageChanged: controller.onPageChanged,
+              itemCount: tours.length.clamp(1, 5),
+              itemBuilder: (context, index) {
+                final tour = tours[index];
+                return Container(
+                  margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16.r),
+                    image: tour.images.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(tour.images.first),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                    color: AppColors.primary.withOpacity(0.8),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16.r),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.7),
+                        ],
+                      ),
+                    ),
+                    padding: EdgeInsets.all(AppSpacing.s5),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tour.name,
+                          style: AppTypography.h4.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: AppSpacing.s2),
+                        Text(
+                          '${tour.displayPrice} • ${tour.displayDuration}',
+                          style: AppTypography.bodyM.copyWith(
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            
+            // Page Indicator
+            if (tours.length > 1)
+              Positioned(
+                bottom: 20.h,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Obx(() => AnimatedSmoothIndicator(
+                    activeIndex: controller.currentPage.value,
+                    count: tours.length.clamp(1, 5),
+                    effect: WormEffect(
+                      dotWidth: 8.w,
+                      dotHeight: 8.h,
+                      activeDotColor: Colors.white,
+                      dotColor: Colors.white.withOpacity(0.4),
+                    ),
+                  )),
                 ),
-              )),
-            ),
-          ),
-        ],
-      ),
-    );
+              ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildSearchBar() {
@@ -259,15 +351,15 @@ class DiscoverPage extends GetView<DiscoverController> {
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
                 child: Icon(
                   Icons.search,
-                  color: AppColors.neutral400,
+                  color: AppColors.textTertiary,
                   size: 24.sp,
                 ),
               ),
               Expanded(
                 child: Text(
-                  'Tìm kiếm theo địa điểm',
+                  'Tìm kiếm địa điểm, tour...',
                   style: AppTypography.bodyM.copyWith(
-                    color: AppColors.neutral400,
+                    color: AppColors.textTertiary,
                   ),
                 ),
               ),
@@ -278,181 +370,164 @@ class DiscoverPage extends GetView<DiscoverController> {
     );
   }
 
-  Widget _buildHotDestinations() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-          child: Text(
-            'Chuyến đi nổi bật',
-            style: AppTypography.h4.copyWith(
-              color: AppColors.neutral900,
-              fontWeight: FontWeight.bold,
+  Widget _buildFeaturedTours() {
+    return Obx(() {
+      final tours = controller.featuredTours;
+      
+      if (tours.isEmpty) {
+        return _buildEmptyTours();
+      }
+      
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Tour nổi bật',
+                  style: AppTypography.h4.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: controller.onSeeAllTours,
+                  child: Text(
+                    'Xem tất cả',
+                    style: AppTypography.bodyM.copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        SizedBox(height: AppSpacing.s4),
-        SizedBox(
-          height: 200.h,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-            itemCount: 5,
-            itemBuilder: (context, index) {
-              final destinations = [
-                {'name': 'Vịnh Hạ Long', 'price': '550.000', 'duration': '5N/6D', 'rating': '4.9', 'location': 'Quảng Ninh'},
-                {'name': 'Biển Nha Trang', 'price': '400.000', 'duration': '4N/5D', 'rating': '4.9', 'location': 'Khánh Hòa'},
-                {'name': 'Đà Lạt', 'price': '350.000', 'duration': '3N/4D', 'rating': '4.8', 'location': 'Lâm Đồng'},
-                {'name': 'Phú Quốc', 'price': '600.000', 'duration': '5N/6D', 'rating': '4.9', 'location': 'Kiên Giang'},
-                {'name': 'Sa Pa', 'price': '450.000', 'duration': '4N/5D', 'rating': '4.7', 'location': 'Lào Cai'},
-              ];
-              
-              final dest = destinations[index];
-              
-              return GestureDetector(
-                onTap: () => Get.toNamed('/accommodation-detail', arguments: {
-                  'accommodationName': dest['name'],
-                  'location': dest['location'],
-                  'price': dest['price'],
-                }),
-                child: Container(
-                  width: 150.w,
-                  margin: EdgeInsets.only(right: AppSpacing.s3),
-                  child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Image with badge
-                    Stack(
+          
+          SizedBox(height: AppSpacing.s3),
+          
+          SizedBox(
+            height: 220.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              itemCount: tours.length,
+              itemBuilder: (context, index) {
+                final tour = tours[index];
+                
+                return GestureDetector(
+                  onTap: () => controller.onTourTapped(tour),
+                  child: Container(
+                    width: 280.w,
+                    margin: EdgeInsets.only(right: AppSpacing.s4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Image
                         Container(
-                          height: 120.h,
+                          height: 140.h,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(12.r),
+                              top: Radius.circular(16.r),
                             ),
-                            image: DecorationImage(
-                              image: CachedNetworkImageProvider(
-                                'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-                              ),
-                              fit: BoxFit.cover,
-                            ),
+                            color: AppColors.neutral100,
                           ),
+                          child: tour.images.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(16.r),
+                                  ),
+                                  child: AppImage(
+                                    imageData: tour.images.first,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Center(
+                                  child: Icon(
+                                    Icons.image,
+                                    size: 40.sp,
+                                    color: AppColors.neutral400,
+                                  ),
+                                ),
                         ),
-                        // Duration badge
-                        Positioned(
-                          top: 8.h,
-                          left: 8.w,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
-                              vertical: 4.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Color(0xFFFF6B35),
-                              borderRadius: BorderRadius.circular(4.r),
-                            ),
-                            child: Text(
-                              dest['duration']!,
-                              style: AppTypography.bodyXS.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
+                        
+                        // Content
+                        Padding(
+                          padding: EdgeInsets.all(AppSpacing.s3),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                tour.name,
+                                style: AppTypography.bodyL.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
+                              SizedBox(height: AppSpacing.s1),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.schedule,
+                                    size: 14.sp,
+                                    color: AppColors.textTertiary,
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    tour.displayDuration,
+                                    style: AppTypography.bodyS.copyWith(
+                                      color: AppColors.textTertiary,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    tour.displayPrice,
+                                    style: AppTypography.bodyL.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    // Content
-                    Container(
-                      padding: EdgeInsets.all(AppSpacing.s2),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(
-                          bottom: Radius.circular(12.r),
-                        ),
-                        border: Border.all(
-                          color: AppColors.neutral100,
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            dest['name']!,
-                            style: AppTypography.bodyM.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            '${dest['price']} VND',
-                            style: AppTypography.bodyS.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: 12.sp,
-                                color: AppColors.neutral400,
-                              ),
-                              SizedBox(width: 2.w),
-                              Expanded(
-                                child: Text(
-                                  dest['location']!,
-                                  style: AppTypography.bodyXS.copyWith(
-                                    color: AppColors.neutral500,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Icon(
-                                Icons.star,
-                                size: 12.sp,
-                                color: Colors.amber,
-                              ),
-                              SizedBox(width: 2.w),
-                              Text(
-                                dest['rating']!,
-                                style: AppTypography.bodyXS.copyWith(
-                                  color: AppColors.neutral600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                ),
-              );
-            },
+                  ),
+                );
+              },
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   Widget _buildPlanningSection() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-      padding: EdgeInsets.all(AppSpacing.s4),
+      padding: EdgeInsets.all(AppSpacing.s5),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
           colors: [
-            Color(0xFFE8D5FF),
-            Color(0xFFD4B5FF),
+            const Color(0xFFE6F5C5),
+            const Color(0xFFD0FCEF),
           ],
         ),
         borderRadius: BorderRadius.circular(16.r),
@@ -464,503 +539,275 @@ class DiscoverPage extends GetView<DiscoverController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Nhanh chóng chỉ với 1 thao tác',
-                  style: AppTypography.bodyS.copyWith(
-                    color: AppColors.neutral700,
-                  ),
-                ),
-                SizedBox(height: AppSpacing.s1),
-                Text(
-                  'Lên lịch trình cho chuyến đi tiếp theo của bạn',
-                  style: AppTypography.bodyL.copyWith(
-                    color: AppColors.neutral900,
-                    fontWeight: FontWeight.w600,
+                  'Lập kế hoạch\ncho chuyến đi',
+                  style: AppTypography.h4.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 SizedBox(height: AppSpacing.s3),
-                GestureDetector(
-                  onTap: () => controller.createTrip(),
-                  child: Container(
+                ElevatedButton(
+                  onPressed: controller.createTrip,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
                     padding: EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s3,
-                      vertical: AppSpacing.s2,
+                      horizontal: AppSpacing.s5,
+                      vertical: AppSpacing.s3,
                     ),
-                    decoration: BoxDecoration(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24.r),
+                    ),
+                  ),
+                  child: Text(
+                    'Bắt đầu',
+                    style: AppTypography.bodyM.copyWith(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('🗺️', style: TextStyle(fontSize: 16.sp)),
-                        SizedBox(width: AppSpacing.s2),
-                        Text(
-                          'Tạo lịch trình mới',
-                          style: AppTypography.bodyS.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-            width: 80.w,
-            height: 80.h,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Icon(
-              Icons.travel_explore,
-              size: 60.sp,
-              color: AppColors.primary.withOpacity(0.5),
-            ),
+          Icon(
+            Icons.map_outlined,
+            size: 80.sp,
+            color: AppColors.primary.withOpacity(0.3),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildExploreByRegion() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-          child: Text(
-            'Khám phá theo vùng',
-            style: AppTypography.h4.copyWith(
-              color: AppColors.neutral900,
-              fontWeight: FontWeight.bold,
+  Widget _buildRecentBlogs() {
+    return Obx(() {
+      final blogs = controller.recentBlogs;
+      
+      if (blogs.isEmpty) {
+        return _buildEmptyBlogs();
+      }
+      
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+            child: Text(
+              'Bài viết gần đây',
+              style: AppTypography.h4.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-        SizedBox(height: AppSpacing.s4),
-        Container(
-          height: 240.h,
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-          child: GridView.builder(
-            physics: NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.75,
-              crossAxisSpacing: AppSpacing.s3,
-              mainAxisSpacing: AppSpacing.s3,
-            ),
-            itemCount: 2,
-            itemBuilder: (context, index) {
-              final regions = [
-                {'name': 'Miền Bắc', 'desc': 'Khám phá vùng đất tuyệt đẹp này'},
-                {'name': 'Miền Trung', 'desc': 'Khám phá vùng đất tuyệt đẹp này'},
-              ];
-              
-              final region = regions[index];
-              
-              return Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.r),
-                  image: DecorationImage(
-                    image: CachedNetworkImageProvider(
-                      index == 0
-                          ? 'https://images.unsplash.com/photo-1528127269322-539801943592?w=400'
-                          : 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400',
-                    ),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12.r),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.7),
+          
+          SizedBox(height: AppSpacing.s3),
+          
+          SizedBox(
+            height: 200.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              itemCount: blogs.length,
+              itemBuilder: (context, index) {
+                final blog = blogs[index];
+                
+                return GestureDetector(
+                  onTap: () => controller.onBlogTapped(blog),
+                  child: Container(
+                    width: 260.w,
+                    margin: EdgeInsets.only(right: AppSpacing.s4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
                       ],
                     ),
-                  ),
-                  padding: EdgeInsets.all(AppSpacing.s3),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        region['name']!,
-                        style: AppTypography.bodyL.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        region['desc']!,
-                        style: AppTypography.bodyXS.copyWith(
-                          color: Colors.white.withOpacity(0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBlogSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-          child: Text(
-            'Blog nhanh',
-            style: AppTypography.h4.copyWith(
-              color: AppColors.neutral900,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        SizedBox(height: AppSpacing.s4),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-          itemCount: 2,
-          itemBuilder: (context, index) {
-            final blogs = [
-              {
-                'title': 'Chia sẻ kinh nghiệm du lịch thú vị',
-                'desc': 'Nội dung bài viết đang được tải...',
-                'author': 'Thế Hùng',
-              },
-              {
-                'title': 'Hướng dẫn du lịch chi tiết',
-                'desc': 'Nội dung bài viết đang được tải...',
-                'author': 'Jung Môi An',
-              },
-            ];
-            
-            final blog = blogs[index];
-            
-            return Container(
-              margin: EdgeInsets.only(bottom: AppSpacing.s3),
-              child: Row(
-                children: [
-                  // Image
-                  Container(
-                    width: 80.w,
-                    height: 80.h,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12.r),
-                      image: DecorationImage(
-                        image: CachedNetworkImageProvider(
-                          'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=200',
-                        ),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: AppSpacing.s3),
-                  // Content
-                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          blog['title']!,
-                          style: AppTypography.bodyM.copyWith(
-                            fontWeight: FontWeight.w600,
+                        // Image
+                        Container(
+                          height: 120.h,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(12.r),
+                            ),
+                            color: AppColors.neutral100,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          blog['desc']!,
-                          style: AppTypography.bodyS.copyWith(
-                            color: AppColors.neutral500,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: 8.h),
-                        Row(
-                          children: [
-                            Container(
-                              width: 20.w,
-                              height: 20.h,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                image: DecorationImage(
-                                  image: CachedNetworkImageProvider(
-                                    'https://i.pravatar.cc/150?img=${index + 1}',
+                          child: blog.coverImage.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(12.r),
                                   ),
-                                  fit: BoxFit.cover,
+                                  child: AppImage(
+                                    imageData: blog.coverImage,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Center(
+                                  child: Icon(
+                                    Icons.article,
+                                    size: 40.sp,
+                                    color: AppColors.neutral400,
+                                  ),
                                 ),
-                              ),
-                            ),
-                            SizedBox(width: 6.w),
-                            Text(
-                              blog['author']!,
-                              style: AppTypography.bodyXS.copyWith(
-                                color: AppColors.neutral600,
-                              ),
-                            ),
-                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  // Bookmark icon
-                  Icon(
-                    Icons.bookmark_border,
-                    size: 20.sp,
-                    color: AppColors.neutral400,
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildComboToursSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Combo tour nổi bật',
-                style: AppTypography.h4.copyWith(
-                  color: AppColors.neutral900,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Xem tất cả',
-                style: AppTypography.bodyS.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: AppSpacing.s4),
-        SizedBox(
-          height: 280.h,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-            itemCount: 3,
-            itemBuilder: (context, index) {
-              final combos = [
-                {
-                  'title': 'Tour Nha Trang - Chuyên đi chữa lành cảm xúc',
-                  'location': 'Nha Trang, Khánh Hòa',
-                  'duration': '2 ngày 1 đêm',
-                  'price': '3.500.000',
-                  'rating': '4.8',
-                  'creator': 'Hiếu Thù Hại',
-                  'image': 'https://images.unsplash.com/photo-1559628233-100c798642d4?w=400',
-                },
-                {
-                  'title': 'Tour Phú Quốc - Thiên đường nghỉ dưỡng',
-                  'location': 'Phú Quốc, Kiên Giang',
-                  'duration': '3 ngày 2 đêm',
-                  'price': '5.200.000',
-                  'rating': '4.9',
-                  'creator': 'Minh Trang',
-                  'image': 'https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400',
-                },
-                {
-                  'title': 'Tour Đà Lạt - Thành phố ngàn hoa',
-                  'location': 'Đà Lạt, Lâm Đồng',
-                  'duration': '2 ngày 1 đêm',
-                  'price': '2.800.000',
-                  'rating': '4.7',
-                  'creator': 'An Nhiên',
-                  'image': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-                },
-              ];
-              
-              final combo = combos[index];
-              
-              return GestureDetector(
-                onTap: () => Get.toNamed('/combo-detail', arguments: combo),
-                child: Container(
-                  width: 240.w,
-                  margin: EdgeInsets.only(right: AppSpacing.s3),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Image
-                      Container(
-                        height: 140.h,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(16.r),
-                          ),
-                          image: DecorationImage(
-                            image: CachedNetworkImageProvider(combo['image']!),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        child: Stack(
-                          children: [
-                            // Rating badge
-                            Positioned(
-                              top: 8.h,
-                              right: 8.w,
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 8.w,
-                                  vertical: 4.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.star,
-                                      size: 14.sp,
-                                      color: Colors.amber,
-                                    ),
-                                    SizedBox(width: 2.w),
-                                    Text(
-                                      combo['rating']!,
-                                      style: AppTypography.bodyS.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Content
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: AppSpacing.s3,
-                            vertical: AppSpacing.s2,
-                          ),
+                        
+                        // Content
+                        Padding(
+                          padding: EdgeInsets.all(AppSpacing.s3),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Title
                               Text(
-                                combo['title']!,
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.15,
+                                blog.title,
+                                style: AppTypography.bodyM.copyWith(
+                                  fontWeight: FontWeight.bold,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              SizedBox(height: 3.h),
-                              // Location
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on_outlined,
-                                    size: 11.sp,
-                                    color: AppColors.neutral500,
-                                  ),
-                                  SizedBox(width: 2.w),
-                                  Expanded(
-                                    child: Text(
-                                      combo['location']!,
-                                      style: TextStyle(
-                                        fontSize: 10.sp,
-                                        color: AppColors.neutral600,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 2.h),
-                              // Duration
+                              SizedBox(height: AppSpacing.s1),
                               Text(
-                                combo['duration']!,
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  color: AppColors.neutral500,
+                                blog.formattedDate,
+                                style: AppTypography.bodyXS.copyWith(
+                                  color: AppColors.textTertiary,
                                 ),
                               ),
-                              const Spacer(),
-                              // Price
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildPopularDestinations() {
+    return Obx(() {
+      final destinations = controller.popularDestinations;
+      
+      if (destinations.isEmpty) {
+        return _buildEmptyDestinations();
+      }
+      
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Điểm đến phổ biến',
+                  style: AppTypography.h4.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: controller.onSeeAllDestinations,
+                  child: Text(
+                    'Xem tất cả',
+                    style: AppTypography.bodyM.copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+            itemCount: destinations.length,
+            itemBuilder: (context, index) {
+              final destination = destinations[index];
+              
+              return GestureDetector(
+                onTap: () => controller.onDestinationTapped(destination),
+                child: Container(
+                  margin: EdgeInsets.only(bottom: AppSpacing.s3),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Image
+                      Container(
+                        width: 100.w,
+                        height: 80.h,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.horizontal(
+                            left: Radius.circular(12.r),
+                          ),
+                          color: AppColors.neutral100,
+                        ),
+                        child: destination.primaryImage.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.horizontal(
+                                  left: Radius.circular(12.r),
+                                ),
+                                child: AppImage(
+                                  imageData: destination.primaryImage,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Center(
+                                child: Icon(
+                                  Icons.place,
+                                  size: 30.sp,
+                                  color: AppColors.neutral400,
+                                ),
+                              ),
+                      ),
+                      
+                      // Content
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.all(AppSpacing.s3),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Text(
-                                '${combo['price']} VND',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: AppColors.primary,
+                                destination.name,
+                                style: AppTypography.bodyM.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 3.h),
-                              // Creator
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 18.w,
-                                    height: 18.h,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      image: DecorationImage(
-                                        image: CachedNetworkImageProvider(
-                                          'https://i.pravatar.cc/150?img=${index + 6}',
-                                        ),
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  Expanded(
-                                    child: Text(
-                                      'Được tạo bởi ${combo['creator']}',
-                                      style: TextStyle(
-                                        fontSize: 10.sp,
-                                        color: AppColors.neutral600,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
+                              SizedBox(height: 4.h),
+                              Text(
+                                destination.description,
+                                style: AppTypography.bodyS.copyWith(
+                                  color: AppColors.textTertiary,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
@@ -972,8 +819,506 @@ class DiscoverPage extends GetView<DiscoverController> {
               );
             },
           ),
-        ),
-      ],
+        ],
+      );
+    });
+  }
+
+  Widget _buildEmptyDestinations() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+      padding: EdgeInsets.all(AppSpacing.s6),
+      decoration: BoxDecoration(
+        color: AppColors.neutral50,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.explore_outlined,
+            size: 48.sp,
+            color: AppColors.neutral400,
+          ),
+          SizedBox(height: AppSpacing.s3),
+          Text(
+            'Khám phá thế giới',
+            style: AppTypography.bodyL.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: AppSpacing.s2),
+          Text(
+            'Chưa có điểm đến nào được thêm.\nHãy bắt đầu khám phá ngay!',
+            style: AppTypography.bodyM.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
+  }
+  
+  Widget _buildEmptyTours() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+      padding: EdgeInsets.all(AppSpacing.s6),
+      decoration: BoxDecoration(
+        color: AppColors.neutral50,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.tour_outlined,
+            size: 48.sp,
+            color: AppColors.neutral400,
+          ),
+          SizedBox(height: AppSpacing.s3),
+          Text(
+            'Chưa có tour nào',
+            style: AppTypography.bodyL.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: AppSpacing.s2),
+          Text(
+            'Các tour du lịch sẽ sớm được cập nhật.\nVui lòng quay lại sau!',
+            style: AppTypography.bodyM.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEmptyBlogs() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+      padding: EdgeInsets.all(AppSpacing.s6),
+      decoration: BoxDecoration(
+        color: AppColors.neutral50,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.article_outlined,
+            size: 48.sp,
+            color: AppColors.neutral400,
+          ),
+          SizedBox(height: AppSpacing.s3),
+          Text(
+            'Chưa có bài viết',
+            style: AppTypography.bodyL.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: AppSpacing.s2),
+          Text(
+            'Hãy là người đầu tiên chia sẻ trải nghiệm du lịch!',
+            style: AppTypography.bodyM.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: AppSpacing.s4),
+          ElevatedButton(
+            onPressed: () => Get.toNamed('/create-post'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.s5,
+                vertical: AppSpacing.s3,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24.r),
+              ),
+            ),
+            child: Text(
+              'Viết bài ngay',
+              style: AppTypography.bodyM.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEmptyRegions() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+      padding: EdgeInsets.all(AppSpacing.s6),
+      decoration: BoxDecoration(
+        color: AppColors.neutral50,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.map_outlined,
+            size: 48.sp,
+            color: AppColors.neutral400,
+          ),
+          SizedBox(height: AppSpacing.s3),
+          Text(
+            'Khám phá theo vùng',
+            style: AppTypography.bodyL.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: AppSpacing.s2),
+          Text(
+            'Tính năng đang được phát triển.\nVui lòng quay lại sau!',
+            style: AppTypography.bodyM.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEmptyCombos() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+      padding: EdgeInsets.all(AppSpacing.s6),
+      decoration: BoxDecoration(
+        color: AppColors.neutral50,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.card_giftcard_outlined,
+            size: 48.sp,
+            color: AppColors.neutral400,
+          ),
+          SizedBox(height: AppSpacing.s3),
+          Text(
+            'Combo tour đặc biệt',
+            style: AppTypography.bodyL.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: AppSpacing.s2),
+          Text(
+            'Combo tour giá ưu đãi sẽ sớm ra mắt.\nĐừng bỏ lỡ!',
+            style: AppTypography.bodyM.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildExploreByRegion() {
+    return Obx(() {
+      final regions = controller.exploreRegions;
+      
+      if (regions.isEmpty) {
+        return _buildEmptyRegions();
+      }
+      
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Khám phá theo vùng',
+                  style: AppTypography.h4.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: controller.onSeeAllRegions,
+                  child: Text(
+                    'Xem tất cả',
+                    style: AppTypography.bodyM.copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          SizedBox(height: AppSpacing.s3),
+          
+          SizedBox(
+            height: 140.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              itemCount: regions.length,
+              itemBuilder: (context, index) {
+                final region = regions[index];
+                
+                return GestureDetector(
+                  onTap: () => controller.onRegionTapped(region),
+                  child: Container(
+                    width: 120.w,
+                    margin: EdgeInsets.only(right: AppSpacing.s3),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 100.w,
+                          height: 100.w,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.neutral100,
+                            border: Border.all(
+                              color: AppColors.primary.withOpacity(0.2),
+                              width: 2,
+                            ),
+                          ),
+                          child: ClipOval(
+                            child: region['image'] != null
+                                ? AppImage(
+                                    imageData: region['image'],
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Icon(
+                                    Icons.landscape,
+                                    size: 40.sp,
+                                    color: AppColors.neutral400,
+                                  ),
+                          ),
+                        ),
+                        SizedBox(height: AppSpacing.s2),
+                        Expanded(
+                          child: Text(
+                            region['name'] ?? '',
+                            style: AppTypography.bodyM.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    });
+  }
+  
+  Widget _buildComboToursSection() {
+    return Obx(() {
+      final combos = controller.comboTours;
+      
+      if (combos.isEmpty) {
+        return _buildEmptyCombos();
+      }
+      
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Combo tour nổi bật',
+                  style: AppTypography.h4.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: controller.onSeeAllCombos,
+                  child: Text(
+                    'Xem tất cả',
+                    style: AppTypography.bodyM.copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          SizedBox(height: AppSpacing.s3),
+          
+          SizedBox(
+            height: 280.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              itemCount: combos.length,
+              itemBuilder: (context, index) {
+                final combo = combos[index];
+                
+                return GestureDetector(
+                  onTap: () => controller.onComboTourTapped(combo),
+                  child: Container(
+                    width: 240.w,
+                    margin: EdgeInsets.only(right: AppSpacing.s4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Image
+                        Container(
+                          height: 160.h,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(16.r),
+                            ),
+                            color: AppColors.neutral100,
+                          ),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(16.r),
+                                ),
+                                child: combo.images.isNotEmpty
+                                    ? AppImage(
+                                        imageData: combo.images.first,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Center(
+                                        child: Icon(
+                                          Icons.tour,
+                                          size: 40.sp,
+                                          color: AppColors.neutral400,
+                                        ),
+                                      ),
+                              ),
+                              
+                              // Badge
+                              Positioned(
+                                top: AppSpacing.s2,
+                                left: AppSpacing.s2,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.s2,
+                                    vertical: 4.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  child: Text(
+                                    'COMBO',
+                                    style: AppTypography.bodyXS.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        // Content
+                        Padding(
+                          padding: EdgeInsets.all(AppSpacing.s3),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                combo.name,
+                                style: AppTypography.bodyM.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: AppSpacing.s1),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    size: 14.sp,
+                                    color: AppColors.textTertiary,
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Expanded(
+                                    child: Text(
+                                      combo.destinations.isNotEmpty 
+                                          ? combo.destinations.join(', ')
+                                          : combo.startLocation,
+                                      style: AppTypography.bodyS.copyWith(
+                                        color: AppColors.textTertiary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: AppSpacing.s2),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    combo.displayDuration,
+                                    style: AppTypography.bodyS.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  Text(
+                                    combo.displayPrice,
+                                    style: AppTypography.bodyL.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    });
   }
 }

@@ -1,187 +1,188 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:dio/dio.dart' as dio;
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
-/// Service để upload images lên các free hosting services
-/// Ưu tiên: Cloudinary > ImgBB > Base64 in Firestore
+/// Service để xử lý images với base64 encoding
+/// KHÔNG dùng external storage - chỉ dùng Firestore với base64
+/// Đã test thành công với user avatar, blog posts
 class ImageUploadService extends GetxService {
   static ImageUploadService get to => Get.find();
   
-  final dio.Dio _dio = dio.Dio();
+  final ImagePicker _picker = ImagePicker();
   
-  // CLOUDINARY CONFIG (Free 25GB)
-  static const String CLOUDINARY_CLOUD_NAME = 'your_cloud_name'; // TODO: Add your cloudinary name
-  static const String CLOUDINARY_UPLOAD_PRESET = 'wanderlust_preset'; // TODO: Create unsigned preset
-  static const String CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/$CLOUDINARY_CLOUD_NAME/image/upload';
+  // Image compression settings cho base64 storage
+  static const int MAX_WIDTH = 1024;  // Giảm size để base64 không quá lớn
+  static const int MAX_HEIGHT = 1024;
+  static const int QUALITY = 70;  // Balance quality vs size
+  static const int AVATAR_SIZE = 300;  // Avatar nhỏ hơn
+  static const int THUMBNAIL_SIZE = 200;  // Cho thumbnails
   
-  // IMGBB CONFIG (Free Unlimited) 
-  static const String IMGBB_API_KEY = 'your_imgbb_api_key'; // TODO: Get free API key from imgbb.com
-  static const String IMGBB_URL = 'https://api.imgbb.com/1/upload';
-  
-  // Image compression settings
-  static const int MAX_WIDTH = 1920;
-  static const int MAX_HEIGHT = 1920;
-  static const int QUALITY = 85;
-  static const int AVATAR_SIZE = 500;
-  
-  /// Upload image to Cloudinary (Primary)
-  Future<String?> uploadToCloudinary(File imageFile, {String? folder}) async {
-    // Skip external services - use base64 directly for production
-    // This is more reliable and doesn't need API keys
-    return await _convertToBase64(imageFile);
-  }
-  
-  /// Upload image to ImgBB (Backup)
-  Future<String?> uploadToImgBB(File imageFile) async {
-    // Skip external services - use base64 directly for production
-    return await _convertToBase64(imageFile);
-  }
-  
-  /// Upload avatar (smaller size)
-  Future<String?> uploadAvatar(File imageFile) async {
+  /// Pick image từ gallery
+  Future<File?> pickImageFromGallery() async {
     try {
-      // Compress to avatar size - perfect for base64 storage
-      final compressedFile = await _compressImage(
-        imageFile,
-        maxWidth: AVATAR_SIZE,
-        maxHeight: AVATAR_SIZE,
-        quality: 85, // Good quality for avatars
-      );
-      
-      // Convert to base64 - reliable and no external dependencies
-      return await _convertToBase64(compressedFile);
-    } catch (e) {
-      LoggerService.e('Avatar upload failed', error: e);
-      return null;
-    }
-  }
-  
-  /// Pick and upload image
-  Future<String?> pickAndUploadImage({
-    ImageSource source = ImageSource.gallery,
-    bool isAvatar = false,
-  }) async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      
-      // Pick image
-      final XFile? image = await picker.pickImage(
-        source: source,
-        maxWidth: MAX_WIDTH.toDouble(),
-        maxHeight: MAX_HEIGHT.toDouble(),
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
         imageQuality: QUALITY,
       );
       
-      if (image == null) return null;
-      
-      final file = File(image.path);
-      
-      // Upload based on type
-      if (isAvatar) {
-        return await uploadAvatar(file);
-      } else {
-        return await uploadToCloudinary(file);
+      if (image != null) {
+        return File(image.path);
       }
+      return null;
     } catch (e) {
-      LoggerService.e('Pick and upload failed', error: e);
+      LoggerService.e('Error picking image from gallery', error: e);
       return null;
     }
   }
   
+  /// Pick image từ camera
+  Future<File?> pickImageFromCamera() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: QUALITY,
+      );
+      
+      if (image != null) {
+        return File(image.path);
+      }
+      return null;
+    } catch (e) {
+      LoggerService.e('Error picking image from camera', error: e);
+      return null;
+    }
+  }
+  
+  /// Convert image to base64 với compression
+  Future<String?> convertToBase64(File imageFile, {bool isAvatar = false}) async {
+    try {
+      // Compress image trước khi convert
+      final compressedFile = await _compressImage(
+        imageFile,
+        maxWidth: isAvatar ? AVATAR_SIZE : MAX_WIDTH,
+        maxHeight: isAvatar ? AVATAR_SIZE : MAX_HEIGHT,
+        quality: QUALITY,
+      );
+      
+      if (compressedFile == null) return null;
+      
+      // Convert to base64
+      final bytes = await compressedFile.readAsBytes();
+      final base64String = base64Encode(bytes);
+      
+      // Return as data URL format để AppImage widget có thể handle
+      return 'data:image/jpeg;base64,$base64String';
+      
+    } catch (e) {
+      LoggerService.e('Error converting image to base64', error: e);
+      return null;
+    }
+  }
+  
+  /// Convert avatar image to base64 (smaller size)
+  Future<String?> convertAvatarToBase64(File imageFile) async {
+    return convertToBase64(imageFile, isAvatar: true);
+  }
+  
   /// Compress image file
-  Future<File> _compressImage(
+  Future<File?> _compressImage(
     File file, {
-    int maxWidth = MAX_WIDTH,
-    int maxHeight = MAX_HEIGHT,
-    int quality = QUALITY,
+    required int maxWidth,
+    required int maxHeight,
+    required int quality,
   }) async {
     try {
       final filePath = file.absolute.path;
       
-      // Generate output path
+      // Get file extension
       final lastIndex = filePath.lastIndexOf(RegExp(r'\.'));
-      final splitPath = filePath.substring(0, lastIndex);
-      final outPath = '${splitPath}_compressed.jpg';
+      final splitted = filePath.substring(0, (lastIndex));
+      final outPath = "${splitted}_compressed.jpg";
       
-      // Compress
-      final compressedFile = await FlutterImageCompress.compressAndGetFile(
-        file.absolute.path,
-        outPath,
-        quality: quality,
+      final compressedBytes = await FlutterImageCompress.compressWithFile(
+        filePath,
         minWidth: maxWidth,
         minHeight: maxHeight,
+        quality: quality,
         format: CompressFormat.jpeg,
       );
       
-      if (compressedFile != null) {
-        final originalSize = await file.length();
-        final compressedSize = await compressedFile.length();
-        LoggerService.d('Image compressed: ${originalSize ~/ 1024}KB -> ${compressedSize ~/ 1024}KB');
-        return File(compressedFile.path);
+      if (compressedBytes == null) {
+        LoggerService.w('Image compression returned null');
+        return file; // Return original if compression fails
       }
       
-      return file;
-    } catch (e) {
-      LoggerService.e('Image compression failed', error: e);
-      return file;
-    }
-  }
-  
-  /// Convert to base64 (PRIMARY method for production)
-  /// This is the most reliable way - no external dependencies!
-  Future<String> _convertToBase64(File file) async {
-    try {
-      // Smart compression based on use case
-      // Avatar: 500x500, Q85 = ~50KB base64
-      // Post image: 800x800, Q75 = ~100KB base64
-      final compressedFile = await _compressImage(
-        file,
-        maxWidth: 800,
-        maxHeight: 800,
-        quality: 75, // Balanced quality/size
-      );
+      // Write compressed bytes to new file
+      final compressedFile = File(outPath);
+      await compressedFile.writeAsBytes(compressedBytes);
       
-      final bytes = await compressedFile.readAsBytes();
-      final base64String = base64Encode(bytes);
+      // Log compression ratio
+      final originalSize = await file.length();
+      final compressedSize = await compressedFile.length();
+      final ratio = ((1 - (compressedSize / originalSize)) * 100).toStringAsFixed(1);
+      LoggerService.i('Image compressed by $ratio% (${originalSize ~/ 1024}KB -> ${compressedSize ~/ 1024}KB)');
       
-      // Return as data URL for direct use in Image.memory
-      return 'data:image/jpeg;base64,$base64String';
+      return compressedFile;
+      
     } catch (e) {
-      LoggerService.e('Base64 conversion failed', error: e);
-      return '';
+      LoggerService.e('Error compressing image', error: e);
+      return file; // Return original if compression fails
     }
   }
   
-  /// Upload multiple images
-  Future<List<String>> uploadMultipleImages(
-    List<File> files, {
-    String? folder,
-  }) async {
-    final urls = <String>[];
+  /// Show image picker dialog
+  Future<String?> showImagePickerDialog() async {
+    final source = await Get.dialog<ImageSource>(
+      AlertDialog(
+        title: const Text('Chọn ảnh'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Từ thư viện'),
+              onTap: () => Get.back(result: ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Chụp ảnh'),
+              onTap: () => Get.back(result: ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
     
-    for (final file in files) {
-      final url = await uploadToCloudinary(file, folder: folder);
-      if (url != null) {
-        urls.add(url);
-      }
+    if (source == null) return null;
+    
+    File? imageFile;
+    if (source == ImageSource.gallery) {
+      imageFile = await pickImageFromGallery();
+    } else {
+      imageFile = await pickImageFromCamera();
     }
     
-    return urls;
+    if (imageFile != null) {
+      return await convertToBase64(imageFile);
+    }
+    
+    return null;
   }
   
-  /// Delete image from Cloudinary (if needed)
-  Future<bool> deleteFromCloudinary(String publicId) async {
-    try {
-      // TODO: Implement if needed (requires API secret)
-      // For now, we don't delete - Cloudinary auto-deletes unused images
-      return true;
-    } catch (e) {
-      LoggerService.e('Delete image failed', error: e);
-      return false;
+  /// Calculate base64 size in KB
+  int calculateBase64SizeKB(String base64String) {
+    // Remove data URL prefix if exists
+    String cleanBase64 = base64String;
+    if (base64String.startsWith('data:')) {
+      cleanBase64 = base64String.split(',').last;
     }
+    
+    // Calculate size
+    final bytes = utf8.encode(cleanBase64);
+    return bytes.length ~/ 1024;
   }
 }

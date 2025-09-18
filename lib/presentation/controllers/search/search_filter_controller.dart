@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
-import 'package:wanderlust/core/services/storage_service.dart';
+import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/data/services/blog_service.dart';
+import 'package:wanderlust/data/services/trip_service.dart';
+// import 'package:wanderlust/core/services/storage_service.dart'; // TODO: Implement later
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
@@ -71,9 +74,9 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
   }
   
   void loadRecentSearches() {
-    // Load from storage
-    final searches = StorageService.to.searchHistory;
-    recentSearches.value = searches.take(5).toList();
+    // TODO: Load from storage when StorageService is implemented
+    // For now, start with empty recent searches
+    recentSearches.value = [];
   }
   
   void onSearchChanged(String query) {
@@ -98,90 +101,87 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
     
     isSearching.value = true;
     
-    // Save to recent searches
-    if (searchQuery.value.isNotEmpty && !recentSearches.contains(searchQuery.value)) {
-      await StorageService.to.addSearchHistory(searchQuery.value);
-      loadRecentSearches();
+    try {
+      // Save to recent searches
+      if (searchQuery.value.isNotEmpty && !recentSearches.contains(searchQuery.value)) {
+        recentSearches.insert(0, searchQuery.value);
+        if (recentSearches.length > 5) recentSearches.removeLast();
+      }
+      
+      // Get services
+      final blogService = Get.find<BlogService>();
+      final tripService = Get.find<TripService>();
+      
+      final results = <Map<String, dynamic>>[];
+      final query = searchQuery.value.toLowerCase();
+      
+      // Search based on selected tab
+      if (selectedTab.value == 0 || selectedTab.value == 2) { // All or Tour tab
+        // Search trips (as tours for now)
+        final trips = await tripService.getUserTrips();
+        for (final trip in trips) {
+          if (trip.title.toLowerCase().contains(query) ||
+              trip.destination.toLowerCase().contains(query) ||
+              trip.description.toLowerCase().contains(query)) {
+            results.add({
+              'id': trip.id,
+              'name': trip.title,
+              'type': 'Chuyến đi',
+              'location': trip.destination,
+              'rating': 4.5, // Default for now
+              'reviews': 0,
+              'price': '${trip.budget.toStringAsFixed(0)}đ',
+              'isFavorite': false,
+              'category': 'tour',
+              'image': trip.coverImage,
+              'startDate': trip.startDate,
+              'endDate': trip.endDate,
+            });
+          }
+        }
+      }
+      
+      if (selectedTab.value == 0 || selectedTab.value == 3) { // All or Destination tab
+        // Search blogs as destinations for now
+        final blogs = await blogService.getRecentPosts(limit: 50);
+        for (final blog in blogs) {
+          if (blog.title.toLowerCase().contains(query) ||
+              blog.content.toLowerCase().contains(query)) {
+            results.add({
+              'id': blog.id,
+              'name': blog.title,
+              'type': 'Bài viết',
+              'location': 'Việt Nam', // Default location
+              'rating': 4.0,
+              'reviews': blog.commentsCount,
+              'price': 'Miễn phí',
+              'isFavorite': false,
+              'category': 'destination',
+              'image': blog.coverImage,
+              'author': blog.authorName,
+            });
+          }
+        }
+      }
+      
+      searchResults.value = results;
+      
+      if (results.isEmpty && searchQuery.value.isNotEmpty) {
+        AppSnackbar.showInfo(
+          message: 'Không tìm thấy kết quả cho "$query"',
+        );
+      }
+    } catch (e) {
+      LoggerService.e('Error searching', error: e);
+      searchResults.value = [];
+      AppSnackbar.showError(message: 'Lỗi khi tìm kiếm');
+    } finally {
+      isSearching.value = false;
     }
-    
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    
-    // Mock results based on tab
-    final tabTypes = ['all', 'hotel', 'tour', 'destination', 'restaurant'];
-    final currentType = tabTypes[selectedTab.value];
-    
-    searchResults.value = _getMockResults(currentType);
-    
-    isSearching.value = false;
   }
   
-  List<Map<String, dynamic>> _getMockResults(String type) {
-    final baseResults = [
-      {
-        'id': '1',
-        'name': 'Khách sạn Mường Thanh Đà Lạt',
-        'type': 'Khách sạn',
-        'location': 'Đà Lạt, Lâm Đồng',
-        'rating': 4.5,
-        'reviews': 234,
-        'price': '1,200,000đ',
-        'isFavorite': false,
-        'category': 'hotel',
-      },
-      {
-        'id': '2',
-        'name': 'Tour khám phá Đà Lạt 3N2Đ',
-        'type': 'Tour',
-        'location': 'Đà Lạt, Lâm Đồng',
-        'rating': 4.8,
-        'reviews': 156,
-        'price': '2,500,000đ',
-        'isFavorite': true,
-        'category': 'tour',
-      },
-      {
-        'id': '3',
-        'name': 'Thung lũng Tình Yêu',
-        'type': 'Địa điểm',
-        'location': 'Đà Lạt, Lâm Đồng',
-        'rating': 4.3,
-        'reviews': 512,
-        'price': '150,000đ',
-        'isFavorite': false,
-        'category': 'destination',
-      },
-      {
-        'id': '4',
-        'name': 'Nhà hàng Le Chalet',
-        'type': 'Nhà hàng',
-        'location': 'Đà Lạt, Lâm Đồng',
-        'rating': 4.6,
-        'reviews': 89,
-        'price': '300,000đ',
-        'isFavorite': false,
-        'category': 'restaurant',
-      },
-      {
-        'id': '5',
-        'name': 'Ana Mandara Villas Đà Lạt',
-        'type': 'Khách sạn',
-        'location': 'Đà Lạt, Lâm Đồng',
-        'rating': 4.9,
-        'reviews': 412,
-        'price': '3,500,000đ',
-        'isFavorite': true,
-        'category': 'hotel',
-      },
-    ];
-    
-    // Filter by type if not 'all'
-    if (type != 'all') {
-      return baseResults.where((item) => item['category'] == type).toList();
-    }
-    
-    return baseResults;
-  }
+  // Removed mock results method - data should come from real services
+  // TODO: Implement search with TourService, DestinationService, etc.
   
   void clearSearch() {
     searchController.clear();
@@ -197,11 +197,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
   
   void removeRecentSearch(String search) async {
     recentSearches.remove(search);
-    // Update storage
-    await StorageService.to.clearSearchHistory();
-    for (var s in recentSearches) {
-      await StorageService.to.addSearchHistory(s);
-    }
+    // TODO: Update storage when StorageService is implemented
   }
   
   void applySort() {
@@ -229,13 +225,13 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
                 children: [
                   Text(
                     'Bộ lọc',
-                    style: AppTypography.heading5,
+                    style: AppTypography.h3,
                   ),
                   TextButton(
                     onPressed: resetFilters,
                     child: Text(
                       'Đặt lại',
-                      style: AppTypography.bodyMedium.copyWith(
+                      style: AppTypography.bodyM.copyWith(
                         color: AppColors.primary,
                       ),
                     ),
@@ -256,7 +252,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
                     // Price range
                     Text(
                       'Khoảng giá',
-                      style: AppTypography.heading6,
+                      style: AppTypography.h4,
                     ),
                     SizedBox(height: AppSpacing.s3),
                     Obx(() => RangeSlider(
@@ -279,7 +275,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
                     // Rating
                     Text(
                       'Đánh giá',
-                      style: AppTypography.heading6,
+                      style: AppTypography.h4,
                     ),
                     SizedBox(height: AppSpacing.s3),
                     Wrap(
@@ -312,7 +308,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
                     // Categories
                     Text(
                       'Danh mục',
-                      style: AppTypography.heading6,
+                      style: AppTypography.h4,
                     ),
                     SizedBox(height: AppSpacing.s3),
                     Wrap(
@@ -347,7 +343,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
                     // Amenities
                     Text(
                       'Tiện ích',
-                      style: AppTypography.heading6,
+                      style: AppTypography.h4,
                     ),
                     SizedBox(height: AppSpacing.s3),
                     Wrap(
@@ -402,7 +398,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
                   ),
                   child: Text(
                     'Áp dụng bộ lọc',
-                    style: AppTypography.button.copyWith(
+                    style: AppTypography.bodyL.copyWith(
                       color: Colors.white,
                     ),
                   ),
@@ -443,7 +439,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
           children: [
             Text(
               'Chọn khu vực',
-              style: AppTypography.heading5,
+              style: AppTypography.h3,
             ),
             SizedBox(height: AppSpacing.s4),
             ...locations.map((location) {
@@ -519,9 +515,17 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
         Get.toNamed('/accommodation-detail', arguments: item);
         break;
       case 'tour':
-        Get.toNamed('/combo-detail', arguments: item);
+        // Navigate to trip detail for now
+        Get.toNamed('/trip-detail', arguments: {'tripId': item['id']});
         break;
       case 'destination':
+        // Navigate to blog detail for blogs
+        if (item['type'] == 'Bài viết') {
+          Get.toNamed('/blog-detail', arguments: {'postId': item['id']});
+        } else {
+          AppSnackbar.showInfo(message: 'Chi tiết ${item["type"]} đang phát triển');
+        }
+        break;
       case 'restaurant':
         AppSnackbar.showInfo(message: 'Chi tiết ${item["type"]} đang phát triển');
         break;

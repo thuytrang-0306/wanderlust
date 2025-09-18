@@ -2,9 +2,11 @@ import 'package:get/get.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/data/models/destination_model.dart';
 import 'package:wanderlust/data/models/tour_model.dart';
+import 'package:wanderlust/data/models/trip_model.dart';
 import 'package:wanderlust/data/models/blog_post_model.dart';
 import 'package:wanderlust/data/services/destination_service.dart';
 import 'package:wanderlust/data/services/tour_service.dart';
+import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/data/services/blog_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,6 +16,7 @@ class DiscoverController extends BaseController {
   // Services
   final DestinationService _destinationService = Get.find<DestinationService>();
   final TourService _tourService = Get.find<TourService>();
+  final TripService _tripService = Get.find<TripService>();
   final BlogService _blogService = Get.find<BlogService>();
   
   // Data
@@ -21,7 +24,9 @@ class DiscoverController extends BaseController {
   final RxList<DestinationModel> popularDestinations = <DestinationModel>[].obs;
   final RxList<TourModel> featuredTours = <TourModel>[].obs;
   final RxList<TourModel> discountedTours = <TourModel>[].obs;
+  final RxList<TourModel> comboTours = <TourModel>[].obs;  // Combo tours
   final RxList<BlogPostModel> recentBlogs = <BlogPostModel>[].obs;
+  final RxList<Map<String, dynamic>> exploreRegions = <Map<String, dynamic>>[].obs;  // Regions
   
   // UI State
   final RxInt currentBannerIndex = 0.obs;
@@ -29,6 +34,7 @@ class DiscoverController extends BaseController {
   final RxBool isLoadingDestinations = true.obs;
   final RxBool isLoadingTours = true.obs;
   final RxBool isLoadingBlogs = true.obs;
+  final RxBool isLoadingCombos = true.obs;
   
   // User info
   final Rx<User?> currentUser = FirebaseAuth.instance.currentUser.obs;
@@ -59,6 +65,8 @@ class DiscoverController extends BaseController {
       loadDestinations(),
       loadTours(),
       loadBlogs(),
+      loadComboTours(),
+      loadRegions(),
     ]);
   }
 
@@ -93,24 +101,22 @@ class DiscoverController extends BaseController {
     try {
       isLoadingTours.value = true;
       
-      // Load featured tours
+      // Try to load real tours from TourService first
       final featured = await _tourService.getFeaturedTours(limit: 5);
       featuredTours.value = featured;
       
-      // Load discounted tours
       final discounted = await _tourService.getDiscountedTours(limit: 10);
       discountedTours.value = discounted;
       
-      // No longer auto-creating sample data
+      // For now, tours are empty - users should use Trips in Planning tab
       if (featured.isEmpty && discounted.isEmpty) {
-        LoggerService.i('No tours found in database');
-        // Sample data creation disabled - data should come from real user content
+        LoggerService.i('No tours found - use Trips feature in Planning tab');
       }
       
     } catch (e) {
       LoggerService.e('Error loading tours', error: e);
-      // Use fallback data
-      _useFallbackTourData();
+      featuredTours.value = [];
+      discountedTours.value = [];
     } finally {
       isLoadingTours.value = false;
     }
@@ -174,9 +180,6 @@ class DiscoverController extends BaseController {
     Get.toNamed('/tour-detail', arguments: {'tour': tour});
   }
 
-  void onRegionTapped(String region) {
-    Get.toNamed('/region', arguments: {'region': region});
-  }
 
   void onSeeAllDestinations() {
     Get.toNamed('/all-destinations');
@@ -192,6 +195,62 @@ class DiscoverController extends BaseController {
 
   void onBlogTapped(BlogPostModel blog) {
     Get.toNamed('/blog-detail', arguments: {'postId': blog.id});
+  }
+  
+  Future<void> loadComboTours() async {
+    try {
+      isLoadingCombos.value = true;
+      
+      // Load combo tours from TourService
+      final combos = await _tourService.getComboTours(limit: 5);
+      comboTours.value = combos;
+      
+      // For now, combo tours are empty - this is a future feature
+      if (combos.isEmpty) {
+        LoggerService.i('No combo tours available yet');
+      }
+      
+    } catch (e) {
+      LoggerService.e('Error loading combo tours', error: e);
+      comboTours.value = [];
+    } finally {
+      isLoadingCombos.value = false;
+    }
+  }
+  
+  Future<void> loadRegions() async {
+    try {
+      // Load regions data from Firestore in future
+      // For now, empty until real data is available
+      exploreRegions.value = [];
+      
+      // TODO: Implement RegionService to load from Firestore
+      // Example structure for future implementation:
+      // final regionService = Get.find<RegionService>();
+      // final regions = await regionService.getRegions();
+      // exploreRegions.value = regions;
+      
+      LoggerService.i('Regions feature pending real data implementation');
+    } catch (e) {
+      LoggerService.e('Error loading regions', error: e);
+      exploreRegions.value = [];
+    }
+  }
+  
+  void onComboTourTapped(TourModel combo) {
+    Get.toNamed('/combo-detail', arguments: {'tour': combo});
+  }
+  
+  void onSeeAllCombos() {
+    Get.toNamed('/all-combos');
+  }
+  
+  void onRegionTapped(Map<String, dynamic> region) {
+    Get.toNamed('/region', arguments: {'region': region});
+  }
+  
+  void onSeeAllRegions() {
+    Get.toNamed('/all-regions');
   }
 
   @override

@@ -39,6 +39,7 @@ class TripEditController extends BaseController {
   final RxList<String> selectedTags = <String>[].obs;
   final RxInt numberOfPeople = 1.obs;
   final RxMap<String, String?> errors = <String, String?>{}.obs;
+  final RxString coverImage = ''.obs; // Base64 cover image
   
   // Available tags
   final List<String> availableTags = [
@@ -85,7 +86,7 @@ class TripEditController extends BaseController {
     tripNameController.text = editingTrip!.title;
     descriptionController.text = editingTrip!.description;
     destinationController.text = editingTrip!.destination;
-    budgetController.text = editingTrip!.budget.toStringAsFixed(0);
+    budgetController.text = editingTrip!.budget > 0 ? editingTrip!.budget.toStringAsFixed(0) : '';
     notesController.text = editingTrip!.notes;
     
     startDate.value = editingTrip!.startDate;
@@ -93,6 +94,7 @@ class TripEditController extends BaseController {
     selectedVisibility.value = editingTrip!.visibility;
     selectedTags.value = editingTrip!.tags;
     numberOfPeople.value = editingTrip!.travelers.length;
+    coverImage.value = editingTrip!.coverImage; // Load existing cover image
   }
 
   Future<void> loadDestinations() async {
@@ -215,6 +217,11 @@ class TripEditController extends BaseController {
     }
   }
 
+  // Set cover image
+  void setCoverImage(String base64Image) {
+    coverImage.value = base64Image;
+  }
+  
   // Save trip plan (alias for saveTrip)
   void saveTripPlan() {
     saveTrip();
@@ -286,10 +293,10 @@ class TripEditController extends BaseController {
         return;
       }
       
-      // Get cover image from selected destination or use empty string
-      String coverImage = '';
-      if (selectedDestination != null && selectedDestination!.images.isNotEmpty) {
-        coverImage = selectedDestination!.images.first;
+      // Use user-selected cover image if available, otherwise try destination image
+      String coverImageToSave = coverImage.value;
+      if (coverImageToSave.isEmpty && selectedDestination != null && selectedDestination!.images.isNotEmpty) {
+        coverImageToSave = selectedDestination!.images.first;
       }
       
       if (editingTrip != null) {
@@ -305,7 +312,7 @@ class TripEditController extends BaseController {
           'notes': notesController.text.trim(),
           'visibility': selectedVisibility.value,
           'tags': selectedTags,
-          'coverImage': coverImage,
+          'coverImage': coverImageToSave,
         };
         
         final success = await _tripService.updateTrip(editingTrip!.id, updates);
@@ -349,7 +356,7 @@ class TripEditController extends BaseController {
           ],
           status: 'planning',
           visibility: selectedVisibility.value,
-          coverImage: coverImage,
+          coverImage: coverImageToSave,
           notes: notesController.text.trim(),
           tags: selectedTags,
           stats: TripStats.empty(),
