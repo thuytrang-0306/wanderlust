@@ -93,6 +93,15 @@ class AccountController extends GetxController {
         notificationsEnabled.value = true;
         StorageService.to.write('notifications_enabled', true);
       }
+      
+      // Load dark mode preference
+      final savedDarkMode = StorageService.to.read('dark_mode_enabled');
+      if (savedDarkMode != null) {
+        darkModeEnabled.value = savedDarkMode;
+      } else {
+        darkModeEnabled.value = false;
+        StorageService.to.write('dark_mode_enabled', false);
+      }
     } catch (e) {
       LoggerService.e('Error loading user data', error: e);
     }
@@ -180,9 +189,22 @@ class AccountController extends GetxController {
   }
 
   void toggleDarkMode(bool value) {
+    // TEMPORARILY DISABLED - Need proper dark theme design
+    AppSnackbar.showInfo(
+      message: 'Chế độ tối đang được phát triển. Sẽ sớm ra mắt!',
+    );
+    
+    // Reset to false to keep switch in correct state
+    darkModeEnabled.value = false;
+    return;
+    
+    // Keep code for future implementation
+    /*
     darkModeEnabled.value = value;
+    StorageService.to.write('dark_mode_enabled', value);
     Get.changeThemeMode(value ? ThemeMode.dark : ThemeMode.light);
     AppSnackbar.showInfo(message: value ? 'Đã bật chế độ tối' : 'Đã tắt chế độ tối');
+    */
   }
 
   void navigateToProfile() {
@@ -190,7 +212,7 @@ class AccountController extends GetxController {
   }
 
   void navigateToChangePassword() {
-    AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
+    Get.toNamed('/change-password');
   }
 
   void navigateToSavedPosts() {
@@ -210,7 +232,7 @@ class AccountController extends GetxController {
   }
 
   void navigateToHelp() {
-    AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
+    Get.toNamed('/help-support');
   }
 
   void navigateToPrivacy() {

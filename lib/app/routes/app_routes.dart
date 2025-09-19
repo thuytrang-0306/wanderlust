@@ -47,6 +47,10 @@ abstract class Routes {
   // Settings
   static const SETTINGS = '/settings';
   static const MY_TRIPS = '/my-trips';
+  static const CHANGE_PASSWORD = '/change-password';
+  static const HELP_SUPPORT = '/help-support';
+  static const PRIVACY_POLICY = '/privacy-policy';
+  static const TERMS_OF_SERVICE = '/terms-of-service';
 
   // Bookings
   static const BOOKING_HISTORY = '/booking-history';

@@ -41,6 +41,10 @@ import 'package:wanderlust/presentation/pages/business/business_type_selection_p
 import 'package:wanderlust/presentation/pages/business/business_info_form_page.dart';
 import 'package:wanderlust/presentation/pages/business/business_dashboard_page.dart';
 import 'package:wanderlust/presentation/pages/listing/create_listing_page.dart';
+import 'package:wanderlust/presentation/pages/settings/change_password_page.dart';
+import 'package:wanderlust/presentation/pages/settings/help_support_page.dart';
+import 'package:wanderlust/presentation/bindings/change_password_binding.dart';
+import 'package:wanderlust/presentation/bindings/help_support_binding.dart';
 
 part 'app_routes.dart';
 
@@ -202,6 +206,19 @@ class AppPages {
     GetPage(
       name: Routes.CREATE_LISTING,
       page: () => CreateListingPage(),
+      transition: Transition.rightToLeft,
+    ),
+    // Settings routes
+    GetPage(
+      name: Routes.CHANGE_PASSWORD,
+      page: () => const ChangePasswordPage(),
+      binding: ChangePasswordBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.HELP_SUPPORT,
+      page: () => const HelpSupportPage(),
+      binding: HelpSupportBinding(),
       transition: Transition.rightToLeft,
     ),
   ];

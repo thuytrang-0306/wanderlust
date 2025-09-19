@@ -94,6 +94,7 @@ dependencies:
   
   # Navigation & Deep Linking
   go_router: ^14.6.1
+  url_launcher: ^6.3.0
   
   # Payment
   # flutter_stripe: ^11.1.0  # Temporarily disabled due to Kotlin conflict

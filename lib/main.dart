@@ -84,8 +84,10 @@ void main() async {
 
   // Determine initial route based on app state
   final String initialRoute = _getInitialRoute();
-
-  runApp(WanderlustApp(initialRoute: initialRoute));
+  
+  runApp(WanderlustApp(
+    initialRoute: initialRoute,
+  ));
 }
 
 String _getInitialRoute() {
@@ -124,7 +126,10 @@ String _getInitialRoute() {
 class WanderlustApp extends StatelessWidget {
   final String initialRoute;
 
-  const WanderlustApp({super.key, required this.initialRoute});
+  const WanderlustApp({
+    super.key, 
+    required this.initialRoute,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -137,8 +142,8 @@ class WanderlustApp extends StatelessWidget {
           title: 'Wanderlust',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.light,
+          darkTheme: AppTheme.lightTheme, // Use light theme for now
+          themeMode: ThemeMode.light, // Always light mode
           initialBinding: InitialBinding(),
           initialRoute: initialRoute,
           getPages: AppPages.routes,
