@@ -8,7 +8,7 @@ import 'package:wanderlust/core/widgets/app_text_field.dart';
 import 'package:wanderlust/core/widgets/app_date_time_picker.dart';
 import 'package:wanderlust/presentation/controllers/planning/trip_edit_controller.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
-import 'package:wanderlust/data/services/image_upload_service.dart';
+import 'package:wanderlust/core/services/unified_image_service.dart';
 
 class TripEditPage extends GetView<TripEditController> {
   const TripEditPage({super.key});
@@ -171,8 +171,8 @@ class TripEditPage extends GetView<TripEditController> {
   }
 
   Future<void> _selectCoverImage() async {
-    final imageUploadService = Get.find<ImageUploadService>();
-    final base64Image = await imageUploadService.showImagePickerDialog();
+    final imageService = Get.find<UnifiedImageService>();
+    final base64Image = await imageService.showImagePickerDialog();
 
     if (base64Image != null) {
       controller.setCoverImage(base64Image);

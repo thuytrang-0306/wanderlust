@@ -4,13 +4,13 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/data/services/blog_service.dart';
-import 'package:wanderlust/data/services/image_upload_service.dart';
+import 'package:wanderlust/core/services/unified_image_service.dart';
 import 'package:wanderlust/core/widgets/app_dialogs.dart';
 
 class CreatePostController extends GetxController {
   // Services
   final BlogService _blogService = Get.find<BlogService>();
-  final ImageUploadService _imageUploadService = Get.put(ImageUploadService());
+  final UnifiedImageService _imageService = Get.find<UnifiedImageService>();
 
   // Text controllers
   final titleController = TextEditingController();
@@ -137,7 +137,7 @@ class CreatePostController extends GetxController {
       List<String> uploadedImages = [];
       for (var imageFile in selectedImages) {
         // Convert to base64 data URL
-        final imageData = await _imageUploadService.convertToBase64(File(imageFile.path));
+        final imageData = await _imageService.convertToBase64(File(imageFile.path));
         if (imageData != null) {
           uploadedImages.add(imageData);
         }

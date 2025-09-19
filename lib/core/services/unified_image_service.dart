@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get/get.dart';
@@ -172,7 +174,6 @@ class UnifiedImageService extends GetxService {
   Future<String?> urlToBase64(String imageUrl) async {
     try {
       // Download image using http package
-      final uri = Uri.parse(imageUrl);
       final response = await GetConnect().request(imageUrl, 'GET');
 
       if (response.bodyBytes == null) return null;
@@ -229,5 +230,100 @@ class UnifiedImageService extends GetxService {
     }
 
     LoggerService.i('Cache cleaned up, kept last $keepLast items');
+  }
+
+  // ============ METHODS FROM ImageUploadService (for backward compatibility) ============
+
+  /// Show image picker dialog UI
+  Future<String?> showImagePickerDialog({bool withPrefix = true, bool isAvatar = false}) async {
+    final source = await Get.dialog<ImageSource>(
+      AlertDialog(
+        title: const Text('Chọn ảnh'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Từ thư viện'),
+              onTap: () => Get.back(result: ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Chụp ảnh'),
+              onTap: () => Get.back(result: ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return null;
+
+    final imageFile = await pickImage(source: source);
+    if (imageFile == null) return null;
+
+    if (withPrefix) {
+      return await imageToBase64WithPrefix(imageFile, isAvatar: isAvatar);
+    } else {
+      return await imageToBase64(imageFile, createThumbnail: isAvatar);
+    }
+  }
+
+  /// Convert image to base64 with data URL prefix (for backward compatibility)
+  Future<String?> imageToBase64WithPrefix(XFile imageFile, {bool isAvatar = false}) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+
+      // Compress image
+      final compressed = await compressImage(
+        bytes,
+        isThumb: isAvatar,
+      );
+
+      if (compressed == null) return null;
+
+      // Convert to base64 with prefix
+      final base64String = base64Encode(compressed);
+      return 'data:image/jpeg;base64,$base64String';
+    } catch (e) {
+      LoggerService.e('Error converting image to base64 with prefix', error: e);
+      return null;
+    }
+  }
+
+  /// Pick image and return as File (for backward compatibility)
+  Future<File?> pickImageFromGallery() async {
+    final xFile = await pickImage(source: ImageSource.gallery);
+    return xFile != null ? File(xFile.path) : null;
+  }
+
+  /// Pick image from camera and return as File (for backward compatibility)
+  Future<File?> pickImageFromCamera() async {
+    final xFile = await pickImage(source: ImageSource.camera);
+    return xFile != null ? File(xFile.path) : null;
+  }
+
+  /// Convert File to base64 with prefix (for backward compatibility)
+  Future<String?> convertToBase64(File imageFile, {bool isAvatar = false}) async {
+    final xFile = XFile(imageFile.path);
+    return imageToBase64WithPrefix(xFile, isAvatar: isAvatar);
+  }
+
+  /// Convert avatar to base64 (for backward compatibility)
+  Future<String?> convertAvatarToBase64(File imageFile) async {
+    return convertToBase64(imageFile, isAvatar: true);
+  }
+
+  /// Calculate base64 size in KB
+  int calculateBase64SizeKB(String base64String) {
+    // Remove data URL prefix if exists
+    String cleanBase64 = base64String;
+    if (base64String.startsWith('data:')) {
+      cleanBase64 = base64String.split(',').last;
+    }
+
+    // Calculate size
+    final bytes = utf8.encode(cleanBase64);
+    return bytes.length ~/ 1024;
   }
 }
