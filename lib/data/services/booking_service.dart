@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/data/models/booking_model.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/core/services/connectivity_service.dart';
 
 class BookingService extends GetxService {
   static BookingService get to => Get.find();
@@ -19,34 +20,33 @@ class BookingService extends GetxService {
 
   // Create new booking
   Future<String?> createBooking(BookingModel booking) async {
-    try {
-      if (currentUserId == null) {
-        throw Exception('User not authenticated');
-      }
+    return await ConnectivityService.to.executeWithConnectivity<String?>(
+      () async {
+        if (currentUserId == null) {
+          throw Exception('User not authenticated');
+        }
 
-      final docRef = await _firestore.collection(_collection).add(booking.toFirestore());
+        final docRef = await _firestore.collection(_collection).add(booking.toFirestore());
 
-      LoggerService.i('Booking created successfully: ${docRef.id}');
-      return docRef.id;
-    } catch (e) {
-      LoggerService.e('Error creating booking', error: e);
-      return null;
-    }
+        LoggerService.i('Booking created successfully: ${docRef.id}');
+        return docRef.id;
+      },
+      errorMessage: 'Unable to create booking without internet connection',
+    );
   }
 
   // Update booking
   Future<bool> updateBooking(String bookingId, Map<String, dynamic> data) async {
-    try {
-      data['updatedAt'] = FieldValue.serverTimestamp();
-
-      await _firestore.collection(_collection).doc(bookingId).update(data);
-
-      LoggerService.i('Booking updated successfully: $bookingId');
-      return true;
-    } catch (e) {
-      LoggerService.e('Error updating booking', error: e);
-      return false;
-    }
+    final result = await ConnectivityService.to.executeWithConnectivity<bool>(
+      () async {
+        data['updatedAt'] = FieldValue.serverTimestamp();
+        await _firestore.collection(_collection).doc(bookingId).update(data);
+        LoggerService.i('Booking updated successfully: $bookingId');
+        return true;
+      },
+      errorMessage: 'Unable to update booking without internet connection',
+    );
+    return result ?? false;
   }
 
   // Confirm booking
@@ -195,8 +195,6 @@ class BookingService extends GetxService {
     if (currentUserId == null) {
       return Stream.value([]);
     }
-
-    final now = DateTime.now();
 
     return _firestore
         .collection(_collection)
