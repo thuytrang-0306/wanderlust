@@ -5,6 +5,8 @@ import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/presentation/controllers/booking/booking_history_controller.dart';
+import 'package:wanderlust/data/models/booking_model.dart';
+import 'package:intl/intl.dart';
 
 class BookingHistoryPage extends GetView<BookingHistoryController> {
   const BookingHistoryPage({super.key});
@@ -87,7 +89,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
     );
   }
 
-  Widget _buildBookingList(RxList<Map<String, dynamic>> bookings) {
+  Widget _buildBookingList(RxList<BookingModel> bookings) {
     return Obx(() {
       if (controller.isLoadingBookings.value) {
         return const Center(child: CircularProgressIndicator());
@@ -107,11 +109,11 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
     });
   }
 
-  Widget _buildBookingCard(Map<String, dynamic> booking) {
+  Widget _buildBookingCard(BookingModel booking) {
     final statusColor =
-        booking['status'] == 'upcoming'
+        booking.status == 'confirmed' || booking.status == 'pending'
             ? AppColors.success
-            : booking['status'] == 'completed'
+            : booking.status == 'completed'
             ? AppColors.neutral500
             : AppColors.error;
 
@@ -152,7 +154,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                       ),
                       SizedBox(height: AppSpacing.s1),
                       Text(
-                        booking['bookingCode'],
+                        'BK${booking.id.substring(0, 8).toUpperCase()}',
                         style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
                       ),
                     ],
@@ -167,7 +169,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Text(
-                      booking['statusText'],
+                      booking.displayStatus,
                       style: AppTypography.bodySmall.copyWith(
                         color: statusColor,
                         fontWeight: FontWeight.w600,
@@ -195,7 +197,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                           color: AppColors.neutral200,
                         ),
                         child: Icon(
-                          booking['type'] == 'hotel' ? Icons.hotel : Icons.tour,
+                          booking.bookingType == 'accommodation' ? Icons.hotel : Icons.tour,
                           color: AppColors.primary,
                           size: 28.sp,
                         ),
@@ -206,7 +208,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              booking['name'],
+                              booking.itemName,
                               style: AppTypography.heading6,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -222,7 +224,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                                 SizedBox(width: 4.w),
                                 Expanded(
                                   child: Text(
-                                    booking['location'],
+                                    booking.metadata['city'] ?? booking.metadata['location'] ?? '',
                                     style: AppTypography.bodySmall.copyWith(
                                       color: AppColors.textSecondary,
                                     ),
@@ -247,7 +249,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                         child: _buildInfoItem(
                           icon: Icons.calendar_today_outlined,
                           label: 'Ngày nhận phòng',
-                          value: booking['checkIn'],
+                          value: DateFormat('dd/MM/yyyy').format(booking.checkIn),
                         ),
                       ),
                       SizedBox(width: AppSpacing.s4),
@@ -255,7 +257,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                         child: _buildInfoItem(
                           icon: Icons.calendar_today_outlined,
                           label: 'Ngày trả phòng',
-                          value: booking['checkOut'],
+                          value: booking.checkOut != null ? DateFormat('dd/MM/yyyy').format(booking.checkOut!) : '',
                         ),
                       ),
                     ],
@@ -269,7 +271,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                         child: _buildInfoItem(
                           icon: Icons.people_outline,
                           label: 'Số khách',
-                          value: '${booking['guests']} người',
+                          value: '${booking.adults + booking.children} người',
                         ),
                       ),
                       SizedBox(width: AppSpacing.s4),
@@ -277,7 +279,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                         child: _buildInfoItem(
                           icon: Icons.meeting_room_outlined,
                           label: 'Số phòng',
-                          value: '${booking['rooms']} phòng',
+                          value: '${booking.quantity} phòng',
                         ),
                       ),
                     ],
@@ -299,13 +301,13 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                             style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                           ),
                           Text(
-                            booking['totalPrice'],
+                            booking.displayPrice,
                             style: AppTypography.heading5.copyWith(color: AppColors.primary),
                           ),
                         ],
                       ),
 
-                      if (booking['status'] == 'upcoming') ...[
+                      if (booking.status == 'confirmed' || booking.status == 'pending') ...[
                         Row(
                           children: [
                             OutlinedButton(
@@ -351,7 +353,7 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
                             ),
                           ],
                         ),
-                      ] else if (booking['status'] == 'completed') ...[
+                      ] else if (booking.status == 'completed') ...[
                         ElevatedButton(
                           onPressed: () => controller.rebook(booking),
                           style: ElevatedButton.styleFrom(

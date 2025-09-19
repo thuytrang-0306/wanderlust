@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/presentation/controllers/payment/booking_info_controller.dart';
 
@@ -103,33 +104,33 @@ class BookingInfoPage extends GetView<BookingInfoController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Homestay Sơn Thủy',
+                Obx(() => Text(
+                  controller.bookingData['accommodationName'] ?? '',
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
-                ),
+                )),
                 SizedBox(height: 4.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Phòng đơn homestay',
+                    Obx(() => Text(
+                      controller.bookingData['roomType'] ?? '',
                       style: TextStyle(fontSize: 14.sp, color: Colors.white.withOpacity(0.9)),
-                    ),
-                    Text(
-                      'x 1',
+                    )),
+                    Obx(() => Text(
+                      'x ${controller.bookingData['roomCount'] ?? 1}',
                       style: TextStyle(fontSize: 14.sp, color: Colors.white.withOpacity(0.9)),
-                    ),
+                    )),
                   ],
                 ),
                 SizedBox(height: 4.h),
-                Text(
-                  '25.0m2',
+                Obx(() => Text(
+                  controller.bookingData['roomSize'] ?? '',
                   style: TextStyle(fontSize: 13.sp, color: Colors.white.withOpacity(0.8)),
-                ),
+                )),
               ],
             ),
           ),
@@ -153,14 +154,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                 SizedBox(height: 4.h),
                 Text('Số đêm', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF))),
                 SizedBox(height: 2.h),
-                Text(
-                  '1 đêm',
+                Obx(() => Text(
+                  '${controller.bookingData['nights'] ?? 1} đêm',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF374151),
                   ),
-                ),
+                )),
               ],
             ),
           ),
@@ -173,14 +174,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                 SizedBox(height: 4.h),
                 Text('Khách', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF))),
                 SizedBox(height: 2.h),
-                Text(
-                  '1 người',
+                Obx(() => Text(
+                  '${controller.bookingData['guests'] ?? 1} người',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF374151),
                   ),
-                ),
+                )),
               ],
             ),
           ),
@@ -196,14 +197,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                   style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF)),
                 ),
                 SizedBox(height: 2.h),
-                Text(
-                  '1 giường đơn',
+                Obx(() => Text(
+                  controller.bookingData['bedType'] ?? '',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF374151),
                   ),
-                ),
+                )),
               ],
             ),
           ),
@@ -228,14 +229,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
             ],
           ),
           SizedBox(height: 4.h),
-          Text(
-            'Thứ Hai, 1/1/2025 (15:00 - 03:00)',
+          Obx(() => Text(
+            controller.bookingData['checkIn'] ?? '',
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF374151),
             ),
-          ),
+          )),
 
           SizedBox(height: 16.h),
 
@@ -248,14 +249,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
             ],
           ),
           SizedBox(height: 4.h),
-          Text(
-            'Thứ Ba, 2/1/2025 (trước 11:00)',
+          Obx(() => Text(
+            controller.bookingData['checkOut'] ?? '',
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF374151),
             ),
-          ),
+          )),
 
           SizedBox(height: 16.h),
 
@@ -364,7 +365,7 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    controller.bookingData['guestName'] ?? 'NGUYEN THUY TRANG',
+                    controller.bookingData['guestName'] ?? '',
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -405,7 +406,7 @@ class BookingInfoPage extends GetView<BookingInfoController> {
               Text('Họ tên', style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280))),
               Obx(
                 () => Text(
-                  controller.bookingData['userName'] ?? 'User name',
+                  controller.bookingData['userName'] ?? '',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
@@ -428,7 +429,7 @@ class BookingInfoPage extends GetView<BookingInfoController> {
               ),
               Obx(
                 () => Text(
-                  controller.bookingData['phone'] ?? '012345678',
+                  controller.bookingData['phone'] ?? '',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
@@ -448,7 +449,7 @@ class BookingInfoPage extends GetView<BookingInfoController> {
               Text('Email', style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280))),
               Obx(
                 () => Text(
-                  controller.bookingData['email'] ?? 'thuytrang@gmail.com',
+                  controller.bookingData['email'] ?? '',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
@@ -527,7 +528,7 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                 SizedBox(width: 12.w),
                 Obx(
                   () => Text(
-                    controller.bookingData['paymentMethod'] ?? 'VIB ••6969',
+                    controller.bookingData['paymentMethod'] ?? 'Tiền mặt',
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -571,14 +572,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               SizedBox(),
-              Text(
-                '480.000 VND',
+              Obx(() => Text(
+                '${NumberFormat('#,###').format(controller.bookingData['price'] ?? 0)} VND',
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF374151),
                 ),
-              ),
+              )),
             ],
           ),
 
@@ -592,7 +593,10 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                 'Thuế và phí',
                 style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
               ),
-              Text('0 VND', style: TextStyle(fontSize: 14.sp, color: const Color(0xFF374151))),
+              Obx(() => Text(
+                '${NumberFormat('#,###').format(controller.bookingData['tax'] ?? 0)} VND',
+                style: TextStyle(fontSize: 14.sp, color: const Color(0xFF374151)),
+              )),
             ],
           ),
 
@@ -612,14 +616,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                   color: const Color(0xFF111827),
                 ),
               ),
-              Text(
-                '480.000 VND',
+              Obx(() => Text(
+                '${NumberFormat('#,###').format(controller.bookingData['total'] ?? 0)} VND',
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF111827),
                 ),
-              ),
+              )),
             ],
           ),
         ],
@@ -660,14 +664,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        '480.000 VND',
+                      Obx(() => Text(
+                        '${NumberFormat('#,###').format(controller.bookingData['total'] ?? 0)} VND',
                         style: TextStyle(
                           fontSize: 20.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
                         ),
-                      ),
+                      )),
                       SizedBox(width: 4.w),
                       Icon(Icons.info_outline, size: 16.sp, color: const Color(0xFF9CA3AF)),
                     ],

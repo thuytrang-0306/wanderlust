@@ -302,6 +302,9 @@ class BookingService extends GetxService {
         throw Exception('User not authenticated');
       }
 
+      // Get business ID from arguments if available
+      final businessId = Get.arguments?['businessId'] as String?;
+      
       final booking = BookingModel(
         id: '',
         userId: currentUserId!,
@@ -330,6 +333,7 @@ class BookingService extends GetxService {
         metadata: {
           'accommodationId': accommodationId,
           'nights': checkOut.difference(checkIn).inDays,
+          'businessId': businessId ?? '',
         },
         specialRequests: specialRequests,
         cancellationReason: null,
@@ -344,6 +348,34 @@ class BookingService extends GetxService {
       LoggerService.e('Error creating accommodation booking', error: e);
       return null;
     }
+  }
+
+  // Get bookings for business owner
+  Stream<List<BookingModel>> getBusinessBookings(String businessId) {
+    return _firestore
+        .collection(_collection)
+        .where('metadata.businessId', isEqualTo: businessId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => BookingModel.fromFirestore(doc.data(), doc.id))
+              .toList();
+        });
+  }
+
+  // Get bookings for a specific listing
+  Stream<List<BookingModel>> getListingBookings(String listingId) {
+    return _firestore
+        .collection(_collection)
+        .where('itemId', isEqualTo: listingId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => BookingModel.fromFirestore(doc.data(), doc.id))
+              .toList();
+        });
   }
 
   // Auto-complete old bookings
