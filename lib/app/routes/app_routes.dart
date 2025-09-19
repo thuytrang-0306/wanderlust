@@ -53,10 +53,26 @@ abstract class Routes {
 
   // AI Assistant
   static const AI_CHAT = '/ai-chat';
+  
+  // Business
+  static const BUSINESS_REGISTRATION = '/business-registration';
+  static const BUSINESS_INFO_FORM = '/business-info-form';
+  static const BUSINESS_DASHBOARD = '/business-dashboard';
+  static const BUSINESS_SETTINGS = '/business-settings';
+  static const BUSINESS_EDIT = '/business-edit';
+  static const BUSINESS_VERIFICATION = '/business-verification';
+  
+  // Business Listings
+  static const CREATE_ROOM_LISTING = '/create-room-listing';
+  static const EDIT_ROOM_LISTING = '/edit-room-listing';
+  static const ROOM_DETAIL = '/room-detail';
+  static const CREATE_TOUR_LISTING = '/create-tour-listing';
+  static const CREATE_MENU = '/create-menu';
+  static const CREATE_SERVICE_LISTING = '/create-service-listing';
+  static const CREATE_PROMOTION = '/create-promotion';
 
   // Future Implementation
   // static const EXPLORE = '/explore';
   // static const BOOKINGS = '/bookings';
   // static const PROFILE = '/profile';
-  // static const SETTINGS = '/settings';
 }

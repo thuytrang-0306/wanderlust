@@ -35,6 +35,12 @@ import 'package:wanderlust/presentation/bindings/add_private_location_binding.da
 import 'package:wanderlust/presentation/bindings/combo_detail_binding.dart';
 import 'package:wanderlust/presentation/pages/ai/ai_chat_page.dart';
 import 'package:wanderlust/presentation/bindings/ai_chat_binding.dart';
+import 'package:wanderlust/presentation/pages/business/business_type_selection_page.dart';
+import 'package:wanderlust/presentation/pages/business/business_info_form_page.dart';
+import 'package:wanderlust/presentation/pages/business/business_dashboard_page.dart';
+import 'package:wanderlust/presentation/pages/room/create_room_page.dart';
+import 'package:wanderlust/presentation/pages/room/edit_room_page.dart';
+import 'package:wanderlust/presentation/pages/room/room_detail_page.dart';
 
 part 'app_routes.dart';
 
@@ -172,6 +178,38 @@ class AppPages {
       name: Routes.AI_CHAT,
       page: () => const AIChatPage(),
       binding: AIChatBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    // Business routes
+    GetPage(
+      name: Routes.BUSINESS_REGISTRATION,
+      page: () => const BusinessTypeSelectionPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.BUSINESS_INFO_FORM,
+      page: () => const BusinessInfoFormPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.BUSINESS_DASHBOARD,
+      page: () => const BusinessDashboardPage(),
+      transition: Transition.rightToLeft,
+    ),
+    // Room routes
+    GetPage(
+      name: Routes.CREATE_ROOM_LISTING,
+      page: () => const CreateRoomPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.EDIT_ROOM_LISTING,
+      page: () => const EditRoomPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.ROOM_DETAIL,
+      page: () => const RoomDetailPage(),
       transition: Transition.rightToLeft,
     ),
   ];

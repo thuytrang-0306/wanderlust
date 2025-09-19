@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:wanderlust/core/services/unified_image_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:wanderlust/data/models/user_profile_model.dart';
+import 'package:wanderlust/data/models/user_model.dart';
+import 'package:wanderlust/data/models/business_profile_model.dart';
 
 class UserProfileService extends GetxService {
   static UserProfileService get to => Get.find();
@@ -238,6 +240,71 @@ class UserProfileService extends GetxService {
     }
   }
 
+  /// Update user to business type
+  Future<bool> upgradeToBusinessUser(String businessProfileId) async {
+    try {
+      if (currentUserId == null) return false;
+      
+      final success = await updateProfileFields({
+        'userType': UserType.business.value,
+        'businessProfileId': businessProfileId,
+        'businessSince': FieldValue.serverTimestamp(),
+      });
+      
+      if (success) {
+        LoggerService.i('User upgraded to business type');
+      }
+      
+      return success;
+    } catch (e) {
+      LoggerService.e('Error upgrading to business user', error: e);
+      return false;
+    }
+  }
+  
+  /// Get user's business profile if exists
+  Future<BusinessProfileModel?> getUserBusinessProfile(String userId) async {
+    try {
+      // First get user to check if they have business profile
+      final userDoc = await _firestore.collection(_collection).doc(userId).get();
+      if (!userDoc.exists) return null;
+      
+      final userData = userDoc.data();
+      final businessProfileId = userData?['businessProfileId'];
+      
+      if (businessProfileId == null) return null;
+      
+      // Get business profile
+      final businessDoc = await _firestore
+          .collection('business_profiles')
+          .doc(businessProfileId)
+          .get();
+      
+      if (!businessDoc.exists) return null;
+      
+      return BusinessProfileModel.fromJson(businessDoc.data()!, businessDoc.id);
+    } catch (e) {
+      LoggerService.e('Error getting user business profile', error: e);
+      return null;
+    }
+  }
+  
+  /// Check if current user is business type
+  Future<bool> isBusinessUser() async {
+    try {
+      if (currentUserId == null) return false;
+      
+      final doc = await _firestore.collection(_collection).doc(currentUserId).get();
+      if (!doc.exists) return false;
+      
+      final userType = doc.data()?['userType'] ?? 'regular';
+      return userType == UserType.business.value;
+    } catch (e) {
+      LoggerService.e('Error checking business user status', error: e);
+      return false;
+    }
+  }
+  
   /// Search users by name or email
   Future<List<UserProfileModel>> searchUsers(String query) async {
     try {

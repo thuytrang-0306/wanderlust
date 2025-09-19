@@ -137,6 +137,55 @@ class AccountPage extends GetView<AccountController> {
                     title: 'Lịch sử',
                     onTap: () => controller.navigateToTripHistory(),
                   ),
+                  
+                  // Business Center - NEW
+                  Obx(() {
+                    if (controller.isBusinessUser.value) {
+                      // Show Business Dashboard
+                      return _buildMenuItem(
+                        icon: Icons.business_center,
+                        title: 'Business Dashboard',
+                        subtitle: 'Quản lý doanh nghiệp của bạn',
+                        onTap: () => controller.navigateToBusinessDashboard(),
+                        trailing: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Text(
+                            'Business',
+                            style: AppTypography.bodyXS.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      );
+                    } else {
+                      // Show Register Business option
+                      return _buildMenuItem(
+                        icon: Icons.store_outlined,
+                        title: 'Đăng ký Business',
+                        subtitle: 'Trở thành đối tác kinh doanh',
+                        onTap: () => controller.navigateToBusinessRegistration(),
+                        trailing: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Text(
+                            'Mới',
+                            style: AppTypography.bodyXS.copyWith(
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                  }),
 
                   SizedBox(height: AppSpacing.s4),
 

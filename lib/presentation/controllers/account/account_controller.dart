@@ -8,7 +8,9 @@ import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/core/widgets/app_dialogs.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:wanderlust/data/services/user_profile_service.dart';
+import 'package:wanderlust/data/services/business_service.dart';
 import 'package:wanderlust/data/models/user_profile_model.dart';
+import 'package:wanderlust/data/models/business_profile_model.dart';
 import 'package:wanderlust/core/services/unified_image_service.dart';
 import 'package:wanderlust/core/services/storage_service.dart';
 import 'package:wanderlust/presentation/controllers/account/user_profile_controller.dart';
@@ -16,11 +18,16 @@ import 'package:wanderlust/presentation/controllers/account/user_profile_control
 class AccountController extends GetxController {
   final UserProfileService _profileService = Get.find<UserProfileService>();
   final UnifiedImageService _imageService = Get.find<UnifiedImageService>();
+  BusinessService? _businessService;
 
   // User profile data - sync with UserProfileController
   final Rxn<UserProfileModel> userProfile = Rxn<UserProfileModel>();
   final Rxn<Uint8List> avatarBytes = Rxn<Uint8List>();
   final RxBool isLoadingAvatar = false.obs;
+  
+  // Business status
+  final RxBool isBusinessUser = false.obs;
+  final Rxn<BusinessProfileModel> businessProfile = Rxn<BusinessProfileModel>();
 
   // Getters for compatibility
   String get userName => userProfile.value?.displayName ?? 'User';
@@ -34,6 +41,16 @@ class AccountController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    
+    // Initialize BusinessService if available
+    try {
+      _businessService = Get.find<BusinessService>();
+    } catch (e) {
+      // BusinessService might not be registered yet
+      Get.lazyPut(() => BusinessService());
+      _businessService = Get.find<BusinessService>();
+    }
+    
     _loadUserData();
 
     // Stream profile changes for real-time updates
@@ -53,6 +70,14 @@ class AccountController extends GetxController {
       if (profile != null) {
         userProfile.value = profile;
         _loadAvatarBytes(profile);
+        
+        // Check if user is business type
+        isBusinessUser.value = await _profileService.isBusinessUser();
+        
+        // Load business profile if business user
+        if (isBusinessUser.value) {
+          await _loadBusinessProfile();
+        }
       } else {
         // Initialize profile for new user
         await _profileService.initializeNewUserProfile();
@@ -208,6 +233,26 @@ Build: 2024.1
 
 © 2024 Wanderlust. All rights reserved.''',
     );
+  }
+  
+  // Business-related methods
+  Future<void> _loadBusinessProfile() async {
+    try {
+      if (_businessService == null) return;
+      
+      await _businessService!.loadCurrentBusinessProfile();
+      businessProfile.value = _businessService!.currentBusinessProfile.value;
+    } catch (e) {
+      LoggerService.e('Error loading business profile', error: e);
+    }
+  }
+  
+  void navigateToBusinessRegistration() {
+    Get.toNamed('/business-registration');
+  }
+  
+  void navigateToBusinessDashboard() {
+    Get.toNamed('/business-dashboard');
   }
 
   void logout() async {

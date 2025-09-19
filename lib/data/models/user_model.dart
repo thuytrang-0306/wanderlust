@@ -1,3 +1,20 @@
+/// User types in the platform
+enum UserType {
+  regular('regular'),
+  business('business'),
+  admin('admin');
+
+  final String value;
+  const UserType(this.value);
+
+  static UserType fromString(String value) {
+    return UserType.values.firstWhere(
+      (type) => type.value == value,
+      orElse: () => UserType.regular,
+    );
+  }
+}
+
 class UserModel {
   final String id;
   final String uid;
@@ -22,6 +39,12 @@ class UserModel {
   final DateTime? lastActive;
   final bool isVerified;
   final String role;
+  
+  // Business-related fields
+  final UserType userType;
+  final String? businessProfileId; // Reference to BusinessProfile document
+  final bool businessVerified;
+  final DateTime? businessSince;
 
   UserModel({
     required this.id,
@@ -47,6 +70,10 @@ class UserModel {
     this.lastActive,
     this.isVerified = false,
     this.role = 'user',
+    this.userType = UserType.regular,
+    this.businessProfileId,
+    this.businessVerified = false,
+    this.businessSince,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -74,6 +101,10 @@ class UserModel {
       lastActive: json['lastActive']?.toDate(),
       isVerified: json['isVerified'] ?? false,
       role: json['role'] ?? 'user',
+      userType: UserType.fromString(json['userType'] ?? 'regular'),
+      businessProfileId: json['businessProfileId'],
+      businessVerified: json['businessVerified'] ?? false,
+      businessSince: json['businessSince']?.toDate(),
     );
   }
 
@@ -102,8 +133,18 @@ class UserModel {
       'lastActive': lastActive,
       'isVerified': isVerified,
       'role': role,
+      'userType': userType.value,
+      'businessProfileId': businessProfileId,
+      'businessVerified': businessVerified,
+      'businessSince': businessSince,
     };
   }
+  
+  /// Check if user is a business user
+  bool get isBusiness => userType == UserType.business;
+  
+  /// Check if user is an admin
+  bool get isAdmin => userType == UserType.admin;
 
   UserModel copyWith({
     String? displayName,
