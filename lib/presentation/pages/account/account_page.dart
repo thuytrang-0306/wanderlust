@@ -236,6 +236,16 @@ class AccountPage extends GetView<AccountController> {
                     title: 'Về chúng tôi',
                     onTap: () => controller.navigateToAbout(),
                   ),
+                  _buildMenuItem(
+                    icon: Icons.privacy_tip_outlined,
+                    title: 'Chính sách bảo mật',
+                    onTap: () => controller.navigateToPrivacy(),
+                  ),
+                  _buildMenuItem(
+                    icon: Icons.description_outlined,
+                    title: 'Điều khoản dịch vụ',
+                    onTap: () => controller.navigateToTerms(),
+                  ),
 
                   SizedBox(height: AppSpacing.s6),
 

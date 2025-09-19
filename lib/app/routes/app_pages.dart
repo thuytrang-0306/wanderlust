@@ -43,6 +43,8 @@ import 'package:wanderlust/presentation/pages/business/business_dashboard_page.d
 import 'package:wanderlust/presentation/pages/listing/create_listing_page.dart';
 import 'package:wanderlust/presentation/pages/settings/change_password_page.dart';
 import 'package:wanderlust/presentation/pages/settings/help_support_page.dart';
+import 'package:wanderlust/presentation/pages/settings/privacy_policy_page.dart';
+import 'package:wanderlust/presentation/pages/settings/terms_of_service_page.dart';
 import 'package:wanderlust/presentation/bindings/change_password_binding.dart';
 import 'package:wanderlust/presentation/bindings/help_support_binding.dart';
 
@@ -219,6 +221,16 @@ class AppPages {
       name: Routes.HELP_SUPPORT,
       page: () => const HelpSupportPage(),
       binding: HelpSupportBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.PRIVACY_POLICY,
+      page: () => const PrivacyPolicyPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.TERMS_OF_SERVICE,
+      page: () => const TermsOfServicePage(),
       transition: Transition.rightToLeft,
     ),
   ];

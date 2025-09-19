@@ -236,11 +236,11 @@ class AccountController extends GetxController {
   }
 
   void navigateToPrivacy() {
-    AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
+    Get.toNamed('/privacy-policy');
   }
 
   void navigateToTerms() {
-    AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
+    Get.toNamed('/terms-of-service');
   }
 
   void navigateToAbout() {
