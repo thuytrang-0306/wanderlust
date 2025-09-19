@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wanderlust/app/config/app_theme.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 import 'package:wanderlust/app/bindings/initial_binding.dart';
 import 'package:wanderlust/core/services/firebase_service.dart';
+import 'package:wanderlust/core/services/saved_blogs_service.dart';
 import 'package:wanderlust/core/services/storage_service.dart';
 import 'package:wanderlust/core/services/connectivity_service.dart';
 import 'package:wanderlust/core/services/image_service.dart';
@@ -26,6 +28,9 @@ import 'package:wanderlust/data/services/booking_service.dart';
 Future<void> _registerDataServices() async {
   // Core services
   Get.put(UnifiedImageService());
+  
+  // Initialize SavedBlogsService early for persistence
+  Get.put(SavedBlogsService(), permanent: true);
 
   // Data services
   Get.put(BlogService());
@@ -61,6 +66,9 @@ void main() async {
 
   // Load environment variables
   await dotenv.load(fileName: '.env');
+
+  // Initialize GetStorage for local persistence
+  await GetStorage.init();
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

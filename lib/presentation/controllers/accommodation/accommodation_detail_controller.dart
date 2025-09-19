@@ -4,12 +4,15 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/data/models/accommodation_model.dart';
+import 'package:wanderlust/data/models/listing_model.dart';
 import 'package:wanderlust/data/services/accommodation_service.dart';
+import 'package:wanderlust/data/services/listing_service.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 
 class AccommodationDetailController extends BaseController {
   final AccommodationService _accommodationService = Get.find<AccommodationService>();
+  final ListingService _listingService = Get.find<ListingService>();
 
   // Observable values
   final RxBool isBookmarked = false.obs;
@@ -22,37 +25,58 @@ class AccommodationDetailController extends BaseController {
   final Rx<DateTime?> checkInDate = Rx<DateTime?>(null);
   final Rx<DateTime?> checkOutDate = Rx<DateTime?>(null);
 
-  // Accommodation data
+  // Accommodation data (can be either old accommodation or new listing)
   final Rxn<AccommodationModel> accommodation = Rxn<AccommodationModel>();
-
-  // Accommodation ID passed from arguments
+  final Rxn<ListingModel> listing = Rxn<ListingModel>();
+  
+  // ID passed from arguments (either accommodation or listing)
   String? accommodationId;
+  String? listingId;
+  
+  // Track data source
+  bool isListingSource = false;
 
   @override
   void onInit() {
     super.onInit();
 
-    // Get accommodation ID from arguments
+    // Get ID from arguments - can be either accommodation or listing
     final args = Get.arguments;
     if (args != null) {
       if (args is String) {
-        accommodationId = args;
-      } else if (args is Map && args['accommodationId'] != null) {
-        accommodationId = args['accommodationId'];
-      } else if (args is Map && args['id'] != null) {
-        accommodationId = args['id'];
+        // Check if it's a listing ID (from listing flow)
+        if (Get.previousRoute == '/listing-detail') {
+          listingId = args;
+          isListingSource = true;
+        } else {
+          accommodationId = args;
+        }
+      } else if (args is Map) {
+        // Check for listing ID
+        if (args['listingId'] != null) {
+          listingId = args['listingId'];
+          isListingSource = true;
+        }
+        // Check for accommodation ID
+        else if (args['accommodationId'] != null) {
+          accommodationId = args['accommodationId'];
+        } else if (args['id'] != null) {
+          accommodationId = args['id'];
+        }
       }
     }
 
     // Initialize dates
     _initializeDates();
 
-    // Load accommodation data
-    if (accommodationId != null) {
+    // Load data based on source
+    if (isListingSource && listingId != null) {
+      loadListingData();
+    } else if (accommodationId != null) {
       loadAccommodationData();
     } else {
-      // If no ID provided, create sample and load first one
-      _createSampleAndLoad();
+      // No data to load
+      setError('Không có dữ liệu để hiển thị');
     }
   }
 
@@ -75,94 +99,66 @@ class AccommodationDetailController extends BaseController {
     }
   }
 
-  Future<void> _createSampleAndLoad() async {
+
+  // Load listing data (from business listing flow)
+  Future<void> loadListingData() async {
+    if (listingId == null) {
+      setError('Không có ID listing');
+      return;
+    }
+
     try {
       setLoading();
 
-      // Check if there are any accommodations
-      final existingAccommodations = await _accommodationService.getAllAccommodations();
+      // Load listing from Firestore
+      final listingData = await _listingService.getListingById(listingId!);
 
-      if (existingAccommodations.isNotEmpty) {
-        // Use first existing accommodation
-        accommodationId = existingAccommodations.first.id;
-        await loadAccommodationData();
+      if (listingData != null) {
+        listing.value = listingData;
+        
+        // Convert listing to accommodation-like data for UI compatibility
+        _convertListingToAccommodation(listingData);
+        
+        setSuccess();
       } else {
-        // Create a sample accommodation
-        final sampleAccommodation = await _createSampleAccommodation();
-        if (sampleAccommodation != null) {
-          accommodationId = sampleAccommodation;
-          await loadAccommodationData();
-        } else {
-          setError('Không thể tạo dữ liệu mẫu');
-        }
+        setError('Không tìm thấy thông tin');
       }
     } catch (e) {
-      LoggerService.e('Error creating sample', error: e);
-      setError('Có lỗi xảy ra');
+      LoggerService.e('Error loading listing', error: e);
+      setError('Có lỗi xảy ra khi tải dữ liệu');
     }
   }
-
-  Future<String?> _createSampleAccommodation() async {
-    final sample = AccommodationModel(
-      id: '',
-      name: 'Vinpearl Resort & Spa Nha Trang',
-      type: 'resort',
-      description:
-          'Khu nghỉ dưỡng 5 sao sang trọng với view biển tuyệt đẹp, hồ bơi vô cực và nhiều tiện nghi cao cấp. Phù hợp cho kỳ nghỉ gia đình hoặc nghỉ dưỡng lãng mạn.',
-      address: '12 Trần Phú',
-      city: 'Nha Trang',
-      province: 'Khánh Hòa',
+  
+  // Helper method to convert ListingModel to AccommodationModel-like structure
+  void _convertListingToAccommodation(ListingModel listingData) {
+    // Create a temporary accommodation model for UI compatibility
+    accommodation.value = AccommodationModel(
+      id: listingData.id,
+      name: listingData.title,
+      type: listingData.type == ListingType.room ? 'hotel' : 'other',
+      description: listingData.description,
+      address: listingData.details['address'] ?? '',
+      city: listingData.details['city'] ?? '',
+      province: listingData.details['province'] ?? '',
       country: 'Vietnam',
-      location: const GeoPoint(12.2388, 109.1967),
-      rating: 4.8,
-      totalReviews: 1250,
-      pricePerNight: 2500000,
-      originalPrice: 3200000,
+      location: const GeoPoint(0, 0),
+      rating: listingData.rating,
+      totalReviews: listingData.reviews,
+      pricePerNight: listingData.hasDiscount ? listingData.discountPrice! : listingData.price,
+      originalPrice: listingData.price,
       currency: 'VND',
-      images: [
-        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
-        'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800',
-        'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800',
-        'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800',
-      ],
-      amenities: [
-        'WiFi miễn phí',
-        'Hồ bơi',
-        'Spa & Massage',
-        'Phòng Gym',
-        'Nhà hàng',
-        'Bar',
-        'Bãi biển riêng',
-        'Điều hòa',
-        'Ti vi',
-        'Minibar',
-      ],
-      roomTypes: [
-        RoomType(
-          id: '1',
-          name: 'Deluxe Ocean View',
-          description: 'Phòng rộng rãi với ban công view biển',
-          maxGuests: 2,
-          beds: 1,
-          bedType: 'King',
-          size: 45,
-          pricePerNight: 2500000,
-          available: 5,
-          amenities: ['AC', 'TV', 'Minibar', 'Safe', 'Balcony'],
-          images: [],
-        ),
-      ],
+      images: listingData.images,
+      amenities: (listingData.details['amenities'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      roomTypes: [],
       policy: AccommodationPolicy.defaultPolicy(),
-      hostId: 'system',
-      hostName: 'Vinpearl Group',
+      hostId: listingData.businessId,
+      hostName: listingData.businessName,
       hostAvatar: '',
-      isVerified: true,
-      isFeatured: true,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      isVerified: listingData.isActive,
+      isFeatured: listingData.views > 100,
+      createdAt: listingData.createdAt,
+      updatedAt: listingData.updatedAt,
     );
-
-    return await _accommodationService.createAccommodation(sample);
   }
 
   Future<void> loadAccommodationData() async {
@@ -305,25 +301,53 @@ class AccommodationDetailController extends BaseController {
   void bookRoom() {
     if (accommodation.value == null) return;
 
-    // Navigate to booking info page with real data
-    Get.toNamed(
-      '/booking-info',
-      arguments: {
-        'accommodationId': accommodation.value!.id,
-        'accommodationName': accommodation.value!.name,
-        'accommodationType': accommodation.value!.type,
-        'accommodationImage':
-            accommodation.value!.images.isNotEmpty ? accommodation.value!.images.first : '',
-        'location': accommodation.value!.fullAddress,
-        'price': accommodation.value!.pricePerNight,
-        'dates': selectedDates.value,
-        'checkIn': checkInDate.value,
-        'checkOut': checkOutDate.value,
-        'rooms': roomCount.value,
-        'guests': guestCount.value,
-        'nights': totalNights,
-        'totalPrice': totalPrice,
-      },
-    );
+    // Navigate to booking info page with data from either source
+    if (isListingSource && listing.value != null) {
+      // Use listing data
+      Get.toNamed(
+        '/booking-info',
+        arguments: {
+          'listingId': listing.value!.id,
+          'listingType': listing.value!.type.value,
+          'accommodationId': listing.value!.id,
+          'accommodationName': listing.value!.title,
+          'accommodationType': 'listing',
+          'accommodationImage':
+              listing.value!.images.isNotEmpty ? listing.value!.images.first : '',
+          'location': '${listing.value!.details['address'] ?? ''}, ${listing.value!.details['city'] ?? ''}',
+          'price': listing.value!.hasDiscount ? listing.value!.discountPrice! : listing.value!.price,
+          'dates': selectedDates.value,
+          'checkIn': checkInDate.value,
+          'checkOut': checkOutDate.value,
+          'rooms': roomCount.value,
+          'guests': guestCount.value,
+          'nights': totalNights,
+          'totalPrice': totalPrice,
+          'businessId': listing.value!.businessId,
+          'businessName': listing.value!.businessName,
+        },
+      );
+    } else {
+      // Use accommodation data
+      Get.toNamed(
+        '/booking-info',
+        arguments: {
+          'accommodationId': accommodation.value!.id,
+          'accommodationName': accommodation.value!.name,
+          'accommodationType': accommodation.value!.type,
+          'accommodationImage':
+              accommodation.value!.images.isNotEmpty ? accommodation.value!.images.first : '',
+          'location': accommodation.value!.fullAddress,
+          'price': accommodation.value!.pricePerNight,
+          'dates': selectedDates.value,
+          'checkIn': checkInDate.value,
+          'checkOut': checkOutDate.value,
+          'rooms': roomCount.value,
+          'guests': guestCount.value,
+          'nights': totalNights,
+          'totalPrice': totalPrice,
+        },
+      );
+    }
   }
 }

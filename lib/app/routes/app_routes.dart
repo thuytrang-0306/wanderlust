@@ -50,6 +50,7 @@ abstract class Routes {
 
   // Bookings
   static const BOOKING_HISTORY = '/booking-history';
+  static const BOOKING_SUCCESS = '/booking-success';
 
   // AI Assistant
   static const AI_CHAT = '/ai-chat';

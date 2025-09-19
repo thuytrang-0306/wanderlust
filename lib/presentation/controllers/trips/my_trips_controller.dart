@@ -29,75 +29,17 @@ class MyTripsController extends BaseController with GetTickerProviderStateMixin 
   void loadTrips() async {
     isLoadingTrips.value = true;
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Mock data
-    upcomingTrips.value = [
-      {
-        'id': '1',
-        'name': 'Khám phá Đà Lạt mùa xuân',
-        'destination': 'Đà Lạt, Lâm Đồng',
-        'startDate': '15/03/2024',
-        'endDate': '20/03/2024',
-        'status': 'upcoming',
-        'members': 4,
-        'activities': 12,
-        'image': '',
-      },
-      {
-        'id': '2',
-        'name': 'Phú Quốc - Thiên đường biển đảo',
-        'destination': 'Phú Quốc, Kiên Giang',
-        'startDate': '01/04/2024',
-        'endDate': '05/04/2024',
-        'status': 'upcoming',
-        'members': 2,
-        'activities': 8,
-        'image': '',
-      },
-    ];
-
-    ongoingTrips.value = [
-      {
-        'id': '3',
-        'name': 'Sapa mùa lúa chín',
-        'destination': 'Sapa, Lào Cai',
-        'startDate': '10/09/2024',
-        'endDate': '13/09/2024',
-        'status': 'ongoing',
-        'members': 3,
-        'activities': 10,
-        'image': '',
-      },
-    ];
-
-    completedTrips.value = [
-      {
-        'id': '4',
-        'name': 'Hội An - Phố cổ',
-        'destination': 'Hội An, Quảng Nam',
-        'startDate': '20/08/2024',
-        'endDate': '23/08/2024',
-        'status': 'completed',
-        'members': 5,
-        'activities': 15,
-        'image': '',
-      },
-      {
-        'id': '5',
-        'name': 'Nha Trang biển xanh',
-        'destination': 'Nha Trang, Khánh Hòa',
-        'startDate': '15/07/2024',
-        'endDate': '18/07/2024',
-        'status': 'completed',
-        'members': 4,
-        'activities': 9,
-        'image': '',
-      },
-    ];
-
-    isLoadingTrips.value = false;
+    try {
+      // TODO: Load real trip data from Firestore
+      // For now, keep empty arrays until backend is ready
+      upcomingTrips.value = [];
+      ongoingTrips.value = [];
+      completedTrips.value = [];
+    } catch (e) {
+      // Handle error
+    } finally {
+      isLoadingTrips.value = false;
+    }
   }
 
   void createNewTrip() {

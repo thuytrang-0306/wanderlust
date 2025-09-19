@@ -35,6 +35,8 @@ import 'package:wanderlust/presentation/bindings/add_private_location_binding.da
 import 'package:wanderlust/presentation/bindings/combo_detail_binding.dart';
 import 'package:wanderlust/presentation/pages/ai/ai_chat_page.dart';
 import 'package:wanderlust/presentation/bindings/ai_chat_binding.dart';
+import 'package:wanderlust/app/bindings/saved_collections_binding.dart';
+import 'package:wanderlust/app/bindings/collection_detail_binding.dart';
 import 'package:wanderlust/presentation/pages/business/business_type_selection_page.dart';
 import 'package:wanderlust/presentation/pages/business/business_info_form_page.dart';
 import 'package:wanderlust/presentation/pages/business/business_dashboard_page.dart';
@@ -105,11 +107,13 @@ class AppPages {
     GetPage(
       name: Routes.SAVED_COLLECTIONS,
       page: () => const SavedCollectionsPage(),
+      binding: SavedCollectionsBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(
       name: Routes.COLLECTION_DETAIL,
       page: () => const CollectionDetailPage(),
+      binding: CollectionDetailBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(

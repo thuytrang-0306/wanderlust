@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
+import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/presentation/controllers/accommodation/accommodation_detail_controller.dart';
 
 class AccommodationDetailPage extends GetView<AccommodationDetailController> {
@@ -27,20 +28,27 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                       height: 280.h,
                       width: double.infinity,
                       child: Obx(() {
-                        final imageUrl =
-                            controller.accommodation.value?.images.isNotEmpty == true
-                                ? controller.accommodation.value!.images.first
-                                : 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800';
+                        final imageData = controller.accommodation.value?.images.isNotEmpty == true
+                            ? controller.accommodation.value!.images.first
+                            : null;
 
-                        return CachedNetworkImage(
-                          imageUrl: imageUrl,
+                        if (imageData == null) {
+                          return Container(
+                            color: AppColors.neutral200,
+                            child: Icon(Icons.image, size: 50.sp, color: AppColors.neutral400),
+                          );
+                        }
+
+                        // Use AppImage which handles both base64 and URLs
+                        return AppImage(
+                          imageData: imageData,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(color: AppColors.neutral200),
-                          errorWidget:
-                              (context, url, error) => Container(
-                                color: AppColors.neutral200,
-                                child: Icon(Icons.image, size: 50.sp, color: AppColors.neutral400),
-                              ),
+                          width: double.infinity,
+                          height: double.infinity,
+                          errorWidget: Container(
+                            color: AppColors.neutral200,
+                            child: Icon(Icons.image, size: 50.sp, color: AppColors.neutral400),
+                          ),
                         );
                       }),
                     ),
@@ -348,9 +356,11 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                             children: [
                                               ClipRRect(
                                                 borderRadius: BorderRadius.circular(8.r),
-                                                child: CachedNetworkImage(
-                                                  imageUrl: images[index],
+                                                child: AppImage(
+                                                  imageData: images[index],
                                                   fit: BoxFit.cover,
+                                                  width: double.infinity,
+                                                  height: double.infinity,
                                                 ),
                                               ),
                                               Container(
@@ -380,9 +390,11 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                       margin: EdgeInsets.only(right: 8.w),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(8.r),
-                                        child: CachedNetworkImage(
-                                          imageUrl: images[index],
+                                        child: AppImage(
+                                          imageData: images[index],
                                           fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: double.infinity,
                                         ),
                                       ),
                                     );

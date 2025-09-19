@@ -2,55 +2,29 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
-import 'package:wanderlust/presentation/pages/community/saved_collections_page.dart';
+import 'package:wanderlust/core/services/saved_blogs_service.dart';
+import 'package:wanderlust/core/widgets/app_snackbar.dart';
 
 class SavedCollectionsController extends BaseController {
-  final RxList<CollectionModel> collections = <CollectionModel>[].obs;
-
+  // Lazy load SavedBlogsService  
+  SavedBlogsService get _savedBlogsService {
+    if (!Get.isRegistered<SavedBlogsService>()) {
+      Get.put(SavedBlogsService());
+    }
+    return Get.find<SavedBlogsService>();
+  }
+  
+  // Observable collections from service
+  RxList<BlogCollection> get collections => _savedBlogsService.collections;
+  
   @override
   void onInit() {
     super.onInit();
-    loadCollections();
+    // Ensure service is initialized
+    _savedBlogsService;
   }
 
-  void loadCollections() {
-    // Mock data - in real app, load from database
-    collections.value = [
-      CollectionModel(
-        id: 'all',
-        name: 'Tất cả bài viết',
-        images: [
-          'https://images.unsplash.com/photo-1564674244660-2b7a0e4afb1e?w=400',
-          'https://images.unsplash.com/photo-1509023464722-18d996393ca8?w=400',
-          'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=400',
-          'https://images.unsplash.com/photo-1528127269322-539801943592?w=400',
-        ],
-        postCount: 15,
-        isDefault: true,
-      ),
-      CollectionModel(
-        id: 'spring',
-        name: 'Mùa xuân',
-        images: [
-          'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400',
-          'https://images.unsplash.com/photo-1462275646964-a0e3386b89fa?w=400',
-          'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400',
-        ],
-        postCount: 8,
-      ),
-      CollectionModel(
-        id: 'date_collection',
-        name: '21/6/2026',
-        images: [
-          'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400',
-          'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400',
-        ],
-        postCount: 5,
-      ),
-    ];
-  }
-
-  void openCollection(CollectionModel collection) {
+  void openCollection(BlogCollection collection) {
     Get.toNamed(
       '/collection-detail',
       arguments: {'collectionId': collection.id, 'collectionName': collection.name},
@@ -58,6 +32,8 @@ class SavedCollectionsController extends BaseController {
   }
 
   void createNewCollection() {
+    final TextEditingController nameController = TextEditingController();
+    
     Get.defaultDialog(
       title: 'Tạo bộ sưu tập mới',
       titleStyle: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
@@ -65,6 +41,7 @@ class SavedCollectionsController extends BaseController {
       content: Column(
         children: [
           TextField(
+            controller: nameController,
             decoration: InputDecoration(
               hintText: 'Tên bộ sưu tập',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
@@ -79,18 +56,29 @@ class SavedCollectionsController extends BaseController {
           child: Text('Hủy', style: TextStyle(color: Colors.grey)),
         ),
         TextButton(
-          onPressed: () {
-            // TODO: Create collection
-            Get.back();
-            Get.snackbar(
-              'Thành công',
-              'Đã tạo bộ sưu tập mới',
-              snackPosition: SnackPosition.BOTTOM,
-            );
+          onPressed: () async {
+            final name = nameController.text.trim();
+            if (name.isNotEmpty) {
+              await _savedBlogsService.createCollection(name);
+              Get.back();
+              AppSnackbar.showSuccess(
+                message: 'Đã tạo bộ sưu tập "$name"',
+              );
+            }
           },
           child: Text('Tạo'),
         ),
       ],
     );
+  }
+  
+  // Get collection images for display
+  List<String> getCollectionImages(BlogCollection collection) {
+    final savedBlogs = _savedBlogsService.getSavedBlogsForCollection(collection.id);
+    return savedBlogs
+        .where((blog) => blog.coverImage.isNotEmpty)
+        .take(4)
+        .map((blog) => blog.coverImage)
+        .toList();
   }
 }

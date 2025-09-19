@@ -1262,8 +1262,10 @@ class DiscoverPage extends GetView<DiscoverController> {
                   margin: EdgeInsets.only(right: AppSpacing.s3),
                   child: GestureDetector(
                     onTap: () {
-                      // Navigate to listing detail
-                      Get.toNamed('/listing-detail', arguments: listing.id);
+                      // Navigate to accommodation detail (reuse existing UI)
+                      Get.toNamed('/accommodation-detail', arguments: {
+                        'listingId': listing.id,
+                      });
                     },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

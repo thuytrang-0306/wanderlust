@@ -1,9 +1,17 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/presentation/pages/community/community_page.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
+import 'package:wanderlust/core/constants/app_colors.dart';
+import 'package:wanderlust/core/constants/app_spacing.dart';
+import 'package:wanderlust/core/constants/app_typography.dart';
+import 'package:wanderlust/core/services/saved_blogs_service.dart';
+import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/data/services/blog_service.dart';
 import 'package:wanderlust/data/services/accommodation_service.dart';
 import 'package:wanderlust/data/services/listing_service.dart';
+import 'package:wanderlust/data/models/blog_post_model.dart';
 import 'package:wanderlust/data/models/listing_model.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 
@@ -12,6 +20,14 @@ class CommunityController extends GetxController {
   final BlogService _blogService = Get.put(BlogService());
   final AccommodationService _accommodationService = Get.put(AccommodationService());
   final ListingService _listingService = Get.find<ListingService>();
+  
+  // Lazy load SavedBlogsService
+  SavedBlogsService get _savedBlogsService {
+    if (!Get.isRegistered<SavedBlogsService>()) {
+      Get.put(SavedBlogsService());
+    }
+    return Get.find<SavedBlogsService>();
+  }
 
   // Observable lists
   final RxList<PostModel> posts = <PostModel>[].obs;
@@ -30,22 +46,33 @@ class CommunityController extends GetxController {
     _loadRealReviews();
     _loadBusinessPosts();
     _trackUserInteractions();
+    _trackSavedBlogs();
   }
 
   void _trackUserInteractions() {
     // Track liked posts
     _blogService.getUserLikedPosts().listen((likedIds) {
-      likedPostIds.value = likedIds;
+      likedPostIds.assignAll(likedIds);
       // Update post models with like status
       _updatePostLikeStatus();
     });
-
-    // Track bookmarked posts
-    _blogService.getUserBookmarkedPosts().listen((bookmarkedIds) {
-      bookmarkedPostIds.value = bookmarkedIds;
-      // Update post models with bookmark status
-      _updatePostBookmarkStatus();
+  }
+  
+  void _trackSavedBlogs() {
+    // Track saved blogs from SavedBlogsService
+    ever(_savedBlogsService.savedBlogsCache, (_) {
+      // Update bookmarked state based on saved blogs
+      _updateBookmarkStatusFromSavedBlogs();
     });
+    
+    // Initial update
+    _updateBookmarkStatusFromSavedBlogs();
+  }
+  
+  void _updateBookmarkStatusFromSavedBlogs() {
+    final savedBlogIds = _savedBlogsService.savedBlogsCache.keys.toSet();
+    bookmarkedPostIds.assignAll(savedBlogIds);
+    _updatePostBookmarkStatus();
   }
 
   void _updatePostLikeStatus() {
@@ -122,7 +149,7 @@ class CommunityController extends GetxController {
                       likeCount: blog.likes,
                       commentCount: blog.commentsCount,
                       isLiked: likedPostIds.contains(blog.id),
-                      isBookmarked: bookmarkedPostIds.contains(blog.id),
+                      isBookmarked: _savedBlogsService.isBlogSaved(blog.id),
                     );
                   }).toList();
 
@@ -140,9 +167,6 @@ class CommunityController extends GetxController {
       // No fallback - show empty state
     }
   }
-
-  // REMOVED: _loadDemoPosts() - No more demo data
-  // REMOVED: _checkAndAddDemoPosts() - No automatic demo creation
 
   String _getRelativeTime(DateTime dateTime) {
     final now = DateTime.now();
@@ -217,9 +241,6 @@ class CommunityController extends GetxController {
     }
   }
 
-  // REMOVED: _loadDemoReviews() - No more demo data
-  // REMOVED: _checkAndAddDemoAccommodations() - No automatic demo creation
-
   Future<void> toggleLike(String postId) async {
     final index = posts.indexWhere((p) => p.id == postId);
     if (index != -1) {
@@ -251,10 +272,249 @@ class CommunityController extends GetxController {
   }
 
   Future<void> toggleBookmark(String postId) async {
+    // First get the blog post data from BlogService
+    final blogPost = await _blogService.getPost(postId);
+    if (blogPost == null) {
+      AppSnackbar.showError(message: 'Không thể tải bài viết');
+      return;
+    }
+    
+    // Check if already saved
+    final isSaved = _savedBlogsService.isBlogSaved(postId);
+    
+    if (isSaved) {
+      // If saved, remove from all collections
+      await _savedBlogsService.removeBlogFromCollection(postId, 'all');
+      
+      // Update UI
+      final index = posts.indexWhere((p) => p.id == postId);
+      if (index != -1) {
+        final post = posts[index];
+        posts[index] = PostModel(
+          id: post.id,
+          userName: post.userName,
+          userAvatar: post.userAvatar,
+          timeAndLocation: post.timeAndLocation,
+          content: post.content,
+          images: post.images,
+          likeCount: post.likeCount,
+          commentCount: post.commentCount,
+          isLiked: post.isLiked,
+          isBookmarked: false,
+        );
+      }
+      
+      AppSnackbar.showInfo(message: 'Đã bỏ lưu bài viết');
+    } else {
+      // Show collection selector
+      _showCollectionSelector(blogPost);
+    }
+  }
+  
+  void _showCollectionSelector(BlogPostModel blog) {
+    final collections = _savedBlogsService.collections;
+    
+    // If no collections exist (except default), auto-save to default
+    if (collections.length <= 1) {
+      _saveBlogToDefault(blog);
+      return;
+    }
+    
+    Get.bottomSheet(
+      Container(
+        constraints: BoxConstraints(
+          maxHeight: Get.height * 0.7,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: EdgeInsets.only(top: AppSpacing.s3),
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.neutral300,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            
+            // Header
+            Padding(
+              padding: EdgeInsets.all(AppSpacing.s5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Lưu vào bộ sưu tập',
+                    style: AppTypography.h4.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Get.back(),
+                    child: Container(
+                      padding: EdgeInsets.all(8.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.neutral100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.close, size: 20.sp),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            Divider(height: 1, color: AppColors.neutral200),
+            
+            // Collections list
+            Flexible(
+              child: Obx(() => ListView.builder(
+                shrinkWrap: true,
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.s3),
+                itemCount: collections.length,
+                itemBuilder: (context, index) {
+                  final collection = collections[index];
+                  final isSelected = _savedBlogsService.isBlogInCollection(blog.id, collection.id);
+                  
+                  return Material(
+                    color: Colors.white,
+                    child: InkWell(
+                      onTap: () async {
+                        await _savedBlogsService.saveBlogToCollection(blog, collection.id);
+                        Get.back();
+                        
+                        // Update UI
+                        _updateBookmarkInUI(blog.id, true);
+                        
+                        AppSnackbar.showSuccess(
+                          message: 'Đã lưu vào "${collection.name}"',
+                        );
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s5,
+                          vertical: AppSpacing.s3,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 44.w,
+                              height: 44.w,
+                              decoration: BoxDecoration(
+                                color: isSelected 
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : AppColors.neutral100,
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              child: Icon(
+                                isSelected ? Icons.bookmark : Icons.bookmark_border,
+                                color: isSelected ? AppColors.primary : AppColors.textTertiary,
+                                size: 24.sp,
+                              ),
+                            ),
+                            SizedBox(width: AppSpacing.s4),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    collection.name,
+                                    style: AppTypography.bodyL.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${collection.postCount} bài viết',
+                                    style: AppTypography.bodyS.copyWith(
+                                      color: AppColors.textTertiary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(Icons.check_circle, color: AppColors.primary, size: 20.sp),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              )),
+            ),
+            
+            // Create new collection button
+            Container(
+              padding: EdgeInsets.all(AppSpacing.s5),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.neutral200)),
+              ),
+              child: SafeArea(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back(); // Close bottom sheet first
+                      // Small delay to ensure bottom sheet is closed
+                      Future.delayed(Duration(milliseconds: 300), () {
+                        _showCreateCollectionDialog(blog);
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.s3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add, size: 20.sp),
+                        SizedBox(width: AppSpacing.s2),
+                        Text(
+                          'Tạo bộ sưu tập mới',
+                          style: AppTypography.bodyL.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+    );
+  }
+  
+  void _saveBlogToDefault(BlogPostModel blog) async {
+    // Auto save to default collection
+    await _savedBlogsService.saveBlogToCollection(blog, 'all');
+    
+    // Update UI
+    _updateBookmarkInUI(blog.id, true);
+    
+    AppSnackbar.showSuccess(
+      message: 'Đã lưu vào "Tất cả bài viết"',
+    );
+  }
+  
+  void _updateBookmarkInUI(String postId, bool isBookmarked) {
     final index = posts.indexWhere((p) => p.id == postId);
     if (index != -1) {
       final post = posts[index];
-      // Optimistic update
       posts[index] = PostModel(
         id: post.id,
         userName: post.userName,
@@ -265,19 +525,85 @@ class CommunityController extends GetxController {
         likeCount: post.likeCount,
         commentCount: post.commentCount,
         isLiked: post.isLiked,
-        isBookmarked: !post.isBookmarked,
+        isBookmarked: isBookmarked,
       );
-
-      // Update backend
-      final newStatus = await _blogService.toggleBookmark(postId);
-
-      // Update local tracking
-      if (newStatus) {
-        bookmarkedPostIds.add(postId);
-      } else {
-        bookmarkedPostIds.remove(postId);
-      }
     }
+  }
+  
+  void _showCreateCollectionDialog(BlogPostModel blog) {
+    final TextEditingController nameController = TextEditingController();
+    
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(AppSpacing.s5),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tạo bộ sưu tập mới',
+                style: AppTypography.h4.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: AppSpacing.s4),
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Tên bộ sưu tập',
+                  filled: true,
+                  fillColor: AppColors.neutral50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              SizedBox(height: AppSpacing.s5),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: Text('Hủy'),
+                  ),
+                  SizedBox(width: AppSpacing.s3),
+                  SizedBox(
+                    width: 80.w, // Fix infinite width constraint
+                    child: ElevatedButton(
+                      onPressed: () async {
+                      final name = nameController.text.trim();
+                      if (name.isNotEmpty) {
+                        final newCollection = await _savedBlogsService.createCollection(name);
+                        await _savedBlogsService.saveBlogToCollection(blog, newCollection.id);
+                        Get.back(); // Close dialog
+                        
+                        // Update UI
+                        _updateBookmarkInUI(blog.id, true);
+                        
+                        AppSnackbar.showSuccess(
+                          message: 'Đã tạo và lưu vào "$name"',
+                        );
+                      }
+                    },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      child: Text('Tạo', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void openComments(String postId) {

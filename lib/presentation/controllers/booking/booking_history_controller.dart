@@ -26,95 +26,20 @@ class BookingHistoryController extends BaseController with GetSingleTickerProvid
     super.onClose();
   }
 
-  void loadBookingHistory() {
+  void loadBookingHistory() async {
     isLoadingBookings.value = true;
 
-    // Simulate loading with fake data
-    Future.delayed(const Duration(seconds: 1), () {
-      // Upcoming bookings
-      upcomingBookings.value = [
-        {
-          'id': '1',
-          'bookingCode': 'HTL-2024-001',
-          'type': 'hotel',
-          'name': 'Melia Vinpearl Nha Trang Empire',
-          'location': 'Nha Trang, Khánh Hòa',
-          'checkIn': '15/02/2024',
-          'checkOut': '18/02/2024',
-          'guests': 2,
-          'rooms': 1,
-          'totalPrice': '8.500.000đ',
-          'status': 'upcoming',
-          'statusText': 'Sắp tới',
-        },
-        {
-          'id': '2',
-          'bookingCode': 'TUR-2024-002',
-          'type': 'tour',
-          'name': 'Tour Đà Lạt 3N2Đ - Khám phá thành phố ngàn hoa',
-          'location': 'Đà Lạt, Lâm Đồng',
-          'checkIn': '20/02/2024',
-          'checkOut': '23/02/2024',
-          'guests': 4,
-          'rooms': 2,
-          'totalPrice': '12.000.000đ',
-          'status': 'upcoming',
-          'statusText': 'Sắp tới',
-        },
-      ];
-
-      // Completed bookings
-      completedBookings.value = [
-        {
-          'id': '3',
-          'bookingCode': 'HTL-2024-003',
-          'type': 'hotel',
-          'name': 'InterContinental Phú Quốc',
-          'location': 'Phú Quốc, Kiên Giang',
-          'checkIn': '01/01/2024',
-          'checkOut': '05/01/2024',
-          'guests': 2,
-          'rooms': 1,
-          'totalPrice': '15.000.000đ',
-          'status': 'completed',
-          'statusText': 'Hoàn thành',
-        },
-        {
-          'id': '4',
-          'bookingCode': 'HTL-2024-004',
-          'type': 'hotel',
-          'name': 'Sheraton Saigon Hotel & Towers',
-          'location': 'TP. Hồ Chí Minh',
-          'checkIn': '10/12/2023',
-          'checkOut': '12/12/2023',
-          'guests': 1,
-          'rooms': 1,
-          'totalPrice': '4.500.000đ',
-          'status': 'completed',
-          'statusText': 'Hoàn thành',
-        },
-      ];
-
-      // Cancelled bookings
-      cancelledBookings.value = [
-        {
-          'id': '5',
-          'bookingCode': 'HTL-2024-005',
-          'type': 'hotel',
-          'name': 'Vinpearl Resort & Spa Hội An',
-          'location': 'Hội An, Quảng Nam',
-          'checkIn': '15/01/2024',
-          'checkOut': '18/01/2024',
-          'guests': 3,
-          'rooms': 2,
-          'totalPrice': '7.200.000đ',
-          'status': 'cancelled',
-          'statusText': 'Đã hủy',
-        },
-      ];
-
+    try {
+      // TODO: Load real booking data from Firestore
+      // For now, keep empty arrays until backend is ready
+      upcomingBookings.value = [];
+      completedBookings.value = [];
+      cancelledBookings.value = [];
+    } catch (e) {
+      // Handle error
+    } finally {
       isLoadingBookings.value = false;
-    });
+    }
   }
 
   void navigateToBookingDetail(Map<String, dynamic> booking) {

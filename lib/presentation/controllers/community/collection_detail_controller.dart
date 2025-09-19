@@ -1,58 +1,78 @@
 import 'package:get/get.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
-import 'package:wanderlust/presentation/pages/community/collection_detail_page.dart';
+import 'package:wanderlust/core/services/saved_blogs_service.dart';
+import 'package:wanderlust/data/models/blog_post_model.dart';
+import 'package:wanderlust/data/services/blog_service.dart';
 
 class CollectionDetailController extends BaseController {
+  // Services
+  SavedBlogsService get _savedBlogsService {
+    if (!Get.isRegistered<SavedBlogsService>()) {
+      Get.put(SavedBlogsService());
+    }
+    return Get.find<SavedBlogsService>();
+  }
+  
+  final BlogService _blogService = Get.put(BlogService());
+  
+  // Data
+  final RxString collectionId = ''.obs;
   final RxString collectionName = ''.obs;
-  final RxList<SavedPostModel> posts = <SavedPostModel>[].obs;
+  final RxList<BlogPostModel> blogPosts = <BlogPostModel>[].obs;
+  final RxBool isLoadingData = false.obs;
 
   @override
   void onInit() {
     super.onInit();
     final args = Get.arguments;
     if (args != null) {
+      collectionId.value = args['collectionId'] ?? '';
       collectionName.value = args['collectionName'] ?? 'Bộ sưu tập';
-      loadPosts(args['collectionId']);
+      loadPosts();
     }
   }
 
-  void loadPosts(String collectionId) {
-    // Mock data - in real app, load from database based on collectionId
-    posts.value = [
-      SavedPostModel(
-        id: '1',
-        authorName: 'Hiếu Thứ Hai',
-        authorAvatar: 'https://i.pravatar.cc/150?img=3',
-        timeAgo: '2 giờ trước',
-        location: 'Hà Giang',
-        title: 'Chia sẻ kinh nghiệm du lịch Hà Giang',
-        content:
-            'Nội dung bài viết đang được tải. Khám phá vùng đất tuyệt đẹp này cùng những kinh nghiệm thú vị...',
-        images: ['', ''],
-        likeCount: 5000,
-        commentCount: 700,
-      ),
-      SavedPostModel(
-        id: '2',
-        authorName: 'Thế Hưng',
-        authorAvatar: 'https://i.pravatar.cc/150?img=8',
-        timeAgo: 'Hôm qua',
-        location: 'Nha Trang',
-        title: 'Hướng dẫn du lịch Nha Trang',
-        content:
-            'Nội dung bài viết đang được tải. Trải nghiệm tuyệt vời tại biển Nha Trang cùng những địa điểm tham quan nổi tiếng...',
-        images: [''],
-        likeCount: 3200,
-        commentCount: 450,
-      ),
-    ];
+  void loadPosts() async {
+    if (collectionId.value.isEmpty) return;
+    
+    isLoadingData.value = true;
+    
+    try {
+      // Get saved blogs IDs from service
+      final savedBlogs = _savedBlogsService.getSavedBlogsForCollection(collectionId.value);
+      
+      // Load all blog data in parallel for better performance
+      final futures = savedBlogs.map((savedBlog) => _blogService.getPost(savedBlog.id)).toList();
+      final results = await Future.wait(futures);
+      
+      // Filter out null values and assign
+      blogPosts.value = results.where((blog) => blog != null).cast<BlogPostModel>().toList();
+    } finally {
+      isLoadingData.value = false;
+    }
+  }
+  
+  Future<void> refreshPosts() async {
+    loadPosts();
+  }
+  
+  Future<void> toggleLike(String postId) async {
+    await _blogService.toggleLike(postId);
+    // Refresh the specific blog
+    final index = blogPosts.indexWhere((b) => b.id == postId);
+    if (index != -1) {
+      final updatedBlog = await _blogService.getPost(postId);
+      if (updatedBlog != null) {
+        blogPosts[index] = updatedBlog;
+      }
+    }
   }
 
-  void openBlogDetail(SavedPostModel post) {
-    Get.toNamed('/blog-detail', arguments: {'postId': post.id});
+  void openBlogDetail(String postId) {
+    Get.toNamed('/blog-detail', arguments: {'postId': postId});
   }
 
-  void toggleBookmark(String postId) {
+  void toggleBookmark(String postId) async {
     // Show confirmation dialog
     Get.defaultDialog(
       title: 'Xóa khỏi bộ sưu tập?',
@@ -61,8 +81,9 @@ class CollectionDetailController extends BaseController {
       textConfirm: 'Xóa',
       confirmTextColor: Get.theme.colorScheme.onError,
       buttonColor: Get.theme.colorScheme.error,
-      onConfirm: () {
-        posts.removeWhere((post) => post.id == postId);
+      onConfirm: () async {
+        await _savedBlogsService.removeBlogFromCollection(postId, collectionId.value);
+        blogPosts.removeWhere((blog) => blog.id == postId);
         Get.back();
         Get.snackbar(
           'Đã xóa',

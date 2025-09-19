@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
+import 'package:wanderlust/core/services/saved_blogs_service.dart';
+import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/presentation/controllers/community/saved_collections_controller.dart';
 
 class SavedCollectionsPage extends GetView<SavedCollectionsController> {
@@ -11,8 +12,6 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
 
   @override
   Widget build(BuildContext context) {
-    Get.lazyPut(() => SavedCollectionsController());
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -71,7 +70,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
     );
   }
 
-  Widget _buildCollectionCard(CollectionModel collection) {
+  Widget _buildCollectionCard(BlogCollection collection) {
     return GestureDetector(
       onTap: () => controller.openCollection(collection),
       child: Container(
@@ -79,7 +78,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -90,7 +89,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
           child: Stack(
             children: [
               // Collection Images Collage
-              _buildCollageImages(collection.images),
+              _buildCollageImages(controller.getCollectionImages(collection)),
 
               // Gradient overlay
               Positioned(
@@ -103,7 +102,7 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
                     ),
                   ),
                 ),
@@ -143,8 +142,8 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
     }
 
     if (images.length == 1) {
-      return CachedNetworkImage(
-        imageUrl: images[0],
+      return AppImage(
+        imageData: images[0],
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
@@ -155,15 +154,15 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
       return Row(
         children: [
           Expanded(
-            child: CachedNetworkImage(
-              imageUrl: images[0],
+            child: AppImage(
+              imageData: images[0],
               fit: BoxFit.cover,
               height: double.infinity,
             ),
           ),
           Expanded(
-            child: CachedNetworkImage(
-              imageUrl: images[1],
+            child: AppImage(
+              imageData: images[1],
               fit: BoxFit.cover,
               height: double.infinity,
             ),
@@ -176,8 +175,8 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
       return Column(
         children: [
           Expanded(
-            child: CachedNetworkImage(
-              imageUrl: images[0],
+            child: AppImage(
+              imageData: images[0],
               fit: BoxFit.cover,
               width: double.infinity,
             ),
@@ -186,15 +185,15 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
             child: Row(
               children: [
                 Expanded(
-                  child: CachedNetworkImage(
-                    imageUrl: images[1],
+                  child: AppImage(
+                    imageData: images[1],
                     fit: BoxFit.cover,
                     height: double.infinity,
                   ),
                 ),
                 Expanded(
-                  child: CachedNetworkImage(
-                    imageUrl: images[2],
+                  child: AppImage(
+                    imageData: images[2],
                     fit: BoxFit.cover,
                     height: double.infinity,
                   ),
@@ -213,15 +212,15 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
           child: Row(
             children: [
               Expanded(
-                child: CachedNetworkImage(
-                  imageUrl: images[0],
+                child: AppImage(
+                  imageData: images[0],
                   fit: BoxFit.cover,
                   height: double.infinity,
                 ),
               ),
               Expanded(
-                child: CachedNetworkImage(
-                  imageUrl: images[1],
+                child: AppImage(
+                  imageData: images[1],
                   fit: BoxFit.cover,
                   height: double.infinity,
                 ),
@@ -233,8 +232,8 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
           child: Row(
             children: [
               Expanded(
-                child: CachedNetworkImage(
-                  imageUrl: images[2],
+                child: AppImage(
+                  imageData: images[2],
                   fit: BoxFit.cover,
                   height: double.infinity,
                 ),
@@ -242,8 +241,8 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
               Expanded(
                 child:
                     images.length > 3
-                        ? CachedNetworkImage(
-                          imageUrl: images[3],
+                        ? AppImage(
+                          imageData: images[3],
                           fit: BoxFit.cover,
                           height: double.infinity,
                         )
@@ -284,21 +283,4 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
       ),
     );
   }
-}
-
-// Model
-class CollectionModel {
-  final String id;
-  final String name;
-  final List<String> images;
-  final int postCount;
-  final bool isDefault;
-
-  CollectionModel({
-    required this.id,
-    required this.name,
-    required this.images,
-    required this.postCount,
-    this.isDefault = false,
-  });
 }

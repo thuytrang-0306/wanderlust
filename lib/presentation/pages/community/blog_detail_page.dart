@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
+import 'package:wanderlust/core/services/saved_blogs_service.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/presentation/controllers/community/blog_detail_controller.dart';
 import 'package:wanderlust/data/models/blog_post_model.dart';
@@ -12,6 +13,10 @@ class BlogDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ensure SavedBlogsService is initialized first
+    if (!Get.isRegistered<SavedBlogsService>()) {
+      Get.put(SavedBlogsService());
+    }
     final controller = Get.put(BlogDetailController());
 
     return Scaffold(
