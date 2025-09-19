@@ -9,9 +9,9 @@ import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/widgets/app_button.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/data/models/business_profile_model.dart';
-import 'package:wanderlust/data/models/room_model.dart';
+import 'package:wanderlust/data/models/listing_model.dart';
 import 'package:wanderlust/data/services/business_service.dart';
-import 'package:wanderlust/data/services/room_service.dart';
+import 'package:wanderlust/data/services/listing_service.dart';
 
 class BusinessDashboardPage extends StatefulWidget {
   const BusinessDashboardPage({super.key});
@@ -24,14 +24,18 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final BusinessService _businessService = Get.find<BusinessService>();
-  final RoomService _roomService = Get.find<RoomService>();
+  final ListingService _listingService = Get.find<ListingService>();
+  
+  // Filter state
+  final Rx<ListingType?> selectedFilter = Rx<ListingType?>(null);
+  final RxString sortBy = 'newest'.obs; // newest, oldest, price_low, price_high
   
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _businessService.loadCurrentBusinessProfile();
-    _roomService.loadBusinessRooms();
+    _listingService.loadBusinessListings();
   }
   
   @override
@@ -313,7 +317,7 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
               Obx(() => _buildStatCard(
                 icon: Icons.list_alt,
                 label: 'Listings',
-                value: _roomService.businessRooms.length.toString(),
+                value: _listingService.businessListings.length.toString(),
                 color: Colors.blue,
               )),
               SizedBox(width: AppSpacing.s3),
@@ -390,6 +394,44 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                     AppSnackbar.showInfo(message: 'Tính năng khuyến mãi sẽ sớm được cập nhật');
                   },
                 ),
+                // Migration helper (temporary - remove after migration)
+                if (business.businessType == BusinessType.hotel) ...[
+                  Divider(height: 24.h),
+                  _buildActionItem(
+                    icon: Icons.sync_alt,
+                    title: 'Di chuyển dữ liệu phòng',
+                    subtitle: 'Chuyển từ hệ thống cũ sang mới',
+                    onTap: () async {
+                      final confirm = await Get.dialog<bool>(
+                        AlertDialog(
+                          title: Text('Di chuyển dữ liệu'),
+                          content: Text('Chuyển toàn bộ phòng từ hệ thống cũ sang hệ thống listing mới?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Get.back(result: false),
+                              child: Text('Hủy'),
+                            ),
+                            TextButton(
+                              onPressed: () => Get.back(result: true),
+                              child: Text('Di chuyển'),
+                            ),
+                          ],
+                        ),
+                      );
+                      
+                      if (confirm == true) {
+                        AppSnackbar.showInfo(message: 'Đang di chuyển dữ liệu...');
+                        final success = await _listingService.migrateRoomsToListings();
+                        if (success) {
+                          AppSnackbar.showSuccess(message: 'Di chuyển dữ liệu thành công!');
+                          _listingService.loadBusinessListings();
+                        } else {
+                          AppSnackbar.showError(message: 'Lỗi khi di chuyển dữ liệu');
+                        }
+                      }
+                    },
+                  ),
+                ],
               ],
             ),
           ),
@@ -400,13 +442,13 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
   
   Widget _buildListingsTab(BusinessProfileModel business) {
     return Obx(() {
-      if (_roomService.isLoading.value) {
+      if (_listingService.isLoading.value) {
         return Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         );
       }
       
-      if (_roomService.businessRooms.isEmpty) {
+      if (_listingService.businessListings.isEmpty) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -435,7 +477,7 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
               SizedBox(
                 width: 200.w,
                 child: AppButton.primary(
-                  onPressed: () => _navigateToCreateListing(business.businessType),
+                  onPressed: () => Get.toNamed('/create-listing'),
                   text: 'Tạo listing đầu tiên',
                 ),
               ),
@@ -444,38 +486,154 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
         );
       }
       
-      // Show room listings
+      // Show listings with filters
       return RefreshIndicator(
         onRefresh: () async {
-          await _roomService.loadBusinessRooms();
+          await _listingService.loadBusinessListings();
         },
-        child: ListView(
-          padding: EdgeInsets.all(AppSpacing.s5),
+        child: Column(
           children: [
-            // Add new room button
+            // Filter chips
             Container(
-              margin: EdgeInsets.only(bottom: AppSpacing.s4),
-              child: AppButton.outline(
-                onPressed: () async {
-                  final result = await Get.toNamed('/create-room-listing');
-                  if (result == true) {
-                    _roomService.loadBusinessRooms();
-                  }
-                },
-                text: 'Thêm phòng mới',
-                icon: Icons.add,
+              color: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s3),
+              child: Column(
+                children: [
+                  // Type filters
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Obx(() => Row(
+                      children: [
+                        _buildFilterChip('Tất cả', null),
+                        SizedBox(width: AppSpacing.s2),
+                        _buildFilterChip('Phòng', ListingType.room),
+                        SizedBox(width: AppSpacing.s2),
+                        _buildFilterChip('Tour', ListingType.tour),
+                        SizedBox(width: AppSpacing.s2),
+                        _buildFilterChip('Ẩm thực', ListingType.food),
+                        SizedBox(width: AppSpacing.s2),
+                        _buildFilterChip('Dịch vụ', ListingType.service),
+                      ],
+                    )),
+                  ),
+                  SizedBox(height: AppSpacing.s2),
+                  // Sort dropdown
+                  Row(
+                    children: [
+                      Text('Sắp xếp:', style: AppTypography.bodyS),
+                      SizedBox(width: AppSpacing.s2),
+                      Obx(() => DropdownButton<String>(
+                        value: sortBy.value,
+                        underline: SizedBox(),
+                        style: AppTypography.bodyS.copyWith(color: AppColors.neutral700),
+                        items: [
+                          DropdownMenuItem(value: 'newest', child: Text('Mới nhất')),
+                          DropdownMenuItem(value: 'oldest', child: Text('Cũ nhất')),
+                          DropdownMenuItem(value: 'price_low', child: Text('Giá thấp → cao')),
+                          DropdownMenuItem(value: 'price_high', child: Text('Giá cao → thấp')),
+                        ],
+                        onChanged: (value) {
+                          sortBy.value = value!;
+                        },
+                      )),
+                    ],
+                  ),
+                ],
               ),
             ),
             
-            // Room list
-            ..._roomService.businessRooms.map((room) => _buildRoomCard(room)).toList(),
+            // Listings
+            Expanded(
+              child: Obx(() {
+                // Apply filters and sorting
+                var filteredListings = selectedFilter.value == null 
+                    ? _listingService.businessListings.toList()
+                    : _listingService.businessListings.where((l) => l.type == selectedFilter.value).toList();
+                
+                // Apply sorting
+                switch (sortBy.value) {
+                  case 'oldest':
+                    filteredListings.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+                    break;
+                  case 'price_low':
+                    filteredListings.sort((a, b) => a.price.compareTo(b.price));
+                    break;
+                  case 'price_high':
+                    filteredListings.sort((a, b) => b.price.compareTo(a.price));
+                    break;
+                  default: // newest
+                    filteredListings.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                }
+                
+                return ListView(
+                  padding: EdgeInsets.all(AppSpacing.s5),
+                  children: [
+                    // Add new listing button
+                    Container(
+                      margin: EdgeInsets.only(bottom: AppSpacing.s4),
+                      child: AppButton.outline(
+                        onPressed: () async {
+                          final result = await Get.toNamed('/create-listing');
+                          if (result == true) {
+                            _listingService.loadBusinessListings();
+                          }
+                        },
+                        text: 'Thêm listing mới',
+                        icon: Icons.add,
+                      ),
+                    ),
+                    
+                    // Listing cards
+                    if (filteredListings.isEmpty)
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: AppSpacing.s10),
+                        child: Column(
+                          children: [
+                            Icon(Icons.search_off, size: 60.sp, color: AppColors.neutral400),
+                            SizedBox(height: AppSpacing.s3),
+                            Text(
+                              'Không có listing nào',
+                              style: AppTypography.bodyM.copyWith(color: AppColors.neutral600),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ...filteredListings.map((listing) => _buildListingCard(listing)),
+                  ],
+                );
+              }),
+            ),
           ],
         ),
       );
     });
   }
   
-  Widget _buildRoomCard(RoomModel room) {
+  Widget _buildFilterChip(String label, ListingType? type) {
+    final isSelected = selectedFilter.value == type;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        selectedFilter.value = selected ? type : null;
+      },
+      backgroundColor: Colors.white,
+      selectedColor: AppColors.primary.withOpacity(0.1),
+      labelStyle: AppTypography.bodyS.copyWith(
+        color: isSelected ? AppColors.primary : AppColors.neutral600,
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20.r),
+        side: BorderSide(
+          color: isSelected ? AppColors.primary : AppColors.neutral300,
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildListingCard(ListingModel listing) {
     return Container(
       margin: EdgeInsets.only(bottom: AppSpacing.s3),
       decoration: BoxDecoration(
@@ -493,13 +651,13 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Room image
-          if (room.images.isNotEmpty)
+          if (listing.images.isNotEmpty)
             Container(
               height: 180.h,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
                 image: DecorationImage(
-                  image: MemoryImage(_convertBase64ToBytes(room.images.first)),
+                  image: MemoryImage(_convertBase64ToBytes(listing.images.first)),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -516,7 +674,7 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                   children: [
                     Expanded(
                       child: Text(
-                        room.roomName,
+                        listing.title,
                         style: AppTypography.bodyL.copyWith(
                           color: AppColors.neutral900,
                           fontWeight: FontWeight.w600,
@@ -531,13 +689,13 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                         vertical: 4.h,
                       ),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(room.status).withOpacity(0.1),
+                        color: listing.isActive ? AppColors.success : AppColors.neutral500.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                       child: Text(
-                        room.statusDisplayName,
+                        listing.isActive ? 'Hoạt động' : 'Tạm dẫng',
                         style: AppTypography.bodyXS.copyWith(
-                          color: _getStatusColor(room.status),
+                          color: listing.isActive ? AppColors.success : AppColors.neutral500,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -550,10 +708,10 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                 // Room type
                 Row(
                   children: [
-                    Text(room.typeIcon, style: TextStyle(fontSize: 16.sp)),
+                    Text(_getListingIcon(listing.type), style: TextStyle(fontSize: 16.sp)),
                     SizedBox(width: 4.w),
                     Text(
-                      room.typeDisplayName,
+                      _getListingTypeLabel(listing.type),
                       style: AppTypography.bodyS.copyWith(
                         color: AppColors.neutral600,
                       ),
@@ -563,16 +721,8 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                 
                 SizedBox(height: AppSpacing.s3),
                 
-                // Room details
-                Row(
-                  children: [
-                    _buildRoomDetail(Icons.people, '${room.maxGuests} khách'),
-                    SizedBox(width: AppSpacing.s4),
-                    _buildRoomDetail(Icons.bed, '${room.numberOfBeds} giường'),
-                    SizedBox(width: AppSpacing.s4),
-                    _buildRoomDetail(Icons.square_foot, '${room.roomSize}m²'),
-                  ],
-                ),
+                // Listing details
+                _buildListingDetails(listing),
                 
                 SizedBox(height: AppSpacing.s3),
                 
@@ -583,16 +733,16 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (room.hasDiscount)
+                          if (listing.hasDiscount)
                             Text(
-                              room.formattedPrice,
+                              listing.formattedPrice,
                               style: AppTypography.bodyS.copyWith(
                                 color: AppColors.neutral500,
                                 decoration: TextDecoration.lineThrough,
                               ),
                             ),
                           Text(
-                            room.hasDiscount ? room.formattedDiscountPrice : room.formattedPrice,
+                            listing.hasDiscount ? listing.formattedDiscountPrice : listing.formattedPrice,
                             style: AppTypography.bodyL.copyWith(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w700,
@@ -610,24 +760,39 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                     // Action buttons
                     Row(
                       children: [
+                        // Toggle active status
                         IconButton(
-                          icon: Icon(Icons.visibility_outlined, color: AppColors.neutral700),
-                          onPressed: () {
-                            Get.toNamed('/room-detail', arguments: room.id);
+                          icon: Icon(
+                            listing.isActive ? Icons.toggle_on : Icons.toggle_off_outlined,
+                            color: listing.isActive ? AppColors.success : AppColors.neutral500,
+                            size: 28.sp,
+                          ),
+                          onPressed: () async {
+                            final newStatus = !listing.isActive;
+                            final success = await _listingService.updateListing(
+                              listing.id, 
+                              {'isActive': newStatus}
+                            );
+                            if (success) {
+                              AppSnackbar.showSuccess(
+                                message: newStatus ? 'Đã kích hoạt' : 'Đã tạm dừng'
+                              );
+                              _listingService.loadBusinessListings();
+                            }
                           },
                         ),
                         IconButton(
                           icon: Icon(Icons.edit_outlined, color: AppColors.neutral700),
                           onPressed: () async {
-                            final result = await Get.toNamed('/edit-room-listing', arguments: room.id);
+                            final result = await Get.toNamed('/create-listing', arguments: listing.id);
                             if (result == true) {
-                              _roomService.loadBusinessRooms();
+                              _listingService.loadBusinessListings();
                             }
                           },
                         ),
                         IconButton(
                           icon: Icon(Icons.delete_outline, color: AppColors.error),
-                          onPressed: () => _showDeleteRoomDialog(room),
+                          onPressed: () => _showDeleteListingDialog(listing),
                         ),
                       ],
                     ),
@@ -656,24 +821,76 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
     );
   }
   
-  Color _getStatusColor(RoomStatus status) {
-    switch (status) {
-      case RoomStatus.available:
-        return AppColors.success;
-      case RoomStatus.booked:
-        return AppColors.warning;
-      case RoomStatus.maintenance:
-        return AppColors.neutral500;
-      case RoomStatus.inactive:
-        return AppColors.error;
+  String _getListingIcon(ListingType type) {
+    switch (type) {
+      case ListingType.room:
+        return '🏨';
+      case ListingType.tour:
+        return '✈️';
+      case ListingType.food:
+        return '🍴';
+      case ListingType.service:
+        return '🛠️';
     }
   }
   
-  void _showDeleteRoomDialog(RoomModel room) {
+  String _getListingTypeLabel(ListingType type) {
+    switch (type) {
+      case ListingType.room:
+        return 'Phòng';
+      case ListingType.tour:
+        return 'Tour du lịch';
+      case ListingType.food:
+        return 'Ẩm thực';
+      case ListingType.service:
+        return 'Dịch vụ';
+    }
+  }
+  
+  Widget _buildListingDetails(ListingModel listing) {
+    switch (listing.type) {
+      case ListingType.room:
+        return Row(
+          children: [
+            _buildRoomDetail(Icons.people, '${listing.details['maxGuests'] ?? 0} khách'),
+            SizedBox(width: AppSpacing.s4),
+            _buildRoomDetail(Icons.bed, '${listing.details['numberOfBeds'] ?? 0} giường'),
+            SizedBox(width: AppSpacing.s4),
+            _buildRoomDetail(Icons.square_foot, '${listing.details['roomSize'] ?? 0}m²'),
+          ],
+        );
+      case ListingType.tour:
+        return Row(
+          children: [
+            _buildRoomDetail(Icons.timer, '${listing.details['duration'] ?? 0} giờ'),
+            SizedBox(width: AppSpacing.s4),
+            _buildRoomDetail(Icons.people, '${listing.details['groupSize'] ?? 0} người'),
+          ],
+        );
+      case ListingType.food:
+        return Row(
+          children: [
+            _buildRoomDetail(Icons.restaurant_menu, listing.details['category'] ?? 'Khác'),
+            SizedBox(width: AppSpacing.s4),
+            _buildRoomDetail(Icons.people, '${listing.details['servingSize'] ?? 0} người'),
+          ],
+        );
+      case ListingType.service:
+        return Row(
+          children: [
+            _buildRoomDetail(Icons.timer, '${listing.details['duration'] ?? 0} giờ'),
+            SizedBox(width: AppSpacing.s4),
+            _buildRoomDetail(Icons.location_on, listing.details['location'] ?? 'Tại chỗ'),
+          ],
+        );
+    }
+  }
+  
+  void _showDeleteListingDialog(ListingModel listing) {
     Get.dialog(
       AlertDialog(
-        title: Text('Xóa phòng'),
-        content: Text('Bạn có chắc chắn muốn xóa phòng "${room.roomName}"?'),
+        title: Text('Xóa listing'),
+        content: Text('Bạn có chắc chắn muốn xóa "${listing.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
@@ -682,11 +899,11 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
           TextButton(
             onPressed: () async {
               Get.back();
-              final success = await _roomService.deleteRoom(room.id);
+              final success = await _listingService.deleteListing(listing.id);
               if (success) {
-                AppSnackbar.showSuccess(message: 'Đã xóa phòng');
+                AppSnackbar.showSuccess(message: 'Đã xóa listing');
               } else {
-                AppSnackbar.showError(message: 'Không thể xóa phòng');
+                AppSnackbar.showError(message: 'Không thể xóa listing');
               }
             },
             child: Text('Xóa', style: TextStyle(color: AppColors.error)),
@@ -899,7 +1116,7 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
     // Navigate to listing pages based on business type
     switch (type) {
       case BusinessType.hotel:
-        Get.toNamed('/create-room-listing');
+        Get.toNamed('/create-listing');
         break;
       case BusinessType.tour:
         AppSnackbar.showInfo(message: 'Tính năng thêm tour sẽ sớm được cập nhật');

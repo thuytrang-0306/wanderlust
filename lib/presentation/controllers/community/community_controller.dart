@@ -3,16 +3,20 @@ import 'package:wanderlust/presentation/pages/community/community_page.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 import 'package:wanderlust/data/services/blog_service.dart';
 import 'package:wanderlust/data/services/accommodation_service.dart';
+import 'package:wanderlust/data/services/listing_service.dart';
+import 'package:wanderlust/data/models/listing_model.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 
 class CommunityController extends GetxController {
   // Services
   final BlogService _blogService = Get.put(BlogService());
   final AccommodationService _accommodationService = Get.put(AccommodationService());
+  final ListingService _listingService = Get.find<ListingService>();
 
   // Observable lists
   final RxList<PostModel> posts = <PostModel>[].obs;
   final RxList<ReviewModel> reviews = <ReviewModel>[].obs;
+  final RxList<ListingModel> businessPosts = <ListingModel>[].obs;
   final RxBool isLoading = false.obs;
 
   // User interaction tracking
@@ -24,6 +28,7 @@ class CommunityController extends GetxController {
     super.onInit();
     _loadRealPosts();
     _loadRealReviews();
+    _loadBusinessPosts();
     _trackUserInteractions();
   }
 
@@ -155,6 +160,32 @@ class CommunityController extends GetxController {
       return '${difference.inMinutes} phút trước';
     } else {
       return 'Vừa xong';
+    }
+  }
+
+  void _loadBusinessPosts() async {
+    try {
+      // Load business listings with high ratings
+      final listings = await _listingService.searchListings();
+      
+      // Filter for listings with good ratings and reviews
+      final topListings = listings
+          .where((l) => l.isActive && l.rating >= 4.0 && l.reviews > 0)
+          .toList()
+        ..sort((a, b) {
+          // Sort by rating and reviews
+          final ratingCompare = b.rating.compareTo(a.rating);
+          if (ratingCompare != 0) return ratingCompare;
+          return b.reviews.compareTo(a.reviews);
+        });
+      
+      // Take top 5 for community showcase
+      businessPosts.value = topListings.take(5).toList();
+      
+      LoggerService.i('Loaded ${businessPosts.length} business posts');
+    } catch (e) {
+      LoggerService.e('Error loading business posts', error: e);
+      businessPosts.value = [];
     }
   }
 

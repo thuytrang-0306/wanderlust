@@ -3,10 +3,12 @@ import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/data/models/destination_model.dart';
 import 'package:wanderlust/data/models/tour_model.dart';
 import 'package:wanderlust/data/models/blog_post_model.dart';
+import 'package:wanderlust/data/models/listing_model.dart';
 import 'package:wanderlust/data/services/destination_service.dart';
 import 'package:wanderlust/data/services/tour_service.dart';
 import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/data/services/blog_service.dart';
+import 'package:wanderlust/data/services/listing_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +19,7 @@ class DiscoverController extends BaseController {
   final TourService _tourService = Get.find<TourService>();
   final TripService _tripService = Get.find<TripService>();
   final BlogService _blogService = Get.find<BlogService>();
+  final ListingService _listingService = Get.find<ListingService>();
 
   // Data
   final RxList<DestinationModel> featuredDestinations = <DestinationModel>[].obs;
@@ -26,6 +29,7 @@ class DiscoverController extends BaseController {
   final RxList<TourModel> comboTours = <TourModel>[].obs; // Combo tours
   final RxList<BlogPostModel> recentBlogs = <BlogPostModel>[].obs;
   final RxList<Map<String, dynamic>> exploreRegions = <Map<String, dynamic>>[].obs; // Regions
+  final RxList<ListingModel> businessListings = <ListingModel>[].obs; // Business listings
 
   // UI State
   final RxInt currentBannerIndex = 0.obs;
@@ -66,6 +70,7 @@ class DiscoverController extends BaseController {
       loadBlogs(),
       loadComboTours(),
       loadRegions(),
+      loadBusinessListings(),
     ]);
   }
 
@@ -241,6 +246,32 @@ class DiscoverController extends BaseController {
 
   void onRegionTapped(Map<String, dynamic> region) {
     Get.toNamed('/region', arguments: {'region': region});
+  }
+
+  Future<void> loadBusinessListings() async {
+    try {
+      // Load all active business listings
+      final listings = await _listingService.searchListings();
+      
+      // Filter active listings and sort by rating/popularity
+      final activeListings = listings
+          .where((l) => l.isActive)
+          .toList()
+        ..sort((a, b) {
+          // Sort by rating first, then by reviews count
+          final ratingCompare = b.rating.compareTo(a.rating);
+          if (ratingCompare != 0) return ratingCompare;
+          return b.reviews.compareTo(a.reviews);
+        });
+      
+      // Take top 10 listings
+      businessListings.value = activeListings.take(10).toList();
+      
+      LoggerService.i('Loaded ${businessListings.length} business listings');
+    } catch (e) {
+      LoggerService.e('Error loading business listings', error: e);
+      businessListings.value = [];
+    }
   }
 
   void onSeeAllRegions() {

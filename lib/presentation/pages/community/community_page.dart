@@ -29,6 +29,12 @@ class CommunityPage extends GetView<CommunityController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Business Highlights Section  
+                      if (controller.businessPosts.isNotEmpty) ...[
+                        _buildBusinessHighlights(),
+                        SizedBox(height: AppSpacing.s4),
+                      ],
+
                       // Posts Feed
                       ...controller.posts.map((post) => _buildPostCard(post)),
 
@@ -409,6 +415,203 @@ class CommunityPage extends GetView<CommunityController> {
       return '${(count / 1000).toStringAsFixed(count % 1000 == 0 ? 0 : 1)}k';
     }
     return count.toString();
+  }
+
+  Widget _buildBusinessHighlights() {
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Header
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Dịch vụ được đánh giá cao',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.neutral900,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Get.toNamed('/business-dashboard');
+                  },
+                  child: Text(
+                    'Xem tất cả',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          SizedBox(height: AppSpacing.s3),
+          
+          // Horizontal List
+          SizedBox(
+            height: 220.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              itemCount: controller.businessPosts.length,
+              itemBuilder: (context, index) {
+                final listing = controller.businessPosts[index];
+                return Container(
+                  width: 160.w,
+                  margin: EdgeInsets.only(right: AppSpacing.s3),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.neutral200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Image
+                      Container(
+                        height: 100.h,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(12.r),
+                          ),
+                          color: AppColors.neutral200,
+                        ),
+                        child: Stack(
+                          children: [
+                            if (listing.images.isNotEmpty)
+                              ClipRRect(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(12.r),
+                                ),
+                                child: AppImage(
+                                  imageData: listing.images.first,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                ),
+                              ),
+                            
+                            // Type Badge
+                            Positioned(
+                              top: 8.h,
+                              left: 8.w,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 3.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.9),
+                                  borderRadius: BorderRadius.circular(6.r),
+                                ),
+                                child: Text(
+                                  listing.typeIcon,
+                                  style: TextStyle(fontSize: 12.sp),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Content
+                      Padding(
+                        padding: EdgeInsets.all(AppSpacing.s3),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Title
+                            Text(
+                              listing.title,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.neutral900,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            
+                            SizedBox(height: 4.h),
+                            
+                            // Business Name
+                            Text(
+                              listing.businessName,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColors.neutral600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            
+                            SizedBox(height: 8.h),
+                            
+                            // Rating & Price
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Rating
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      size: 14.sp,
+                                      color: AppColors.warning,
+                                    ),
+                                    SizedBox(width: 2.w),
+                                    Text(
+                                      listing.rating.toStringAsFixed(1),
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      ' (${listing.reviews})',
+                                      style: TextStyle(
+                                        fontSize: 11.sp,
+                                        color: AppColors.neutral600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            
+                            SizedBox(height: 4.h),
+                            
+                            // Price
+                            Text(
+                              listing.formattedPrice,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildEmptyState() {

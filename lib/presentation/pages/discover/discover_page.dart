@@ -67,6 +67,11 @@ class DiscoverPage extends GetView<DiscoverController> {
                 // Popular Destinations
                 _buildPopularDestinations(),
 
+                SizedBox(height: AppSpacing.s6),
+
+                // Business Listings Section
+                _buildBusinessListings(),
+
                 // Bottom padding
                 SizedBox(height: 100.h),
               ],
@@ -1177,6 +1182,246 @@ class DiscoverPage extends GetView<DiscoverController> {
                               ),
                             ],
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildBusinessListings() {
+    return Obx(() {
+      if (controller.businessListings.isEmpty) {
+        return SizedBox();
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Header
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Dịch vụ nổi bật',
+                      style: AppTypography.h3.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.neutral900,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Khám phá các dịch vụ tốt nhất',
+                      style: AppTypography.bodyS.copyWith(
+                        color: AppColors.neutral600,
+                      ),
+                    ),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Navigate to all listings
+                    Get.toNamed('/search-filter', arguments: {'type': 'business'});
+                  },
+                  child: Text(
+                    'Xem tất cả',
+                    style: AppTypography.bodyM.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          SizedBox(height: AppSpacing.s4),
+          
+          // Business Listings Horizontal List
+          SizedBox(
+            height: 280.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              itemCount: controller.businessListings.take(6).length,
+              itemBuilder: (context, index) {
+                final listing = controller.businessListings[index];
+                return Container(
+                  width: 200.w,
+                  margin: EdgeInsets.only(right: AppSpacing.s3),
+                  child: GestureDetector(
+                    onTap: () {
+                      // Navigate to listing detail
+                      Get.toNamed('/listing-detail', arguments: listing.id);
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Image
+                        Container(
+                          height: 140.h,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12.r),
+                            color: AppColors.neutral200,
+                          ),
+                          child: Stack(
+                            children: [
+                              if (listing.images.isNotEmpty)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  child: AppImage(
+                                    imageData: listing.images.first,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  ),
+                                ),
+                              
+                              // Type badge
+                              Positioned(
+                                top: 8.h,
+                                left: 8.w,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 4.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.9),
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        listing.typeIcon,
+                                        style: TextStyle(fontSize: 14.sp),
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Text(
+                                        listing.typeDisplayName,
+                                        style: AppTypography.bodyXS.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              
+                              // Price
+                              if (listing.hasDiscount)
+                                Positioned(
+                                  top: 8.h,
+                                  right: 8.w,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w,
+                                      vertical: 3.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error,
+                                      borderRadius: BorderRadius.circular(4.r),
+                                    ),
+                                    child: Text(
+                                      '-${listing.discountPercentage.toStringAsFixed(0)}%',
+                                      style: AppTypography.bodyXS.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        
+                        SizedBox(height: AppSpacing.s2),
+                        
+                        // Business Name
+                        Text(
+                          listing.businessName,
+                          style: AppTypography.bodyXS.copyWith(
+                            color: AppColors.neutral600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        
+                        // Title
+                        Text(
+                          listing.title,
+                          style: AppTypography.bodyM.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.neutral900,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        
+                        SizedBox(height: AppSpacing.s1),
+                        
+                        // Rating
+                        if (listing.rating > 0)
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.star,
+                                size: 14.sp,
+                                color: AppColors.warning,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                listing.rating.toStringAsFixed(1),
+                                style: AppTypography.bodyS.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                ' (${listing.reviews})',
+                                style: AppTypography.bodyS.copyWith(
+                                  color: AppColors.neutral600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        
+                        Spacer(),
+                        
+                        // Price
+                        Row(
+                          children: [
+                            if (listing.hasDiscount)
+                              Text(
+                                listing.formattedPrice,
+                                style: AppTypography.bodyS.copyWith(
+                                  color: AppColors.neutral500,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            if (listing.hasDiscount)
+                              SizedBox(width: 6.w),
+                            Text(
+                              listing.hasDiscount 
+                                  ? listing.formattedDiscountPrice 
+                                  : listing.formattedPrice,
+                              style: AppTypography.bodyM.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

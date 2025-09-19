@@ -63,9 +63,7 @@ abstract class Routes {
   static const BUSINESS_VERIFICATION = '/business-verification';
   
   // Business Listings
-  static const CREATE_ROOM_LISTING = '/create-room-listing';
-  static const EDIT_ROOM_LISTING = '/edit-room-listing';
-  static const ROOM_DETAIL = '/room-detail';
+  static const CREATE_LISTING = '/create-listing';
   static const CREATE_TOUR_LISTING = '/create-tour-listing';
   static const CREATE_MENU = '/create-menu';
   static const CREATE_SERVICE_LISTING = '/create-service-listing';

@@ -38,9 +38,7 @@ import 'package:wanderlust/presentation/bindings/ai_chat_binding.dart';
 import 'package:wanderlust/presentation/pages/business/business_type_selection_page.dart';
 import 'package:wanderlust/presentation/pages/business/business_info_form_page.dart';
 import 'package:wanderlust/presentation/pages/business/business_dashboard_page.dart';
-import 'package:wanderlust/presentation/pages/room/create_room_page.dart';
-import 'package:wanderlust/presentation/pages/room/edit_room_page.dart';
-import 'package:wanderlust/presentation/pages/room/room_detail_page.dart';
+import 'package:wanderlust/presentation/pages/listing/create_listing_page.dart';
 
 part 'app_routes.dart';
 
@@ -196,20 +194,10 @@ class AppPages {
       page: () => const BusinessDashboardPage(),
       transition: Transition.rightToLeft,
     ),
-    // Room routes
+    // Unified Listing routes
     GetPage(
-      name: Routes.CREATE_ROOM_LISTING,
-      page: () => const CreateRoomPage(),
-      transition: Transition.rightToLeft,
-    ),
-    GetPage(
-      name: Routes.EDIT_ROOM_LISTING,
-      page: () => const EditRoomPage(),
-      transition: Transition.rightToLeft,
-    ),
-    GetPage(
-      name: Routes.ROOM_DETAIL,
-      page: () => const RoomDetailPage(),
+      name: Routes.CREATE_LISTING,
+      page: () => CreateListingPage(),
       transition: Transition.rightToLeft,
     ),
   ];
