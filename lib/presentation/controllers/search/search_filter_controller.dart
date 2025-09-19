@@ -5,6 +5,9 @@ import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:wanderlust/data/services/blog_service.dart';
 import 'package:wanderlust/data/services/trip_service.dart';
+import 'package:wanderlust/data/services/listing_service.dart';
+import 'package:wanderlust/data/models/listing_model.dart';
+import 'package:intl/intl.dart';
 // import 'package:wanderlust/core/services/storage_service.dart'; // TODO: Implement later
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
@@ -106,68 +109,117 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
       }
 
       // Get services
+      final listingService = Get.find<ListingService>();
       final blogService = Get.find<BlogService>();
       final tripService = Get.find<TripService>();
 
       final results = <Map<String, dynamic>>[];
-      final query = searchQuery.value.toLowerCase();
+      final query = searchQuery.value;
 
-      // Search based on selected tab
+      // Determine listing type based on tab
+      ListingType? filterType;
+      switch (selectedTab.value) {
+        case 1: // Chỗ ở
+          filterType = ListingType.room;
+          break;
+        case 2: // Tour
+          filterType = ListingType.tour;
+          break;
+        case 3: // Ẩm thực
+          filterType = ListingType.food;
+          break;
+        case 4: // Dịch vụ
+          filterType = ListingType.service;
+          break;
+      }
+
+      // Search listings with filters
+      final listings = await listingService.searchListings(
+        query: query,
+        type: filterType,
+        minPrice: priceRange[0] > 0 ? priceRange[0] : null,
+        maxPrice: priceRange[1] < 10000000 ? priceRange[1] : null,
+      );
+
+      // Convert listings to search results format
+      for (final listing in listings) {
+        // Apply additional filters
+        if (selectedRating.value > 0 && listing.rating < selectedRating.value) {
+          continue;
+        }
+        
+        if (selectedLocation.value.isNotEmpty) {
+          final location = '${listing.details['city'] ?? ''} ${listing.details['province'] ?? ''}'.toLowerCase();
+          if (!location.contains(selectedLocation.value.toLowerCase())) {
+            continue;
+          }
+        }
+
+        results.add({
+          'id': listing.id,
+          'name': listing.title,
+          'type': _getTypeDisplay(listing.type),
+          'location': '${listing.details['city'] ?? ''}, ${listing.details['province'] ?? ''}',
+          'rating': listing.rating,
+          'reviews': listing.reviews,
+          'price': listing.hasDiscount 
+              ? '${NumberFormat('#,###').format(listing.discountPrice)}đ'
+              : '${NumberFormat('#,###').format(listing.price)}đ',
+          'originalPrice': listing.hasDiscount ? '${NumberFormat('#,###').format(listing.price)}đ' : null,
+          'isFavorite': false,
+          'category': listing.type.value,
+          'image': listing.images.isNotEmpty ? listing.images.first : '',
+          'businessName': listing.businessName,
+          'listingId': listing.id,
+        });
+      }
+
+      // Also search trips if on All or Tour tab
       if (selectedTab.value == 0 || selectedTab.value == 2) {
-        // All or Tour tab
-        // Search trips (as tours for now)
         final trips = await tripService.getUserTrips();
         for (final trip in trips) {
-          if (trip.title.toLowerCase().contains(query) ||
-              trip.destination.toLowerCase().contains(query) ||
-              trip.description.toLowerCase().contains(query)) {
+          if (query.isEmpty || 
+              trip.title.toLowerCase().contains(query.toLowerCase()) ||
+              trip.destination.toLowerCase().contains(query.toLowerCase())) {
             results.add({
               'id': trip.id,
               'name': trip.title,
               'type': 'Chuyến đi',
               'location': trip.destination,
-              'rating': 4.5, // Default for now
+              'rating': 4.5,
               'reviews': 0,
-              'price': '${trip.budget.toStringAsFixed(0)}đ',
+              'price': '${NumberFormat('#,###').format(trip.budget)}đ',
               'isFavorite': false,
-              'category': 'tour',
+              'category': 'trip',
               'image': trip.coverImage,
-              'startDate': trip.startDate,
-              'endDate': trip.endDate,
             });
           }
         }
       }
 
-      if (selectedTab.value == 0 || selectedTab.value == 3) {
-        // All or Destination tab
-        // Search blogs as destinations for now
-        final blogs = await blogService.getRecentPosts(limit: 50);
-        for (final blog in blogs) {
-          if (blog.title.toLowerCase().contains(query) ||
-              blog.content.toLowerCase().contains(query)) {
-            results.add({
-              'id': blog.id,
-              'name': blog.title,
-              'type': 'Bài viết',
-              'location': 'Việt Nam', // Default location
-              'rating': 4.0,
-              'reviews': blog.commentsCount,
-              'price': 'Miễn phí',
-              'isFavorite': false,
-              'category': 'destination',
-              'image': blog.coverImage,
-              'author': blog.authorName,
-            });
-          }
-        }
+      // Sort results based on selected sort
+      if (selectedSort.value == 'price_low') {
+        results.sort((a, b) {
+          final priceA = _extractPrice(a['price']);
+          final priceB = _extractPrice(b['price']);
+          return priceA.compareTo(priceB);
+        });
+      } else if (selectedSort.value == 'price_high') {
+        results.sort((a, b) {
+          final priceA = _extractPrice(a['price']);
+          final priceB = _extractPrice(b['price']);
+          return priceB.compareTo(priceA);
+        });
+      } else if (selectedSort.value == 'rating') {
+        results.sort((a, b) {
+          final ratingA = (a['rating'] ?? 0).toDouble();
+          final ratingB = (b['rating'] ?? 0).toDouble();
+          return ratingB.compareTo(ratingA);
+        });
       }
 
       searchResults.value = results;
-
-      if (results.isEmpty && searchQuery.value.isNotEmpty) {
-        AppSnackbar.showInfo(message: 'Không tìm thấy kết quả cho "$query"');
-      }
+      // Remove snackbar - we have empty state UI
     } catch (e) {
       LoggerService.e('Error searching', error: e);
       searchResults.value = [];
@@ -177,8 +229,24 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
     }
   }
 
-  // Removed mock results method - data should come from real services
-  // TODO: Implement search with TourService, DestinationService, etc.
+  String _getTypeDisplay(ListingType type) {
+    switch (type) {
+      case ListingType.room:
+        return 'Chỗ ở';
+      case ListingType.tour:
+        return 'Tour';
+      case ListingType.food:
+        return 'Ẩm thực';
+      case ListingType.service:
+        return 'Dịch vụ';
+    }
+  }
+
+  double _extractPrice(String priceStr) {
+    // Extract numeric value from price string like "1,500,000đ"
+    final cleanStr = priceStr.replaceAll(RegExp(r'[^0-9]'), '');
+    return double.tryParse(cleanStr) ?? 0;
+  }
 
   void clearSearch() {
     searchController.clear();

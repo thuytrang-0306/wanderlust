@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
+import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/presentation/controllers/search/search_filter_controller.dart';
 
 class SearchFilterPage extends GetView<SearchFilterController> {
@@ -31,36 +32,50 @@ class SearchFilterPage extends GetView<SearchFilterController> {
       padding: EdgeInsets.all(AppSpacing.s5),
       child: Column(
         children: [
-          // Search bar
-          Container(
-            height: 48.h,
-            decoration: BoxDecoration(
-              color: AppColors.neutral100,
-              borderRadius: BorderRadius.circular(24.r),
-            ),
-            child: TextField(
-              controller: controller.searchController,
-              onChanged: controller.onSearchChanged,
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm địa điểm, khách sạn, tour...',
-                hintStyle: AppTypography.bodyM.copyWith(color: AppColors.textTertiary),
-                prefixIcon: Icon(Icons.search, color: AppColors.neutral500, size: 24.sp),
-                suffixIcon: Obx(
-                  () =>
-                      controller.searchQuery.value.isNotEmpty
-                          ? IconButton(
-                            icon: Icon(Icons.clear, color: AppColors.neutral500, size: 20.sp),
-                            onPressed: controller.clearSearch,
-                          )
-                          : const SizedBox.shrink(),
-                ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s4,
-                  vertical: AppSpacing.s3,
+          // Search bar with back button
+          Row(
+            children: [
+              // Back button
+              IconButton(
+                icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary, size: 20.sp),
+                onPressed: () => Get.back(),
+                padding: EdgeInsets.zero,
+              ),
+              // Search field
+              Expanded(
+                child: Container(
+                  height: 48.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.neutral100,
+                    borderRadius: BorderRadius.circular(24.r),
+                  ),
+                  child: TextField(
+                    controller: controller.searchController,
+                    onChanged: controller.onSearchChanged,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Tìm kiếm địa điểm, khách sạn, tour...',
+                      hintStyle: AppTypography.bodyM.copyWith(color: AppColors.textTertiary),
+                      prefixIcon: Icon(Icons.search, color: AppColors.neutral500, size: 24.sp),
+                      suffixIcon: Obx(
+                        () =>
+                            controller.searchQuery.value.isNotEmpty
+                                ? IconButton(
+                                  icon: Icon(Icons.clear, color: AppColors.neutral500, size: 20.sp),
+                                  onPressed: controller.clearSearch,
+                                )
+                                : const SizedBox.shrink(),
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s4,
+                        vertical: AppSpacing.s3,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
 
           SizedBox(height: AppSpacing.s3),
@@ -369,22 +384,40 @@ class SearchFilterPage extends GetView<SearchFilterController> {
           ),
         ],
       ),
-      child: InkWell(
-        onTap: () => controller.navigateToDetail(item),
-        borderRadius: BorderRadius.circular(12.r),
-        child: Column(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => controller.navigateToDetail(item),
+          borderRadius: BorderRadius.circular(12.r),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Image
             Stack(
               children: [
-                Container(
-                  height: 180.h,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
-                    color: AppColors.neutral200,
+                ClipRRect(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                  child: SizedBox(
+                    height: 180.h,
+                    width: double.infinity,
+                    child: item['image'] != null && item['image'].toString().isNotEmpty
+                        ? AppImage(
+                            imageData: item['image'],
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            errorWidget: Container(
+                              color: AppColors.neutral200,
+                              child: Icon(Icons.image, size: 48.sp, color: AppColors.neutral400),
+                            ),
+                          )
+                        : Container(
+                            color: AppColors.neutral200,
+                            child: Center(
+                              child: Icon(Icons.image, size: 48.sp, color: AppColors.neutral400),
+                            ),
+                          ),
                   ),
-                  child: Center(child: Icon(Icons.image, size: 48.sp, color: AppColors.neutral400)),
                 ),
 
                 // Type badge
@@ -501,6 +534,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
