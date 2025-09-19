@@ -34,8 +34,18 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _businessService.loadCurrentBusinessProfile();
-    _listingService.loadBusinessListings();
+    // Non-blocking async load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+  
+  Future<void> _loadData() async {
+    // Load in parallel for better performance
+    await Future.wait([
+      _businessService.loadCurrentBusinessProfile(),
+      _listingService.loadBusinessListings(),
+    ]);
   }
   
   @override

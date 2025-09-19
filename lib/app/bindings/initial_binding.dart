@@ -12,18 +12,19 @@ import 'package:wanderlust/presentation/controllers/app_controller.dart';
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
+    // Core controllers only - required for app startup
     Get.put(AppController(), permanent: true);
     Get.put(AuthController(), permanent: true);
-    Get.put(LocationService(), permanent: true);
     
-    // Services
-    Get.put(UnifiedImageService(), permanent: true);
-    Get.put(UserProfileService(), permanent: true);
-    Get.put(BusinessService(), permanent: true);
-    Get.put(ListingService(), permanent: true);
+    // Lazy load services - only init when needed
+    Get.lazyPut(() => LocationService(), fenix: true);
+    Get.lazyPut(() => UnifiedImageService(), fenix: true);
+    Get.lazyPut(() => UserProfileService(), fenix: true);
+    Get.lazyPut(() => BusinessService(), fenix: true);
+    Get.lazyPut(() => ListingService(), fenix: true);
     
-    // AI Services
-    Get.put(GeminiService(), permanent: true);
-    Get.put(AIStorageService(), permanent: true);
+    // AI Services - lazy load
+    Get.lazyPut(() => GeminiService(), fenix: true);
+    Get.lazyPut(() => AIStorageService(), fenix: true);
   }
 }

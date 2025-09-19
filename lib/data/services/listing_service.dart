@@ -20,7 +20,18 @@ class ListingService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    // Auto-load if business exists
+    // Listen to business profile changes
+    ever(_businessService.currentBusinessProfile, (profile) {
+      if (profile != null) {
+        LoggerService.i('Business profile changed, reloading listings...');
+        loadBusinessListings();
+      } else {
+        LoggerService.i('Business profile removed, clearing listings...');
+        businessListings.clear();
+      }
+    });
+    
+    // Load immediately if business exists
     if (_businessService.currentBusinessProfile.value != null) {
       loadBusinessListings();
     }

@@ -22,7 +22,18 @@ class BusinessService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    // Load business profile if user is logged in
+    // Listen to auth state changes
+    _auth.authStateChanges().listen((user) {
+      if (user != null) {
+        LoggerService.i('User logged in: ${user.uid}, loading business profile...');
+        loadCurrentBusinessProfile();
+      } else {
+        LoggerService.i('User logged out, clearing business profile...');
+        currentBusinessProfile.value = null;
+      }
+    });
+    
+    // Load immediately if user exists
     if (_userId != null) {
       loadCurrentBusinessProfile();
     }
