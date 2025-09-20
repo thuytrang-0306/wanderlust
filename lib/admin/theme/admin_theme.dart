@@ -19,6 +19,27 @@ class AdminTheme {
   static const Color textSecondary = Color(0xFF64748B);
   static const Color textTertiary = Color(0xFF94A3B8);
 
+  // Text theme
+  static TextTheme get textTheme {
+    return TextTheme(
+      headlineSmall: TextStyle(
+        fontSize: 24.sp,
+        fontWeight: FontWeight.w600,
+        color: textPrimary,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w400,
+        color: textSecondary,
+      ),
+      bodySmall: TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w400,
+        color: textTertiary,
+      ),
+    );
+  }
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,

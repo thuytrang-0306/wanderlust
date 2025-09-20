@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../services/admin_auth_service.dart';
 import '../routes/admin_routes.dart';
 import '../../shared/core/widgets/app_snackbar.dart';
+import '../../shared/core/utils/logger_service.dart';
 
 class AdminAuthController extends GetxController {
   final AdminAuthService _authService = Get.find<AdminAuthService>();
@@ -34,9 +35,19 @@ class AdminAuthController extends GetxController {
     super.onClose();
   }
   
-  void _checkAuthState() {
+  void _checkAuthState() async {
+    // First check if admin setup is required
+    final setupRequired = await _authService.isAdminSetupRequired();
+    
+    if (setupRequired) {
+      LoggerService.i('Admin setup required, redirecting to setup page');
+      Get.offAllNamed(AdminRoutes.SETUP);
+      return;
+    }
+    
     // Check initial auth state
     if (_authService.isLoggedIn) {
+      LoggerService.i('Admin already logged in, redirecting to dashboard');
       Get.offAllNamed(AdminRoutes.DASHBOARD);
     }
   }

@@ -229,6 +229,62 @@ class AdminExportService extends GetxService {
     }
   }
   
+  // Export analytics data to CSV
+  Future<void> exportAnalyticsToCSV(Map<String, dynamic> analyticsData) async {
+    try {
+      final csvData = <List<String>>[];
+      
+      // Headers for summary data
+      csvData.add([
+        'Metric',
+        'Value',
+        'Date',
+        'Time Range',
+      ]);
+      
+      // Add summary data
+      final summary = analyticsData['summary'] as Map<String, dynamic>? ?? {};
+      final timeRange = summary['timeRange'] ?? 'unknown';
+      final lastUpdated = summary['lastUpdated'] ?? DateTime.now().toIso8601String();
+      
+      summary.forEach((key, value) {
+        if (key != 'timeRange' && key != 'lastUpdated') {
+          csvData.add([
+            key.toString(),
+            value.toString(),
+            lastUpdated,
+            timeRange,
+          ]);
+        }
+      });
+      
+      // Add separator
+      csvData.add(['', '', '', '']);
+      csvData.add(['Chart Data', '', '', '']);
+      csvData.add(['Date', 'Users', 'Revenue', 'Businesses', 'Content']);
+      
+      // Add chart data
+      final chartData = analyticsData['chartData'] as List<Map<String, dynamic>>? ?? [];
+      for (final data in chartData) {
+        csvData.add([
+          data['date']?.toString() ?? '',
+          data['users']?.toString() ?? '0',
+          data['revenue']?.toString() ?? '0',
+          data['businesses']?.toString() ?? '0',
+          data['content']?.toString() ?? '0',
+        ]);
+      }
+      
+      final csvString = _convertToCSV(csvData);
+      _downloadFile(csvString, 'analytics_export_${DateTime.now().millisecondsSinceEpoch}.csv', 'text/csv');
+      
+      LoggerService.i('Analytics data exported to CSV');
+    } catch (e) {
+      LoggerService.e('Error exporting analytics to CSV', error: e);
+      rethrow;
+    }
+  }
+  
   // Helper method to convert 2D array to CSV string
   String _convertToCSV(List<List<String>> data) {
     return data.map((row) {

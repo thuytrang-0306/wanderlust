@@ -152,6 +152,30 @@ class AdminLoginPage extends GetView<AdminAuthController> {
                 
                 SizedBox(height: 16.h),
                 
+                // Demo button for testing (only in debug mode)
+                if (const bool.fromEnvironment('dart.vm.product') == false) ...[
+                  OutlinedButton(
+                    onPressed: () {
+                      // Fill demo admin credentials
+                      controller.emailController.text = 'admin@wanderlust.com';
+                      controller.passwordController.text = 'Admin123!@#';
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF9455FD),
+                      side: const BorderSide(color: Color(0xFF9455FD)),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    ),
+                    child: Text(
+                      'Fill Demo Credentials',
+                      style: TextStyle(fontSize: 14.sp),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                ],
+                
                 // Security notice
                 Container(
                   padding: EdgeInsets.all(12.w),

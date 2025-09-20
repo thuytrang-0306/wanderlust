@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import '../routes/admin_routes.dart';
 import '../controllers/admin_auth_controller.dart';
+import '../controllers/admin_main_controller.dart';
 
 class AdminSidebar extends StatelessWidget {
-  const AdminSidebar({super.key});
+  final Function(AdminTab)? onTabChanged;
+  final Rx<AdminTab>? currentTab;
+  
+  const AdminSidebar({
+    super.key,
+    this.onTabChanged,
+    this.currentTab,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -77,12 +84,12 @@ class AdminSidebar extends StatelessWidget {
                   _buildMenuItem(
                     icon: Icons.dashboard_outlined,
                     title: 'Dashboard',
-                    route: AdminRoutes.DASHBOARD,
+                    tab: AdminTab.dashboard,
                   ),
                   _buildMenuItem(
                     icon: Icons.analytics_outlined,
                     title: 'Analytics',
-                    route: AdminRoutes.ANALYTICS,
+                    tab: AdminTab.analytics,
                   ),
                 ]),
                 
@@ -90,37 +97,20 @@ class AdminSidebar extends StatelessWidget {
                   _buildMenuItem(
                     icon: Icons.people_outline,
                     title: 'Users',
-                    route: AdminRoutes.USERS,
+                    tab: AdminTab.users,
                   ),
                   _buildMenuItem(
                     icon: Icons.business_outlined,
                     title: 'Businesses',
-                    route: AdminRoutes.BUSINESS,
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.approval_outlined,
-                    title: 'Approvals',
-                    route: AdminRoutes.BUSINESS_APPROVAL,
-                    badge: '3',
+                    tab: AdminTab.business,
                   ),
                 ]),
                 
                 _buildMenuSection('Content', [
                   _buildMenuItem(
                     icon: Icons.article_outlined,
-                    title: 'Blog Moderation',
-                    route: AdminRoutes.BLOG_MODERATION,
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.list_alt_outlined,
-                    title: 'Listing Moderation',
-                    route: AdminRoutes.LISTING_MODERATION,
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.report_outlined,
-                    title: 'Content Reports',
-                    route: AdminRoutes.CONTENT_REPORTS,
-                    badge: '7',
+                    title: 'Content Moderation',
+                    tab: AdminTab.content,
                   ),
                 ]),
                 
@@ -128,12 +118,7 @@ class AdminSidebar extends StatelessWidget {
                   _buildMenuItem(
                     icon: Icons.settings_outlined,
                     title: 'Settings',
-                    route: AdminRoutes.SETTINGS,
-                  ),
-                  _buildMenuItem(
-                    icon: Icons.assessment_outlined,
-                    title: 'Reports',
-                    route: AdminRoutes.REPORTS,
+                    tab: AdminTab.settings,
                   ),
                 ]),
               ],
@@ -236,60 +221,62 @@ class AdminSidebar extends StatelessWidget {
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
-    required String route,
+    required AdminTab tab,
     String? badge,
   }) {
-    final isActive = Get.currentRoute == route;
-    
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
-      child: Material(
-        color: isActive ? const Color(0xFF9455FD).withValues(alpha: 0.1) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8.r),
-        child: InkWell(
-          onTap: () => Get.toNamed(route),
+    return Obx(() {
+      final isActive = currentTab?.value == tab;
+      
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
+        child: Material(
+          color: isActive ? const Color(0xFF9455FD).withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(8.r),
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 20.sp,
-                  color: isActive ? const Color(0xFF9455FD) : const Color(0xFF64748B),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      color: isActive ? const Color(0xFF9455FD) : const Color(0xFF1E293B),
-                    ),
+          child: InkWell(
+            onTap: () => onTabChanged?.call(tab),
+            borderRadius: BorderRadius.circular(8.r),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    size: 20.sp,
+                    color: isActive ? const Color(0xFF9455FD) : const Color(0xFF64748B),
                   ),
-                ),
-                if (badge != null)
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEF4444),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
+                  SizedBox(width: 12.w),
+                  Expanded(
                     child: Text(
-                      badge,
+                      title,
                       style: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        fontSize: 14.sp,
+                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                        color: isActive ? const Color(0xFF9455FD) : const Color(0xFF1E293B),
                       ),
                     ),
                   ),
-              ],
+                  if (badge != null)
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444),
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Text(
+                        badge,
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

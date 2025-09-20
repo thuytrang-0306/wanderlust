@@ -4,7 +4,7 @@ import '../../shared/core/services/storage_service.dart';
 import '../../shared/core/services/connectivity_service.dart';
 import '../../shared/data/services/blog_service.dart';
 import '../../shared/data/services/business_service.dart';
-// import '../../shared/data/services/user_service.dart'; // TODO: Create UserService
+import '../../shared/core/services/user_service.dart';
 import '../services/admin_analytics_service.dart';
 import '../services/admin_export_service.dart';
 import '../services/admin_auth_service.dart';
@@ -27,7 +27,7 @@ class AdminInitialBinding extends Bindings {
     // Data Services
     Get.lazyPut<BlogService>(() => BlogService(), fenix: true);
     Get.lazyPut<BusinessService>(() => BusinessService(), fenix: true);
-    // Get.lazyPut<UserService>(() => UserService(), fenix: true); // TODO: Create UserService
+    Get.lazyPut<UserService>(() => UserService(), fenix: true);
 
     // Admin-specific Services
     Get.lazyPut<AdminAnalyticsService>(() => AdminAnalyticsService(), fenix: true);

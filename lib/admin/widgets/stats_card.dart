@@ -7,6 +7,7 @@ class StatsCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String? trend;
+  final String? subtitle;
   
   const StatsCard({
     super.key,
@@ -15,6 +16,7 @@ class StatsCard extends StatelessWidget {
     required this.icon,
     required this.color,
     this.trend,
+    this.subtitle,
   });
 
   @override
@@ -95,6 +97,18 @@ class StatsCard extends StatelessWidget {
               color: const Color(0xFF64748B),
             ),
           ),
+          
+          if (subtitle != null) ...[
+            SizedBox(height: 2.h),
+            Text(
+              subtitle!,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: const Color(0xFF94A3B8),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
         ],
       ),
     );

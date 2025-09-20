@@ -68,7 +68,7 @@ class AdminApp extends StatelessWidget {
           darkTheme: AdminTheme.darkTheme,
           themeMode: ThemeMode.light,
           debugShowCheckedModeBanner: false,
-          initialRoute: AdminRoutes.LOGIN,
+          initialRoute: AdminRoutes.LOGIN, // Will auto-redirect to SETUP if needed
           getPages: AdminPages.routes,
           initialBinding: AdminInitialBinding(),
           defaultTransition: Transition.fadeIn,

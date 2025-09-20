@@ -1,6 +1,7 @@
 abstract class AdminRoutes {
   // Auth routes
   static const LOGIN = '/admin/login';
+  static const SETUP = '/admin/setup';
   
   // Dashboard routes
   static const DASHBOARD = '/admin/dashboard';
