@@ -4,6 +4,9 @@ import 'package:get/get.dart';
 import 'package:wanderlust/admin/controllers/admin_dashboard_controller.dart';
 import 'package:wanderlust/admin/widgets/stats_card.dart';
 import 'package:wanderlust/admin/widgets/recent_activities_card.dart';
+import 'package:wanderlust/admin/widgets/charts/interactive_line_chart.dart';
+import 'package:wanderlust/admin/widgets/charts/pie_chart.dart';
+import 'package:wanderlust/admin/widgets/charts/bar_chart.dart';
 import 'package:wanderlust/shared/core/services/user_service.dart';
 
 class AdminDashboardTab extends GetView<AdminDashboardController> {
@@ -59,8 +62,21 @@ class AdminDashboardTab extends GetView<AdminDashboardController> {
             
             SizedBox(height: 32.h),
             
-            // Platform Statistics
-            _buildPlatformStats(),
+            // Bottom row with Platform and Activity charts
+            Row(
+              children: [
+                // Platform Statistics
+                Expanded(
+                  child: _buildPlatformStats(),
+                ),
+                SizedBox(width: 24.w),
+                
+                // User Activity Chart
+                Expanded(
+                  child: _buildUserActivityChart(),
+                ),
+              ],
+            ),
           ],
         ),
       );
@@ -177,7 +193,7 @@ class AdminDashboardTab extends GetView<AdminDashboardController> {
           
           // Chart area
           SizedBox(
-            height: 200.h,
+            height: 250.h,
             child: Obx(() {
               final chartData = controller.chartData;
               if (chartData.isEmpty) {
@@ -186,7 +202,15 @@ class AdminDashboardTab extends GetView<AdminDashboardController> {
                 );
               }
               
-              return _buildSimpleLineChart(chartData);
+              return InteractiveLineChart(
+                data: chartData,
+                title: 'User Growth Over Time',
+                lineColor: const Color(0xFF3B82F6),
+                areaColor: const Color(0xFF3B82F6),
+                showArea: true,
+                showPoints: true,
+                showTooltip: true,
+              );
             }),
           ),
         ],
@@ -194,14 +218,65 @@ class AdminDashboardTab extends GetView<AdminDashboardController> {
     );
   }
 
-  Widget _buildSimpleLineChart(List<Map<String, dynamic>> data) {
-    if (data.isEmpty) return const SizedBox();
-    
+  Widget _buildUserActivityChart() {
     return Container(
-      height: 200.h,
-      child: CustomPaint(
-        painter: SimpleLineChartPainter(data),
-        size: Size.infinite,
+      padding: EdgeInsets.all(24.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'User Activity Metrics',
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1E293B),
+            ),
+          ),
+          SizedBox(height: 24.h),
+          
+          SizedBox(
+            height: 250.h,
+            child: InteractiveBarChart(
+              data: [
+                BarChartData(
+                  label: 'Daily',
+                  value: 85.0,
+                  color: const Color(0xFF10B981),
+                ),
+                BarChartData(
+                  label: 'Weekly',
+                  value: 72.0,
+                  color: const Color(0xFF3B82F6),
+                ),
+                BarChartData(
+                  label: 'Monthly',
+                  value: 68.0,
+                  color: const Color(0xFF8B5CF6),
+                ),
+                BarChartData(
+                  label: 'Retention',
+                  value: 45.0,
+                  color: const Color(0xFFF59E0B),
+                ),
+              ],
+              title: 'Activity Rates',
+              showValues: true,
+              showTooltip: true,
+              horizontal: false,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -233,122 +308,32 @@ class AdminDashboardTab extends GetView<AdminDashboardController> {
           ),
           SizedBox(height: 24.h),
           
-          Row(
-            children: [
-              Expanded(
-                child: _buildPlatformStatItem(
-                  'Mobile App',
-                  '85%',
-                  Icons.phone_android,
-                  const Color(0xFF10B981),
+          SizedBox(
+            height: 300.h,
+            child: InteractivePieChart(
+              data: [
+                PieChartData(
+                  label: 'Mobile App',
+                  value: 850,
+                  percentage: 85.0,
+                  color: const Color(0xFF10B981),
                 ),
-              ),
-              Expanded(
-                child: _buildPlatformStatItem(
-                  'Web Platform',
-                  '15%',
-                  Icons.web,
-                  const Color(0xFF3B82F6),
+                PieChartData(
+                  label: 'Web Platform',
+                  value: 150,
+                  percentage: 15.0,
+                  color: const Color(0xFF3B82F6),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlatformStatItem(String title, String percentage, IconData icon, Color color) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            size: 32.sp,
-            color: color,
-          ),
-          SizedBox(height: 12.h),
-          Text(
-            percentage,
-            style: TextStyle(
-              fontSize: 24.sp,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: const Color(0xFF64748B),
+              ],
+              title: 'Platform Distribution',
+              showLabels: true,
+              showLegend: true,
+              showPercentage: true,
             ),
           ),
         ],
       ),
     );
   }
-}
 
-// Simple line chart painter for demonstration
-class SimpleLineChartPainter extends CustomPainter {
-  final List<Map<String, dynamic>> data;
-
-  SimpleLineChartPainter(this.data);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.isEmpty) return;
-    
-    final paint = Paint()
-      ..color = const Color(0xFF3B82F6)
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
-
-    final path = Path();
-    final stepX = size.width / (data.length - 1);
-    
-    // Safe value extraction with null checks
-    final values = data.map((e) {
-      final value = e['value'];
-      if (value == null) return 0.0;
-      if (value is num) return value.toDouble();
-      return 0.0;
-    }).toList();
-    
-    if (values.isEmpty) return;
-    
-    final maxValue = values.reduce((a, b) => a > b ? a : b);
-    if (maxValue <= 0) return; // Prevent division by zero
-    
-    for (int i = 0; i < values.length; i++) {
-      final x = i * stepX;
-      final normalizedValue = values[i] / maxValue;
-      final y = size.height - (normalizedValue * size.height);
-      
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    
-    canvas.drawPath(path, paint);
-    
-    // Draw points using safe values
-    final pointPaint = Paint()
-      ..color = const Color(0xFF3B82F6)
-      ..style = PaintingStyle.fill;
-    
-    for (int i = 0; i < values.length; i++) {
-      final x = i * stepX;
-      final normalizedValue = values[i] / maxValue;
-      final y = size.height - (normalizedValue * size.height);
-      canvas.drawCircle(Offset(x, y), 4, pointPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }

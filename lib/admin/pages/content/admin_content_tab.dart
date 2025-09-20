@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/admin/controllers/admin_content_controller.dart';
 import 'package:wanderlust/admin/services/admin_content_service.dart';
+import 'package:wanderlust/admin/widgets/content_details_dialog.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
 
 class AdminContentTab extends GetView<AdminContentController> {
@@ -729,9 +730,12 @@ class AdminContentTab extends GetView<AdminContentController> {
   }
 
   void _showContentDetails(ContentModerationItem contentItem) {
-    controller.viewContentDetails(contentItem.id, contentItem.type);
-    // Show content details dialog - will implement later
-    Get.snackbar('Info', 'Content details: ${contentItem.title}');
+    Get.dialog(
+      ContentDetailsDialog(
+        contentItem: contentItem,
+      ),
+      barrierDismissible: false,
+    );
   }
 
   void _showModerationDialog(ContentModerationItem contentItem, bool isApproval) {

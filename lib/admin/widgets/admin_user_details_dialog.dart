@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:wanderlust/admin/theme/admin_theme.dart';
+import 'package:wanderlust/admin/widgets/user_edit_dialog.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/shared/core/models/user_model.dart';
 
@@ -348,7 +350,10 @@ class AdminUserDetailsDialog extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: () {
               Navigator.of(context).pop();
-              // Navigate to edit user page
+              Get.dialog(
+                UserEditDialog(user: user),
+                barrierDismissible: false,
+              );
             },
             icon: const Icon(Icons.edit, size: 18),
             label: const Text('Edit User'),

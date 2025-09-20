@@ -5,6 +5,7 @@ import 'package:wanderlust/admin/controllers/admin_business_controller.dart';
 import 'package:wanderlust/shared/data/models/business_profile_model.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/admin/widgets/business_verification_dialog.dart';
+import 'package:wanderlust/admin/widgets/business_suspension_dialog.dart';
 
 class BusinessDetailsDialog extends GetView<AdminBusinessController> {
   final BusinessProfileModel business;
@@ -574,7 +575,11 @@ class BusinessDetailsDialog extends GetView<AdminBusinessController> {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // Show suspension dialog
+                    Get.back();
+                    Get.dialog(
+                      BusinessSuspensionDialog(business: business),
+                      barrierDismissible: false,
+                    );
                   },
                   icon: const Icon(Icons.pause),
                   label: const Text('Suspend'),

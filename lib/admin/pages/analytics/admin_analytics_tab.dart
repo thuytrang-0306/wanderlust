@@ -3,6 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/admin/controllers/admin_analytics_controller.dart';
 import 'package:wanderlust/admin/widgets/stats_card.dart';
+import 'package:wanderlust/admin/widgets/charts/interactive_line_chart.dart';
+import 'package:wanderlust/admin/widgets/charts/pie_chart.dart';
+import 'package:wanderlust/admin/widgets/charts/bar_chart.dart';
 
 class AdminAnalyticsTab extends GetView<AdminAnalyticsController> {
   const AdminAnalyticsTab({super.key});
@@ -228,15 +231,14 @@ class AdminAnalyticsTab extends GetView<AdminAnalyticsController> {
                 return const Center(child: Text('No data available'));
               }
               
-              return Container(
-                height: 250.h,
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: const Center(
-                  child: Text('Analytics Chart - Coming Soon'),
-                ),
+              return InteractiveLineChart(
+                data: data,
+                title: 'User Analytics',
+                lineColor: const Color(0xFF3B82F6),
+                areaColor: const Color(0xFF3B82F6),
+                showArea: true,
+                showPoints: true,
+                showTooltip: true,
               );
             }),
           ),
@@ -377,75 +379,39 @@ class AdminAnalyticsTab extends GetView<AdminAnalyticsController> {
           ),
           SizedBox(height: 24.h),
           
-          Obx(() {
-            final platforms = controller.platformStats['platforms'] as List<dynamic>? ?? [];
-            return Column(
-              children: platforms.map<Widget>((platform) {
-                final total = platforms.fold<int>(0, (sum, p) => sum + (p['users'] as int));
+          SizedBox(
+            height: 250.h,
+            child: Obx(() {
+              final platforms = controller.platformStats['platforms'] as List<dynamic>? ?? [];
+              if (platforms.isEmpty) {
+                return const Center(child: Text('No data available'));
+              }
+              
+              final total = platforms.fold<int>(0, (sum, p) => sum + (p['users'] as int));
+              final pieData = platforms.map<PieChartData>((platform) {
                 final percentage = total > 0 ? (platform['users'] / total * 100) : 0.0;
-                
-                return Padding(
-                  padding: EdgeInsets.only(bottom: 16.h),
-                  child: _buildPlatformItem(
-                    platform['name'],
-                    platform['users'].toString(),
-                    percentage,
-                    Color(platform['color']),
-                  ),
+                return PieChartData(
+                  label: platform['name'],
+                  value: platform['users'].toDouble(),
+                  percentage: percentage,
+                  color: Color(platform['color']),
                 );
-              }).toList(),
-            );
-          }),
+              }).toList();
+              
+              return InteractivePieChart(
+                data: pieData,
+                title: 'Platform Distribution',
+                showLabels: true,
+                showLegend: true,
+                showPercentage: true,
+              );
+            }),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildPlatformItem(String name, String users, double percentage, Color color) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 12.w,
-                  height: 12.h,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: const Color(0xFF1E293B),
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              '$users users (${percentage.toStringAsFixed(1)}%)',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF64748B),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 8.h),
-        LinearProgressIndicator(
-          value: percentage / 100,
-          backgroundColor: const Color(0xFFF1F5F9),
-          valueColor: AlwaysStoppedAnimation<Color>(color),
-        ),
-      ],
-    );
-  }
 
   Widget _buildRetentionChart() {
     return Container(
@@ -474,60 +440,48 @@ class AdminAnalyticsTab extends GetView<AdminAnalyticsController> {
           ),
           SizedBox(height: 24.h),
           
-          Obx(() {
-            return Column(
-              children: controller.retentionData.map<Widget>((data) {
+          SizedBox(
+            height: 200.h,
+            child: Obx(() {
+              final retentionData = controller.retentionData;
+              if (retentionData.isEmpty) {
+                return const Center(child: Text('No data available'));
+              }
+              
+              final barData = retentionData.map<BarChartData>((data) {
                 final retention = data['retention'] as int;
-                return Padding(
-                  padding: EdgeInsets.only(bottom: 16.h),
-                  child: _buildRetentionItem(
-                    data['period'],
-                    retention,
-                  ),
+                Color color;
+                if (retention > 70) {
+                  color = const Color(0xFF10B981); // Green
+                } else if (retention > 50) {
+                  color = const Color(0xFFF59E0B); // Yellow
+                } else if (retention > 30) {
+                  color = const Color(0xFFEF4444); // Red
+                } else {
+                  color = const Color(0xFF9CA3AF); // Gray
+                }
+                
+                return BarChartData(
+                  label: data['period'],
+                  value: retention.toDouble(),
+                  color: color,
                 );
-              }).toList(),
-            );
-          }),
+              }).toList();
+              
+              return InteractiveBarChart(
+                data: barData,
+                title: 'User Retention',
+                barColor: const Color(0xFF3B82F6),
+                showValues: true,
+                showTooltip: true,
+                horizontal: true,
+              );
+            }),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildRetentionItem(String period, int retention) {
-    final color = retention > 50 ? const Color(0xFF10B981) : 
-                 retention > 30 ? const Color(0xFFF59E0B) : 
-                 const Color(0xFFEF4444);
-    
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              period,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: const Color(0xFF1E293B),
-              ),
-            ),
-            Text(
-              '$retention%',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 8.h),
-        LinearProgressIndicator(
-          value: retention / 100,
-          backgroundColor: const Color(0xFFF1F5F9),
-          valueColor: AlwaysStoppedAnimation<Color>(color),
-        ),
-      ],
-    );
-  }
 
 }

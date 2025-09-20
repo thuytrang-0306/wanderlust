@@ -282,18 +282,85 @@ class AdminUserManagementController extends GetxController {
     }
   }
 
-  Future<void> resetUserPassword(String email) async {
+  Future<void> resetUserPassword(String userId) async {
     try {
       isLoading.value = true;
       
-      await _auth.sendPasswordResetEmail(email: email);
+      // Find user email
+      final user = users.firstWhereOrNull((u) => u.id == userId);
+      if (user == null) {
+        AppSnackbar.showError(message: 'User not found');
+        return;
+      }
       
-      LoggerService.i('Admin action: Password reset sent - $email by ${_adminAuthService.currentAdmin?.id}');
+      await _auth.sendPasswordResetEmail(email: user.email);
+      
+      LoggerService.i('Admin action: Password reset sent - ${user.email} by ${_adminAuthService.currentAdmin?.id}');
       
       AppSnackbar.showSuccess(message: 'Password reset email sent successfully');
     } catch (e) {
       LoggerService.e('Error sending password reset', error: e);
       AppSnackbar.showError(message: 'Failed to send password reset email');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> updateUser(String userId, UserModel updatedUser) async {
+    try {
+      isLoading.value = true;
+      
+      final updateData = {
+        'name': updatedUser.name,
+        'displayName': updatedUser.name,
+        'phone': updatedUser.phone,
+        'bio': updatedUser.bio,
+        'location': updatedUser.location,
+        'language': updatedUser.language,
+        'timezone': updatedUser.timezone,
+        'status': updatedUser.status,
+        'isVerified': updatedUser.isVerified,
+        'isBusinessAccount': updatedUser.isBusinessAccount,
+        'updatedAt': DateTime.now(),
+        'updatedBy': _adminAuthService.currentAdmin?.id,
+      };
+      
+      final success = await _userService.updateUser(userId, updateData);
+
+      if (success) {
+        LoggerService.i('Admin action: User updated - $userId by ${_adminAuthService.currentAdmin?.id}');
+        AppSnackbar.showSuccess(message: 'User updated successfully');
+      } else {
+        AppSnackbar.showError(message: 'Failed to update user');
+      }
+    } catch (e) {
+      LoggerService.e('Error updating user', error: e);
+      AppSnackbar.showError(message: 'Failed to update user');
+      rethrow;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> suspendUser(String userId) async {
+    try {
+      isLoading.value = true;
+      
+      final success = await _userService.updateUser(userId, {
+        'status': 'suspended',
+        'suspendedAt': DateTime.now(),
+        'suspendedBy': _adminAuthService.currentAdmin?.id,
+      });
+
+      if (success) {
+        LoggerService.i('Admin action: User suspended - $userId by ${_adminAuthService.currentAdmin?.id}');
+        AppSnackbar.showSuccess(message: 'User suspended successfully');
+      } else {
+        AppSnackbar.showError(message: 'Failed to suspend user');
+      }
+    } catch (e) {
+      LoggerService.e('Error suspending user', error: e);
+      AppSnackbar.showError(message: 'Failed to suspend user');
     } finally {
       isLoading.value = false;
     }
