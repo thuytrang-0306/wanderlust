@@ -4,6 +4,7 @@ import 'package:wanderlust/admin/controllers/admin_dashboard_controller.dart';
 import 'package:wanderlust/admin/controllers/admin_analytics_controller.dart';
 import 'package:wanderlust/admin/controllers/admin_user_management_controller.dart';
 import 'package:wanderlust/admin/controllers/admin_business_controller.dart';
+import 'package:wanderlust/admin/controllers/admin_settings_controller.dart';
 import 'package:wanderlust/admin/services/admin_business_service.dart';
 import 'package:wanderlust/admin/routes/admin_routes.dart';
 
@@ -18,6 +19,9 @@ class AdminMainBinding extends Bindings {
     
     // Always put dashboard controller
     Get.put(AdminDashboardController());
+    
+    // Always put settings controller
+    Get.put(AdminSettingsController());
     
     // Check current route and set appropriate tab
     final currentRoute = Get.currentRoute;
