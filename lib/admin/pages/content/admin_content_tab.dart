@@ -765,12 +765,12 @@ class AdminContentTab extends GetView<AdminContentController> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Get.back(),
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () {
-                Get.back();
+                Navigator.of(context).pop();
                 controller.rejectContent(contentItem.id, contentItem.type);
               },
               style: ElevatedButton.styleFrom(
@@ -817,12 +817,12 @@ class AdminContentTab extends GetView<AdminContentController> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
-              Get.back();
+              Navigator.of(context).pop();
               controller.flagContent(contentItem.id, contentItem.type);
             },
             style: ElevatedButton.styleFrom(

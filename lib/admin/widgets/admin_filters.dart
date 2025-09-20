@@ -62,30 +62,41 @@ class AdminFilters extends StatelessWidget {
             filter.onChanged(value);
           }
         },
+        isExpanded: true, // Fix overflow by expanding to container width
         decoration: InputDecoration(
           labelText: filter.label,
           labelStyle: AdminTheme.textTheme.bodySmall?.copyWith(
             color: Colors.grey[600],
+            fontSize: 11.sp, // Smaller label to prevent overflow
           ),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.s3,
+            horizontal: AppSpacing.s2, // Reduced padding
             vertical: AppSpacing.s2,
           ),
         ),
-        style: AdminTheme.textTheme.bodyMedium,
+        style: AdminTheme.textTheme.bodyMedium?.copyWith(
+          fontSize: 12.sp, // Smaller text to prevent overflow
+        ),
         dropdownColor: Colors.white,
         icon: Icon(
           Icons.keyboard_arrow_down,
           color: Colors.grey[600],
-          size: 20.r,
+          size: 16.r, // Smaller icon
         ),
         items: filter.options.map((option) => 
           DropdownMenuItem<String>(
             value: option.value,
-            child: Text(
-              option.label,
-              style: AdminTheme.textTheme.bodyMedium,
+            child: SizedBox(
+              width: double.infinity,
+              child: Text(
+                option.label,
+                style: AdminTheme.textTheme.bodyMedium?.copyWith(
+                  fontSize: 12.sp,
+                ),
+                overflow: TextOverflow.ellipsis, // Handle text overflow
+                maxLines: 1,
+              ),
             ),
           ),
         ).toList(),

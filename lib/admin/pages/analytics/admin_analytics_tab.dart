@@ -125,25 +125,25 @@ class AdminAnalyticsTab extends GetView<AdminAnalyticsController> {
         ),
         SizedBox(width: 16.w),
         Expanded(
-          child: StatsCard(
+          child: Obx(() => StatsCard(
             title: 'Engagement Rate',
             value: '${controller.engagementRate.toStringAsFixed(1)}%',
             icon: Icons.favorite,
             color: const Color(0xFFEF4444),
-            trend: '+5%',
-            subtitle: 'vs last period',
-          ),
+            trend: controller.getEngagementTrend(),
+            subtitle: 'platform health',
+          )),
         ),
         SizedBox(width: 16.w),
         Expanded(
-          child: StatsCard(
+          child: Obx(() => StatsCard(
             title: 'Avg Session Time',
             value: controller.averageSessionTime,
             icon: Icons.access_time,
             color: const Color(0xFF8B5CF6),
-            trend: '+2m',
-            subtitle: 'vs last period',
-          ),
+            trend: controller.getSessionTimeTrend(),
+            subtitle: 'user retention',
+          )),
         ),
         SizedBox(width: 16.w),
         Expanded(
@@ -154,8 +154,8 @@ class AdminAnalyticsTab extends GetView<AdminAnalyticsController> {
                 : '0',
             icon: Icons.computer,
             color: const Color(0xFF3B82F6),
-            trend: '+12%',
-            subtitle: 'vs last period',
+            trend: controller.getSessionsTrend(),
+            subtitle: 'user activity',
           )),
         ),
       ],
@@ -391,10 +391,10 @@ class AdminAnalyticsTab extends GetView<AdminAnalyticsController> {
               final pieData = platforms.map<PieChartData>((platform) {
                 final percentage = total > 0 ? (platform['users'] / total * 100) : 0.0;
                 return PieChartData(
-                  label: platform['name'],
-                  value: platform['users'].toDouble(),
+                  label: platform['name'] ?? 'Unknown',
+                  value: (platform['users'] ?? 0).toDouble(),
                   percentage: percentage,
-                  color: Color(platform['color']),
+                  color: Color(platform['color'] ?? 0xFF9CA3AF),
                 );
               }).toList();
               
@@ -462,7 +462,7 @@ class AdminAnalyticsTab extends GetView<AdminAnalyticsController> {
                 }
                 
                 return BarChartData(
-                  label: data['period'],
+                  label: data['period'] ?? 'Unknown',
                   value: retention.toDouble(),
                   color: color,
                 );

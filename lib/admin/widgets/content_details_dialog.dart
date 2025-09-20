@@ -613,7 +613,6 @@ class _ContentDetailsDialogState extends State<ContentDetailsDialog>
             onPressed: () {
               Navigator.of(context).pop();
               _controller.rejectContent(widget.contentItem.id, widget.contentItem.type);
-              Get.back();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
@@ -654,7 +653,6 @@ class _ContentDetailsDialogState extends State<ContentDetailsDialog>
             onPressed: () {
               Navigator.of(context).pop();
               _controller.flagContent(widget.contentItem.id, widget.contentItem.type);
-              Get.back();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),

@@ -6,6 +6,7 @@ import 'package:wanderlust/shared/data/models/business_profile_model.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/admin/widgets/business_verification_dialog.dart';
 import 'package:wanderlust/admin/widgets/business_details_dialog.dart';
+import 'package:wanderlust/admin/widgets/business_suspension_dialog.dart';
 
 class AdminBusinessTab extends GetView<AdminBusinessController> {
   const AdminBusinessTab({super.key});
@@ -728,42 +729,9 @@ class AdminBusinessTab extends GetView<AdminBusinessController> {
   }
 
   void _showSuspensionDialog(BusinessProfileModel business) {
-    showDialog(
-      context: Get.context!,
-      builder: (context) => AlertDialog(
-        title: const Text('Suspend Business'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Are you sure you want to suspend ${business.businessName}?'),
-            SizedBox(height: 16.h),
-            TextField(
-              controller: controller.suspensionReasonController,
-              decoration: const InputDecoration(
-                labelText: 'Suspension Reason *',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              controller.suspendBusiness(business.id);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-            ),
-            child: const Text('Suspend'),
-          ),
-        ],
-      ),
+    Get.dialog(
+      BusinessSuspensionDialog(business: business),
+      barrierDismissible: false,
     );
   }
 }

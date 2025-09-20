@@ -72,27 +72,36 @@ class AdminAnalyticsService extends GetxService {
   }
   
   Future<int> _getTotalBookings() async {
-    final snapshot = await _firestore.collection('bookings').count().get();
-    return snapshot.count ?? 0;
+    try {
+      final snapshot = await _firestore.collection('bookings').count().get();
+      return snapshot.count ?? 0;
+    } catch (e) {
+      LoggerService.w('Bookings collection index missing, returning 0', error: e);
+      return 0;
+    }
   }
   
   Future<double> _getMonthlyRevenue() async {
-    final now = DateTime.now();
-    final startOfMonth = DateTime(now.year, now.month, 1);
-    
-    final snapshot = await _firestore
-        .collection('bookings')
-        .where('createdAt', isGreaterThanOrEqualTo: startOfMonth)
-        .where('status', isEqualTo: 'completed')
-        .get();
-    
-    double revenue = 0.0;
-    for (final doc in snapshot.docs) {
-      final data = doc.data();
-      revenue += (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
+    try {
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      
+      final snapshot = await _firestore
+          .collection('bookings')
+          .where('createdAt', isGreaterThanOrEqualTo: startOfMonth)
+          .where('status', isEqualTo: 'completed')
+          .get();
+      
+      double revenue = 0.0;
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        revenue += (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      }
+      return revenue;
+    } catch (e) {
+      LoggerService.w('Revenue query requires Firestore index, returning 0', error: e);
+      return 0.0;
     }
-    
-    return revenue;
   }
   
   Future<int> _getActiveUsers() async {
