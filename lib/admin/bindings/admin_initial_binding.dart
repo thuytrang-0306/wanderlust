@@ -8,7 +8,9 @@ import '../../shared/core/services/user_service.dart';
 import '../services/admin_analytics_service.dart';
 import '../services/admin_export_service.dart';
 import '../services/admin_auth_service.dart';
+import '../services/admin_content_service.dart';
 import '../controllers/admin_auth_controller.dart';
+import '../controllers/admin_content_controller.dart';
 
 class AdminInitialBinding extends Bindings {
   @override
@@ -33,8 +35,10 @@ class AdminInitialBinding extends Bindings {
     Get.lazyPut<AdminAnalyticsService>(() => AdminAnalyticsService(), fenix: true);
     Get.lazyPut<AdminExportService>(() => AdminExportService(), fenix: true);
     Get.lazyPut<AdminAuthService>(() => AdminAuthService(), fenix: true);
+    Get.lazyPut<AdminContentService>(() => AdminContentService(), fenix: true);
 
     // Admin Controllers
     Get.lazyPut<AdminAuthController>(() => AdminAuthController(), fenix: true);
+    Get.lazyPut<AdminContentController>(() => AdminContentController(), fenix: true);
   }
 }

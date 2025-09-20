@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:wanderlust/data/models/business_profile_model.dart';
-import 'package:wanderlust/data/models/user_model.dart';
-import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/shared/data/models/business_profile_model.dart';
+import 'package:wanderlust/shared/data/models/user_model.dart';
+import 'package:wanderlust/shared/core/utils/logger_service.dart';
 
 class BusinessService extends GetxService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

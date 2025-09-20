@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:wanderlust/admin/controllers/admin_dashboard_controller.dart';
 import 'package:wanderlust/admin/controllers/admin_analytics_controller.dart';
 import 'package:wanderlust/admin/controllers/admin_user_management_controller.dart';
+import 'package:wanderlust/admin/controllers/admin_business_controller.dart';
+import 'package:wanderlust/admin/controllers/admin_content_controller.dart';
 import 'package:wanderlust/shared/core/utils/logger_service.dart';
 
 enum AdminTab {
@@ -60,6 +62,16 @@ class AdminMainController extends GetxController {
             Get.put(AdminUserManagementController());
           }
           break;
+        case AdminTab.business:
+          if (!Get.isRegistered<AdminBusinessController>()) {
+            Get.put(AdminBusinessController());
+          }
+          break;
+        case AdminTab.content:
+          if (!Get.isRegistered<AdminContentController>()) {
+            Get.put(AdminContentController());
+          }
+          break;
         default:
           break;
       }
@@ -87,6 +99,18 @@ class AdminMainController extends GetxController {
             userController.refreshUsers();
           }
           break;
+        case AdminTab.business:
+          if (Get.isRegistered<AdminBusinessController>()) {
+            final businessController = Get.find<AdminBusinessController>();
+            businessController.refreshBusinesses();
+          }
+          break;
+        case AdminTab.content:
+          if (Get.isRegistered<AdminContentController>()) {
+            final contentController = Get.find<AdminContentController>();
+            contentController.refreshContent();
+          }
+          break;
         default:
           LoggerService.i('Refresh not implemented for tab: ${currentTab.value.name}');
       }
@@ -112,6 +136,12 @@ class AdminMainController extends GetxController {
           if (Get.isRegistered<AdminUserManagementController>()) {
             final userController = Get.find<AdminUserManagementController>();
             userController.exportUsers();
+          }
+          break;
+        case AdminTab.content:
+          if (Get.isRegistered<AdminContentController>()) {
+            final contentController = Get.find<AdminContentController>();
+            contentController.exportContent();
           }
           break;
         default:
