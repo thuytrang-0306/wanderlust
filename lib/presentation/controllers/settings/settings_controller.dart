@@ -10,18 +10,17 @@ import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:in_app_review/in_app_review.dart';
 
 class SettingsController extends BaseController {
   // App Settings
   final notificationsEnabled = true.obs;
   final darkModeEnabled = false.obs;
-  final offlineModeEnabled = false.obs;
   final currentLanguage = 'Tiếng Việt'.obs;
-
-  // Preferences
-  final defaultMapProvider = 'Google Maps'.obs;
   final defaultCurrency = 'VND'.obs;
-  final measurementUnit = 'Metric'.obs;
 
   // App Info
   final appVersion = '1.0.0'.obs;
@@ -33,6 +32,7 @@ class SettingsController extends BaseController {
     super.onInit();
     loadSettings();
     loadAppInfo();
+    _calculateCacheSize();
   }
 
   void loadSettings() {
@@ -45,11 +45,7 @@ class SettingsController extends BaseController {
     final savedTheme = StorageService.to.theme;
     darkModeEnabled.value = savedTheme == 'dark';
 
-    // Load other preferences
-    defaultMapProvider.value = StorageService.to.read('map_provider') ?? 'Google Maps';
     defaultCurrency.value = StorageService.to.read('currency') ?? 'VND';
-    measurementUnit.value = StorageService.to.read('measurement_unit') ?? 'Metric';
-    offlineModeEnabled.value = StorageService.to.read('offline_mode') ?? false;
   }
 
   void loadAppInfo() async {
@@ -67,32 +63,16 @@ class SettingsController extends BaseController {
     Get.toNamed('/edit-profile');
   }
 
-  void navigateToSecurity() {
-    Get.toNamed('/security-settings');
-  }
-
-  void navigateToPrivacy() {
-    Get.toNamed('/privacy-settings');
+  void navigateToChangePassword() {
+    Get.toNamed('/change-password');
   }
 
   void navigateToBookingHistory() {
     Get.toNamed('/booking-history');
   }
 
-  void navigateToNotificationSettings() {
-    Get.toNamed('/notification-settings');
-  }
-
-  void navigateToDownloads() {
-    AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
-  }
-
   void navigateToHelp() {
-    Get.toNamed('/help-center');
-  }
-
-  void navigateToSupport() {
-    AppSnackbar.showInfo(message: 'Tính năng chat hỗ trợ đang phát triển');
+    Get.toNamed('/help-support');
   }
 
   // Toggle methods
@@ -110,13 +90,6 @@ class SettingsController extends BaseController {
     Get.changeThemeMode(value ? ThemeMode.dark : ThemeMode.light);
 
     AppSnackbar.showInfo(message: value ? 'Đã bật chế độ tối' : 'Đã tắt chế độ tối');
-  }
-
-  void toggleOfflineMode(bool value) async {
-    offlineModeEnabled.value = value;
-    await StorageService.to.write('offline_mode', value);
-
-    AppSnackbar.showInfo(message: value ? 'Đã bật chế độ offline' : 'Đã tắt chế độ offline');
   }
 
   // Picker methods
@@ -158,42 +131,6 @@ class SettingsController extends BaseController {
               },
               activeColor: AppColors.primary,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void showMapProviderPicker() {
-    final providers = ['Google Maps', 'Apple Maps', 'OpenStreetMap'];
-
-    Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.all(AppSpacing.s5),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Chọn nhà cung cấp bản đồ', style: AppTypography.heading5),
-            SizedBox(height: AppSpacing.s4),
-            ...providers.map((provider) {
-              return RadioListTile<String>(
-                title: Text(provider),
-                value: provider,
-                groupValue: defaultMapProvider.value,
-                onChanged: (value) async {
-                  defaultMapProvider.value = value!;
-                  await StorageService.to.write('map_provider', value);
-                  Get.back();
-                  AppSnackbar.showSuccess(message: 'Đã chọn $value');
-                },
-                activeColor: AppColors.primary,
-              );
-            }),
           ],
         ),
       ),
@@ -242,42 +179,6 @@ class SettingsController extends BaseController {
     );
   }
 
-  void showUnitPicker() {
-    final units = {'Metric': 'Metric (km, m)', 'Imperial': 'Imperial (miles, ft)'};
-
-    Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.all(AppSpacing.s5),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Chọn đơn vị đo lường', style: AppTypography.heading5),
-            SizedBox(height: AppSpacing.s4),
-            ...units.entries.map((entry) {
-              return RadioListTile<String>(
-                title: Text(entry.value),
-                value: entry.key,
-                groupValue: measurementUnit.value,
-                onChanged: (value) async {
-                  measurementUnit.value = value!;
-                  await StorageService.to.write('measurement_unit', value);
-                  Get.back();
-                  AppSnackbar.showSuccess(message: 'Đã chọn ${entry.value}');
-                },
-                activeColor: AppColors.primary,
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
   // Action methods
   void sendFeedback() {
     Get.dialog(
@@ -309,9 +210,76 @@ class SettingsController extends BaseController {
     );
   }
 
-  void rateApp() {
-    // TODO: Implement app store/play store rating
-    AppSnackbar.showInfo(message: 'Chuyển đến App Store/Play Store...');
+  Future<void> rateApp() async {
+    try {
+      final InAppReview inAppReview = InAppReview.instance;
+
+      // Check if in-app review is available (only works on published apps)
+      if (await inAppReview.isAvailable()) {
+        await inAppReview.requestReview();
+      } else {
+        // Fallback for apps not on store yet - show feedback dialog
+        _showRateFallbackDialog();
+      }
+    } catch (e) {
+      // Safe fallback if anything goes wrong
+      _showRateFallbackDialog();
+    }
+  }
+
+  void _showRateFallbackDialog() {
+    Get.dialog(
+      AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.star, color: AppColors.warning, size: 24.sp),
+            SizedBox(width: AppSpacing.s2),
+            const Text('Đánh giá Wanderlust'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Cảm ơn bạn đã sử dụng Wanderlust!',
+              style: AppTypography.bodyMedium,
+            ),
+            SizedBox(height: AppSpacing.s3),
+            Text(
+              'Ứng dụng đang trong giai đoạn phát triển. Tính năng đánh giá sẽ khả dụng khi app chính thức lên App Store/Play Store.',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            SizedBox(height: AppSpacing.s4),
+            Text(
+              'Bạn có muốn gửi phản hồi cho chúng tôi không?',
+              style: AppTypography.bodyMedium.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Để sau', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              sendFeedback(); // Reuse existing feedback dialog
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+            ),
+            child: const Text('Gửi phản hồi', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   void showAbout() {
@@ -329,18 +297,41 @@ Build: ${buildNumber.value}
   }
 
   void showTerms() {
-    // TODO: Navigate to terms page or show web view
-    AppSnackbar.showInfo(message: 'Mở điều khoản sử dụng...');
+    Get.toNamed('/terms-of-service');
   }
 
   void showPrivacyPolicy() {
-    // TODO: Navigate to privacy policy page or show web view
-    AppSnackbar.showInfo(message: 'Mở chính sách bảo mật...');
+    Get.toNamed('/privacy-policy');
   }
 
   void showLicenses() {
     // Show Flutter licenses
     Get.to(() => const LicensePage(applicationName: 'Wanderlust', applicationVersion: '1.0.0'));
+  }
+
+  Future<void> _calculateCacheSize() async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      int totalSize = 0;
+
+      if (await tempDir.exists()) {
+        await for (var entity in tempDir.list(recursive: true, followLinks: false)) {
+          if (entity is File) {
+            totalSize += await entity.length();
+          }
+        }
+      }
+
+      cacheSize.value = _formatBytes(totalSize);
+    } catch (e) {
+      cacheSize.value = '0 MB';
+    }
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
   void clearCache() async {
@@ -352,15 +343,41 @@ Build: ${buildNumber.value}
     );
 
     if (confirm) {
-      AppDialogs.showLoading(message: 'Đang xóa cache...');
+      try {
+        AppDialogs.showLoading(message: 'Đang xóa cache...');
 
-      // Simulate cache clearing
-      await Future.delayed(const Duration(seconds: 2));
+        // Clear cached network images
+        await DefaultCacheManager().emptyCache();
 
-      cacheSize.value = '0 MB';
+        // Clear temporary directory
+        final tempDir = await getTemporaryDirectory();
+        if (await tempDir.exists()) {
+          await for (var entity in tempDir.list()) {
+            if (entity is File) {
+              try {
+                await entity.delete();
+              } catch (e) {
+                // Skip files that can't be deleted
+              }
+            } else if (entity is Directory) {
+              try {
+                await entity.delete(recursive: true);
+              } catch (e) {
+                // Skip directories that can't be deleted
+              }
+            }
+          }
+        }
 
-      AppDialogs.hideLoading();
-      AppSnackbar.showSuccess(message: 'Đã xóa bộ nhớ cache thành công');
+        // Recalculate cache size
+        await _calculateCacheSize();
+
+        AppDialogs.hideLoading();
+        AppSnackbar.showSuccess(message: 'Đã xóa bộ nhớ cache thành công');
+      } catch (e) {
+        AppDialogs.hideLoading();
+        AppSnackbar.showError(message: 'Không thể xóa cache: $e');
+      }
     }
   }
 

@@ -39,22 +39,16 @@ class SettingsPage extends GetView<SettingsController> {
                 onTap: controller.navigateToEditProfile,
               ),
               _buildSettingItem(
+                icon: Icons.lock_outline,
+                title: 'Đổi mật khẩu',
+                subtitle: 'Thay đổi mật khẩu tài khoản',
+                onTap: controller.navigateToChangePassword,
+              ),
+              _buildSettingItem(
                 icon: Icons.hotel_outlined,
                 title: 'Lịch sử đặt phòng',
                 subtitle: 'Xem các booking đã đặt',
                 onTap: controller.navigateToBookingHistory,
-              ),
-              _buildSettingItem(
-                icon: Icons.lock_outline,
-                title: 'Bảo mật',
-                subtitle: 'Đổi mật khẩu, xác thực 2 bước',
-                onTap: controller.navigateToSecurity,
-              ),
-              _buildSettingItem(
-                icon: Icons.privacy_tip_outlined,
-                title: 'Quyền riêng tư',
-                subtitle: 'Quản lý dữ liệu và quyền riêng tư',
-                onTap: controller.navigateToPrivacy,
               ),
             ]),
 
@@ -66,8 +60,7 @@ class SettingsPage extends GetView<SettingsController> {
               _buildSettingItem(
                 icon: Icons.notifications_outlined,
                 title: 'Thông báo',
-                subtitle: 'Quản lý thông báo từ ứng dụng',
-                onTap: controller.navigateToNotificationSettings,
+                subtitle: 'Bật/tắt thông báo',
                 trailing: Obx(
                   () => Switch(
                     value: controller.notificationsEnabled.value,
@@ -95,47 +88,10 @@ class SettingsPage extends GetView<SettingsController> {
                 ),
               ),
               _buildSettingItem(
-                icon: Icons.download_outlined,
-                title: 'Tải xuống',
-                subtitle: 'Quản lý nội dung đã tải',
-                onTap: controller.navigateToDownloads,
-              ),
-            ]),
-
-            SizedBox(height: AppSpacing.s6),
-
-            // Preferences
-            _buildSectionTitle('Tùy chọn'),
-            _buildSettingsSection([
-              _buildSettingItem(
-                icon: Icons.map_outlined,
-                title: 'Bản đồ',
-                subtitle: controller.defaultMapProvider.value,
-                onTap: controller.showMapProviderPicker,
-              ),
-              _buildSettingItem(
                 icon: Icons.attach_money,
                 title: 'Tiền tệ',
                 subtitle: controller.defaultCurrency.value,
                 onTap: controller.showCurrencyPicker,
-              ),
-              _buildSettingItem(
-                icon: Icons.straighten,
-                title: 'Đơn vị',
-                subtitle: controller.measurementUnit.value,
-                onTap: controller.showUnitPicker,
-              ),
-              _buildSettingItem(
-                icon: Icons.wifi_outlined,
-                title: 'Chế độ offline',
-                subtitle: 'Sử dụng ứng dụng khi không có mạng',
-                trailing: Obx(
-                  () => Switch(
-                    value: controller.offlineModeEnabled.value,
-                    onChanged: controller.toggleOfflineMode,
-                    activeColor: AppColors.primary,
-                  ),
-                ),
               ),
             ]),
 
@@ -149,12 +105,6 @@ class SettingsPage extends GetView<SettingsController> {
                 title: 'Trung tâm trợ giúp',
                 subtitle: 'FAQ và hướng dẫn sử dụng',
                 onTap: controller.navigateToHelp,
-              ),
-              _buildSettingItem(
-                icon: Icons.headset_mic_outlined,
-                title: 'Liên hệ hỗ trợ',
-                subtitle: 'Chat với đội ngũ hỗ trợ',
-                onTap: controller.navigateToSupport,
               ),
               _buildSettingItem(
                 icon: Icons.feedback_outlined,

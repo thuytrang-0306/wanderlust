@@ -47,6 +47,8 @@ import 'package:wanderlust/presentation/pages/settings/privacy_policy_page.dart'
 import 'package:wanderlust/presentation/pages/settings/terms_of_service_page.dart';
 import 'package:wanderlust/presentation/bindings/change_password_binding.dart';
 import 'package:wanderlust/presentation/bindings/help_support_binding.dart';
+import 'package:wanderlust/presentation/pages/account/edit_profile_page.dart';
+import 'package:wanderlust/presentation/bindings/edit_profile_binding.dart';
 
 part 'app_routes.dart';
 
@@ -156,6 +158,12 @@ class AppPages {
     GetPage(
       name: Routes.USER_PROFILE,
       page: () => const UserProfilePage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.EDIT_PROFILE,
+      page: () => const EditProfilePage(),
+      binding: EditProfileBinding(),
       transition: Transition.rightToLeft,
     ),
     GetPage(

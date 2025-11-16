@@ -40,6 +40,7 @@ abstract class Routes {
 
   // Account/Profile
   static const USER_PROFILE = '/user-profile';
+  static const EDIT_PROFILE = '/edit-profile';
 
   // Search
   static const SEARCH_FILTER = '/search-filter';
