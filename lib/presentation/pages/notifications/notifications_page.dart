@@ -4,7 +4,8 @@ import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/presentation/controllers/notifications/notifications_controller.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wanderlust/shared/data/models/notification_model.dart';
+import 'package:wanderlust/shared/core/widgets/app_image.dart';
 
 class NotificationsPage extends GetView<NotificationsController> {
   const NotificationsPage({super.key});
@@ -38,6 +39,12 @@ class NotificationsPage extends GetView<NotificationsController> {
                       if (controller.weekNotifications.isNotEmpty) ...[
                         _buildSectionHeader('7 ngày qua'),
                         ...controller.weekNotifications.map(
+                          (notification) => _buildNotificationItem(notification),
+                        ),
+                      ],
+                      if (controller.olderNotifications.isNotEmpty) ...[
+                        _buildSectionHeader('Cũ hơn'),
+                        ...controller.olderNotifications.map(
                           (notification) => _buildNotificationItem(notification),
                         ),
                       ],
@@ -79,11 +86,43 @@ class NotificationsPage extends GetView<NotificationsController> {
                   color: AppColors.primary,
                 ),
               ),
-              GestureDetector(
-                onTap: () {
-                  // Settings action
-                },
-                child: Icon(Icons.settings_outlined, color: AppColors.primary, size: 24.sp),
+              Row(
+                children: [
+                  Obx(() {
+                    if (controller.unreadCount.value > 0) {
+                      return Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => controller.markAllAsRead(),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(16.r),
+                              ),
+                              child: Text(
+                                'Đọc tất cả',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                        ],
+                      );
+                    }
+                    return const SizedBox();
+                  }),
+                  GestureDetector(
+                    onTap: () {
+                      // Settings action - could open notification preferences
+                    },
+                    child: Icon(Icons.settings_outlined, color: AppColors.primary, size: 24.sp),
+                  ),
+                ],
               ),
             ],
           ),
@@ -114,35 +153,42 @@ class NotificationsPage extends GetView<NotificationsController> {
       child: InkWell(
         onTap: () {
           controller.markAsRead(notification.id);
+          // Navigate to actionUrl if available
+          if (notification.actionUrl != null && notification.actionUrl!.isNotEmpty) {
+            Get.toNamed(notification.actionUrl!);
+          }
         },
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s4),
+          decoration: BoxDecoration(
+            color: notification.isUnread ? const Color(0xFFF8FAFC) : Colors.white,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar
+              // Avatar or Icon
               Container(
                 width: 44.w,
                 height: 44.w,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+                  color: notification.senderAvatar == null ? AppColors.primary.withValues(alpha: 0.1) : null,
                 ),
                 child: ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: notification.avatar,
-                    fit: BoxFit.cover,
-                    placeholder:
-                        (context, url) => Container(
-                          color: AppColors.neutral200,
-                          child: Icon(Icons.person, color: AppColors.neutral400, size: 20.sp),
+                  child: notification.senderAvatar != null
+                      ? AppImage(
+                          imageData: notification.senderAvatar!,
+                          width: 44.w,
+                          height: 44.h,
+                          fit: BoxFit.cover,
+                        )
+                      : Center(
+                          child: Text(
+                            notification.type.icon,
+                            style: TextStyle(fontSize: 18.sp),
+                          ),
                         ),
-                    errorWidget:
-                        (context, url, error) => Container(
-                          color: AppColors.neutral200,
-                          child: Icon(Icons.person, color: AppColors.neutral400, size: 20.sp),
-                        ),
-                  ),
                 ),
               ),
               SizedBox(width: AppSpacing.s3),
@@ -152,58 +198,139 @@ class NotificationsPage extends GetView<NotificationsController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name
-                    Text(
-                      notification.userName,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF111827),
-                        height: 1.2,
-                      ),
+                    // Title with type indicator
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            notification.title,
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF111827),
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: _getTypeColor(notification.type).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Text(
+                            notification.type.displayName,
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w500,
+                              color: _getTypeColor(notification.type),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(height: 4.h),
-                    // Time
+                    
+                    // Body content
                     Text(
-                      notification.time,
+                      notification.body,
                       style: TextStyle(
-                        fontSize: 13.sp,
-                        color: const Color(0xFF9CA3AF),
-                        height: 1.2,
+                        fontSize: 14.sp,
+                        color: const Color(0xFF4B5563),
+                        height: 1.4,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    if (notification.content.isNotEmpty) ...[
-                      SizedBox(height: 6.h),
-                      Text(
-                        notification.content,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: const Color(0xFF4B5563),
-                          height: 1.4,
+                    SizedBox(height: 6.h),
+                    
+                    // Time and sender info
+                    Row(
+                      children: [
+                        Text(
+                          notification.timeAgo,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: const Color(0xFF9CA3AF),
+                          ),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                        if (notification.senderName != null) ...[
+                          Text(
+                            ' • ',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: const Color(0xFF9CA3AF),
+                            ),
+                          ),
+                          Text(
+                            notification.senderName!,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: const Color(0xFF6B7280),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
               ),
 
-              // Unread indicator
-              if (notification.isUnread) ...[
-                SizedBox(width: AppSpacing.s2),
-                Container(
-                  width: 8.w,
-                  height: 8.w,
-                  margin: EdgeInsets.only(top: 6.h),
-                  decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                ),
-              ],
+              // Unread indicator and priority
+              Column(
+                children: [
+                  if (notification.isUnread)
+                    Container(
+                      width: 8.w,
+                      height: 8.w,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  if (notification.priority == NotificationPriority.high ||
+                      notification.priority == NotificationPriority.urgent) ...[
+                    SizedBox(height: 4.h),
+                    Icon(
+                      Icons.priority_high,
+                      size: 16.sp,
+                      color: notification.priority == NotificationPriority.urgent
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFFEAB308),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+  
+  Color _getTypeColor(NotificationType type) {
+    switch (type) {
+      case NotificationType.businessApproved:
+      case NotificationType.bookingConfirmed:
+      case NotificationType.paymentConfirmed:
+        return const Color(0xFF10B981);
+      case NotificationType.businessRejected:
+      case NotificationType.bookingCancelled:
+        return const Color(0xFFEF4444);
+      case NotificationType.businessPending:
+      case NotificationType.bookingReminder:
+        return const Color(0xFFEAB308);
+      case NotificationType.blogLike:
+      case NotificationType.userFollow:
+        return AppColors.primary;
+      case NotificationType.welcome:
+        return const Color(0xFF8B5CF6);
+      default:
+        return AppColors.neutral500;
+    }
   }
 
   Widget _buildEmptyState() {
@@ -233,23 +360,4 @@ class NotificationsPage extends GetView<NotificationsController> {
   }
 }
 
-// Notification Model
-class NotificationModel {
-  final String id;
-  final String userName;
-  final String avatar;
-  final String time;
-  final String content;
-  final bool isUnread;
-  final DateTime timestamp;
-
-  NotificationModel({
-    required this.id,
-    required this.userName,
-    required this.avatar,
-    required this.time,
-    required this.content,
-    required this.isUnread,
-    required this.timestamp,
-  });
-}
+// NotificationModel is now imported from shared/data/models/notification_model.dart

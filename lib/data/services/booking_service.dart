@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:wanderlust/data/models/booking_model.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:wanderlust/core/services/connectivity_service.dart';
+import 'package:wanderlust/shared/core/services/notification_service.dart';
+import 'package:wanderlust/shared/data/models/notification_model.dart';
 
 class BookingService extends GetxService {
   static BookingService get to => Get.find();
@@ -57,6 +59,9 @@ class BookingService extends GetxService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
+      // Send booking confirmation notification
+      _sendBookingConfirmationNotification(bookingId);
+
       LoggerService.i('Booking confirmed: $bookingId');
       return true;
     } catch (e) {
@@ -74,6 +79,9 @@ class BookingService extends GetxService {
         'cancellationDate': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      // Send booking cancellation notification
+      _sendBookingCancellationNotification(bookingId, reason);
 
       LoggerService.i('Booking cancelled: $bookingId');
       return true;
@@ -107,6 +115,9 @@ class BookingService extends GetxService {
         'paymentId': paymentId,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      // Send payment confirmation notification
+      _sendPaymentConfirmationNotification(bookingId, paymentId);
 
       LoggerService.i('Payment processed for booking: $bookingId');
       return true;
@@ -412,6 +423,122 @@ class BookingService extends GetxService {
       return booking.totalPrice * 0.5; // 50% refund
     } else {
       return 0; // No refund
+    }
+  }
+
+  // ============ NOTIFICATION HELPERS ============
+
+  /// Send booking confirmation notification (non-blocking)
+  void _sendBookingConfirmationNotification(String bookingId) async {
+    try {
+      // Get booking data
+      final booking = await getBooking(bookingId);
+      if (booking == null) return;
+
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.sendBookingConfirmationNotification(
+          userId: booking.userId,
+          bookingId: bookingId,
+          serviceName: booking.itemName,
+          checkInDate: booking.checkIn,
+        );
+        LoggerService.d('Booking confirmation notification sent for: ${booking.itemName}');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send booking confirmation notification', error: e);
+    }
+  }
+
+  /// Send booking cancellation notification (non-blocking)
+  void _sendBookingCancellationNotification(String bookingId, String reason) async {
+    try {
+      // Get booking data
+      final booking = await getBooking(bookingId);
+      if (booking == null) return;
+
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.createNotification(
+          recipientId: booking.userId,
+          title: 'Đặt chỗ đã bị hủy ❌',
+          body: 'Booking cho "${booking.itemName}" đã bị hủy: $reason',
+          type: NotificationType.bookingCancelled,
+          priority: NotificationPriority.high,
+          actionUrl: '/bookings/$bookingId',
+          metadata: {
+            'bookingId': bookingId,
+            'serviceName': booking.itemName,
+            'cancellationReason': reason,
+            'refundAmount': calculateRefundAmount(booking),
+          },
+        );
+        LoggerService.d('Booking cancellation notification sent for: ${booking.itemName}');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send booking cancellation notification', error: e);
+    }
+  }
+
+  /// Send payment confirmation notification (non-blocking)
+  void _sendPaymentConfirmationNotification(String bookingId, String paymentId) async {
+    try {
+      // Get booking data
+      final booking = await getBooking(bookingId);
+      if (booking == null) return;
+
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.createNotification(
+          recipientId: booking.userId,
+          title: 'Thanh toán thành công! 💳',
+          body: 'Thanh toán cho "${booking.itemName}" đã được xử lý. Mã giao dịch: $paymentId',
+          type: NotificationType.paymentConfirmed,
+          priority: NotificationPriority.high,
+          actionUrl: '/bookings/$bookingId',
+          metadata: {
+            'bookingId': bookingId,
+            'serviceName': booking.itemName,
+            'paymentId': paymentId,
+            'amount': booking.totalPrice,
+            'currency': booking.currency,
+          },
+        );
+        LoggerService.d('Payment confirmation notification sent for: ${booking.itemName}');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send payment confirmation notification', error: e);
+    }
+  }
+
+  /// Send booking reminder notification (for upcoming bookings)
+  Future<void> sendBookingReminder(String bookingId) async {
+    try {
+      final booking = await getBooking(bookingId);
+      if (booking == null) return;
+
+      // Check if booking is upcoming (1-3 days from now)
+      final now = DateTime.now();
+      final daysUntilCheckIn = booking.checkIn.difference(now).inDays;
+      
+      if (daysUntilCheckIn > 0 && daysUntilCheckIn <= 3) {
+        if (Get.isRegistered<NotificationService>()) {
+          NotificationService.to.createNotification(
+            recipientId: booking.userId,
+            title: 'Nhắc nhở booking sắp tới! ⏰',
+            body: 'Booking cho "${booking.itemName}" sẽ bắt đầu trong $daysUntilCheckIn ngày nữa.',
+            type: NotificationType.bookingReminder,
+            priority: NotificationPriority.normal,
+            actionUrl: '/bookings/$bookingId',
+            metadata: {
+              'bookingId': bookingId,
+              'serviceName': booking.itemName,
+              'checkInDate': booking.checkIn.toIso8601String(),
+              'daysUntil': daysUntilCheckIn,
+            },
+          );
+          LoggerService.d('Booking reminder notification sent for: ${booking.itemName}');
+        }
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send booking reminder notification', error: e);
     }
   }
 }

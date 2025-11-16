@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:wanderlust/data/models/business_profile_model.dart';
 import 'package:wanderlust/data/models/user_model.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/shared/core/services/notification_service.dart';
+import 'package:wanderlust/shared/data/models/notification_model.dart';
 
 class BusinessService extends GetxService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -109,6 +111,9 @@ class BusinessService extends GetxService {
       
       // Update user document with business info
       await _updateUserBusinessInfo(docRef.id);
+      
+      // Send business registration pending notification
+      _sendBusinessRegistrationNotification(_userId!, businessName);
       
       // Return created profile with ID (use the original object, not from JSON)
       currentBusinessProfile.value = BusinessProfileModel(
@@ -388,4 +393,172 @@ class BusinessService extends GetxService {
   /// Check if current business is verified
   bool get isBusinessVerified => 
       currentBusinessProfile.value?.isVerified ?? false;
+
+  // ============ ADMIN BUSINESS MANAGEMENT ============
+
+  /// Admin approve business (Admin only)
+  Future<bool> approveBusinessProfile({
+    required String profileId,
+    String? adminMessage,
+  }) async {
+    try {
+      // Update business profile
+      await _firestore
+          .collection(_businessProfilesCollection)
+          .doc(profileId)
+          .update({
+        'verificationStatus': VerificationStatus.verified.value,
+        'verifiedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        if (adminMessage != null) 'adminMessage': adminMessage,
+      });
+
+      // Get business profile to send notification
+      final businessProfile = await getBusinessProfile(profileId);
+      if (businessProfile != null) {
+        _sendBusinessApprovalNotification(
+          businessProfile.userId,
+          businessProfile.businessName,
+        );
+      }
+
+      LoggerService.i('Business approved: $profileId');
+      return true;
+    } catch (e) {
+      LoggerService.e('Error approving business', error: e);
+      return false;
+    }
+  }
+
+  /// Admin reject business (Admin only)
+  Future<bool> rejectBusinessProfile({
+    required String profileId,
+    required String rejectionReason,
+    String? adminMessage,
+  }) async {
+    try {
+      // Update business profile
+      await _firestore
+          .collection(_businessProfilesCollection)
+          .doc(profileId)
+          .update({
+        'verificationStatus': VerificationStatus.rejected.value,
+        'rejectionReason': rejectionReason,
+        'updatedAt': FieldValue.serverTimestamp(),
+        if (adminMessage != null) 'adminMessage': adminMessage,
+      });
+
+      // Get business profile to send notification
+      final businessProfile = await getBusinessProfile(profileId);
+      if (businessProfile != null) {
+        _sendBusinessRejectionNotification(
+          businessProfile.userId,
+          rejectionReason,
+        );
+      }
+
+      LoggerService.i('Business rejected: $profileId');
+      return true;
+    } catch (e) {
+      LoggerService.e('Error rejecting business', error: e);
+      return false;
+    }
+  }
+
+  /// Admin suspend business (Admin only)
+  Future<bool> suspendBusinessProfile({
+    required String profileId,
+    required String suspensionReason,
+    String? adminMessage,
+  }) async {
+    try {
+      // Update business profile
+      await _firestore
+          .collection(_businessProfilesCollection)
+          .doc(profileId)
+          .update({
+        'verificationStatus': VerificationStatus.rejected.value,
+        'suspensionReason': suspensionReason,
+        'isActive': false,
+        'suspendedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        if (adminMessage != null) 'adminMessage': adminMessage,
+      });
+
+      // Get business profile to send notification
+      final businessProfile = await getBusinessProfile(profileId);
+      if (businessProfile != null) {
+        _sendBusinessSuspensionNotification(
+          businessProfile.userId,
+          businessProfile.businessName,
+          suspensionReason,
+        );
+      }
+
+      LoggerService.i('Business suspended: $profileId');
+      return true;
+    } catch (e) {
+      LoggerService.e('Error suspending business', error: e);
+      return false;
+    }
+  }
+
+  // ============ NOTIFICATION HELPERS ============
+
+  /// Send business registration notification (non-blocking)
+  void _sendBusinessRegistrationNotification(String userId, String businessName) {
+    try {
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.sendBusinessRegistrationNotification(userId);
+        LoggerService.d('Business registration notification sent for: $businessName');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send business registration notification', error: e);
+      // Don't throw error - notification failure shouldn't block business registration
+    }
+  }
+
+  /// Send business approval notification (non-blocking)
+  void _sendBusinessApprovalNotification(String userId, String businessName) {
+    try {
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.sendBusinessApprovalNotification(userId, businessName);
+        LoggerService.d('Business approval notification sent for: $businessName');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send business approval notification', error: e);
+    }
+  }
+
+  /// Send business rejection notification (non-blocking)
+  void _sendBusinessRejectionNotification(String userId, String reason) {
+    try {
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.sendBusinessRejectionNotification(userId, reason);
+        LoggerService.d('Business rejection notification sent: $reason');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send business rejection notification', error: e);
+    }
+  }
+
+  /// Send business suspension notification (non-blocking)
+  void _sendBusinessSuspensionNotification(String userId, String businessName, String reason) {
+    try {
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.createNotification(
+          recipientId: userId,
+          title: 'Tài khoản kinh doanh bị đình chỉ ⚠️',
+          body: 'Tài khoản "$businessName" đã bị đình chỉ: $reason. Vui lòng liên hệ hỗ trợ.',
+          type: NotificationType.businessSuspended,
+          priority: NotificationPriority.urgent,
+          actionUrl: '/support',
+          metadata: {'businessName': businessName, 'suspensionReason': reason},
+        );
+        LoggerService.d('Business suspension notification sent for: $businessName');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send business suspension notification', error: e);
+    }
+  }
 }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:wanderlust/core/utils/logger_utils.dart';
 import 'package:wanderlust/data/models/user_model.dart';
+import 'package:wanderlust/shared/core/services/notification_service.dart';
 
 class AuthService extends GetxService {
   static AuthService get to => Get.find();
@@ -163,6 +164,9 @@ class AuthService extends GetxService {
       };
 
       await userDoc.set(userData);
+      
+      // Send welcome notification (non-blocking)
+      _sendWelcomeNotification(uid);
     } catch (e) {
       LoggerUtils.logErrorSafely('Error creating user document', e);
     }
@@ -211,5 +215,18 @@ class AuthService extends GetxService {
 
     Get.snackbar('Lỗi', message);
     LoggerService.e('Auth exception: ${e.code}', error: e.message);
+  }
+  
+  // Send welcome notification to new user (non-blocking)
+  void _sendWelcomeNotification(String userId) {
+    try {
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.sendWelcomeNotification(userId);
+        LoggerService.d('Welcome notification triggered for user: $userId');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send welcome notification', error: e);
+      // Don't throw error - notification failure shouldn't block user registration
+    }
   }
 }

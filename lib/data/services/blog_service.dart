@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/data/models/blog_post_model.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/shared/core/services/notification_service.dart';
+import 'package:wanderlust/shared/data/models/notification_model.dart';
 
 class BlogService extends GetxService {
   static BlogService get to => Get.find();
@@ -124,6 +126,9 @@ class BlogService extends GetxService {
         'publishedAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      // Send blog published notification
+      _sendBlogPublishedNotification(postId);
 
       return true;
     } catch (e) {
@@ -264,6 +269,11 @@ class BlogService extends GetxService {
         }
       });
 
+      // Send notification if it's a new like (not unlike)
+      if (!isCurrentlyLiked) {
+        _sendBlogLikeNotification(postId);
+      }
+
       return !isCurrentlyLiked; // Return new like status
     } catch (e) {
       LoggerService.e('Error toggling like', error: e);
@@ -359,6 +369,9 @@ class BlogService extends GetxService {
         'commentsCount': FieldValue.increment(1),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      // Send blog comment notification
+      _sendBlogCommentNotification(postId, content);
 
       return commentRef.id;
     } catch (e) {
@@ -467,6 +480,144 @@ class BlogService extends GetxService {
     } catch (e) {
       LoggerService.e('Error searching posts', error: e);
       return [];
+    }
+  }
+
+  // ============ NOTIFICATION HELPERS ============
+
+  /// Send blog published notification (non-blocking)
+  void _sendBlogPublishedNotification(String postId) async {
+    try {
+      if (currentUserId == null) return;
+
+      // Get post data to include in notification
+      final postDoc = await _postsCollection.doc(postId).get();
+      if (!postDoc.exists) return;
+
+      final postData = postDoc.data() as Map<String, dynamic>?;
+      final postTitle = postData?['title'] ?? 'Blog post';
+      
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.createNotification(
+          recipientId: currentUserId!,
+          title: 'Blog đã được xuất bản! 📝',
+          body: 'Blog "$postTitle" của bạn đã được xuất bản thành công.',
+          type: NotificationType.blogPublished,
+          priority: NotificationPriority.normal,
+          actionUrl: '/blogs/$postId',
+          metadata: {'postId': postId, 'postTitle': postTitle},
+        );
+        LoggerService.d('Blog published notification sent for: $postTitle');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send blog published notification', error: e);
+    }
+  }
+
+  /// Send blog like notification (non-blocking)
+  void _sendBlogLikeNotification(String postId) async {
+    try {
+      if (currentUserId == null) return;
+
+      // Get post data
+      final postDoc = await _postsCollection.doc(postId).get();
+      if (!postDoc.exists) return;
+
+      final postData = postDoc.data() as Map<String, dynamic>?;
+      final postAuthorId = postData?['userId'];
+      final postTitle = postData?['title'] ?? 'Blog post';
+
+      // Don't notify if user likes their own post
+      if (postAuthorId == null || postAuthorId == currentUserId) return;
+
+      // Get current user data
+      final userDoc = await _usersCollection.doc(currentUserId).get();
+      final userData = userDoc.data() as Map<String, dynamic>?;
+      final userName = userData?['displayName'] ?? currentUser?.displayName ?? 'Ai đó';
+      
+      // Get avatar - prioritize base64 avatar from user profile
+      String userAvatar = '';
+      final user = currentUser;
+      if (userData?['avatar'] != null && userData!['avatar'].isNotEmpty) {
+        userAvatar = userData['avatar'];
+      } else if (userData?['photoURL'] != null && userData!['photoURL'].isNotEmpty) {
+        userAvatar = userData['photoURL'];
+      } else if (user != null && user.photoURL != null && user.photoURL!.isNotEmpty) {
+        userAvatar = user.photoURL!;
+      }
+
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.sendBlogLikeNotification(
+          blogAuthorId: postAuthorId,
+          blogTitle: postTitle,
+          likerName: userName,
+          likerAvatar: userAvatar.isNotEmpty ? userAvatar : null,
+          blogId: postId,
+        );
+        LoggerService.d('Blog like notification sent for: $postTitle');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send blog like notification', error: e);
+    }
+  }
+
+  /// Send blog comment notification (non-blocking)
+  void _sendBlogCommentNotification(String postId, String commentContent) async {
+    try {
+      if (currentUserId == null) return;
+
+      // Get post data
+      final postDoc = await _postsCollection.doc(postId).get();
+      if (!postDoc.exists) return;
+
+      final postData = postDoc.data() as Map<String, dynamic>?;
+      final postAuthorId = postData?['userId'];
+      final postTitle = postData?['title'] ?? 'Blog post';
+
+      // Don't notify if user comments on their own post
+      if (postAuthorId == null || postAuthorId == currentUserId) return;
+
+      // Get current user data
+      final userDoc = await _usersCollection.doc(currentUserId).get();
+      final userData = userDoc.data() as Map<String, dynamic>?;
+      final userName = userData?['displayName'] ?? currentUser?.displayName ?? 'Ai đó';
+      
+      // Get avatar - prioritize base64 avatar from user profile
+      String userAvatar = '';
+      final user = currentUser;
+      if (userData?['avatar'] != null && userData!['avatar'].isNotEmpty) {
+        userAvatar = userData['avatar'];
+      } else if (userData?['photoURL'] != null && userData!['photoURL'].isNotEmpty) {
+        userAvatar = userData['photoURL'];
+      } else if (user != null && user.photoURL != null && user.photoURL!.isNotEmpty) {
+        userAvatar = user.photoURL!;
+      }
+
+      // Truncate comment if too long for notification
+      final shortComment = commentContent.length > 50 
+          ? '${commentContent.substring(0, 50)}...' 
+          : commentContent;
+
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.createNotification(
+          recipientId: postAuthorId,
+          title: 'Có bình luận mới trên blog của bạn! 💬',
+          body: '$userName bình luận: "$shortComment"',
+          type: NotificationType.blogComment,
+          senderId: currentUserId,
+          senderName: userName,
+          senderAvatar: userAvatar.isNotEmpty ? userAvatar : null,
+          actionUrl: '/blogs/$postId',
+          metadata: {
+            'postId': postId,
+            'postTitle': postTitle,
+            'commentContent': commentContent,
+          },
+        );
+        LoggerService.d('Blog comment notification sent for: $postTitle');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send blog comment notification', error: e);
     }
   }
 

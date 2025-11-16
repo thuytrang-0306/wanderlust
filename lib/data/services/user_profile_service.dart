@@ -7,6 +7,7 @@ import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:wanderlust/data/models/user_profile_model.dart';
 import 'package:wanderlust/data/models/user_model.dart';
 import 'package:wanderlust/data/models/business_profile_model.dart';
+import 'package:wanderlust/shared/core/services/notification_service.dart';
 
 class UserProfileService extends GetxService {
   static UserProfileService get to => Get.find();
@@ -342,6 +343,251 @@ class UserProfileService extends GetxService {
     } catch (e) {
       LoggerService.e('Error searching users', error: e);
       return [];
+    }
+  }
+
+  // ============ USER FOLLOW FUNCTIONALITY ============
+
+  /// Follow/Unfollow a user
+  Future<bool> toggleFollow(String targetUserId) async {
+    try {
+      if (currentUserId == null) {
+        LoggerService.w('User not authenticated');
+        return false;
+      }
+
+      if (currentUserId == targetUserId) {
+        LoggerService.w('User cannot follow themselves');
+        return false;
+      }
+
+      // Check current follow status
+      final isCurrentlyFollowing = await isFollowing(targetUserId);
+
+      // Use transaction for atomic update
+      await _firestore.runTransaction((transaction) async {
+        final currentUserRef = _firestore.collection(_collection).doc(currentUserId);
+        final targetUserRef = _firestore.collection(_collection).doc(targetUserId);
+        
+        final followingRef = currentUserRef.collection('following').doc(targetUserId);
+        final followersRef = targetUserRef.collection('followers').doc(currentUserId);
+
+        if (isCurrentlyFollowing) {
+          // Unfollow
+          transaction.delete(followingRef);
+          transaction.delete(followersRef);
+          
+          // Decrement counts
+          transaction.update(currentUserRef, {
+            'stats.followingCount': FieldValue.increment(-1),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          transaction.update(targetUserRef, {
+            'stats.followersCount': FieldValue.increment(-1),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          // Follow
+          final followData = {
+            'userId': targetUserId,
+            'followedAt': FieldValue.serverTimestamp(),
+          };
+          final followerData = {
+            'userId': currentUserId,
+            'followedAt': FieldValue.serverTimestamp(),
+          };
+          
+          transaction.set(followingRef, followData);
+          transaction.set(followersRef, followerData);
+          
+          // Increment counts
+          transaction.update(currentUserRef, {
+            'stats.followingCount': FieldValue.increment(1),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          transaction.update(targetUserRef, {
+            'stats.followersCount': FieldValue.increment(1),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+
+      // Send notification if it's a new follow (not unfollow)
+      if (!isCurrentlyFollowing) {
+        _sendUserFollowNotification(targetUserId);
+      }
+
+      LoggerService.i('Follow status updated for user: $targetUserId');
+      return !isCurrentlyFollowing; // Return new follow status
+    } catch (e) {
+      LoggerService.e('Error toggling follow status', error: e);
+      return false;
+    }
+  }
+
+  /// Check if current user is following target user
+  Future<bool> isFollowing(String targetUserId) async {
+    try {
+      if (currentUserId == null) return false;
+
+      final followDoc = await _firestore
+          .collection(_collection)
+          .doc(currentUserId)
+          .collection('following')
+          .doc(targetUserId)
+          .get();
+
+      return followDoc.exists;
+    } catch (e) {
+      LoggerService.e('Error checking follow status', error: e);
+      return false;
+    }
+  }
+
+  /// Get user's followers
+  Stream<List<UserProfileModel>> getUserFollowers(String userId) {
+    return _firestore
+        .collection(_collection)
+        .doc(userId)
+        .collection('followers')
+        .orderBy('followedAt', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      final followers = <UserProfileModel>[];
+      
+      for (final doc in snapshot.docs) {
+        final followerId = doc['userId'] as String;
+        final follower = await getUserProfile(followerId);
+        if (follower != null) {
+          followers.add(follower);
+        }
+      }
+      
+      return followers;
+    });
+  }
+
+  /// Get user's following list
+  Stream<List<UserProfileModel>> getUserFollowing(String userId) {
+    return _firestore
+        .collection(_collection)
+        .doc(userId)
+        .collection('following')
+        .orderBy('followedAt', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      final following = <UserProfileModel>[];
+      
+      for (final doc in snapshot.docs) {
+        final followingId = doc['userId'] as String;
+        final user = await getUserProfile(followingId);
+        if (user != null) {
+          following.add(user);
+        }
+      }
+      
+      return following;
+    });
+  }
+
+  /// Get mutual followers/friends
+  Future<List<UserProfileModel>> getMutualFollowers(String targetUserId) async {
+    try {
+      if (currentUserId == null) return [];
+
+      // Get current user's following list
+      final currentUserFollowing = await _firestore
+          .collection(_collection)
+          .doc(currentUserId)
+          .collection('following')
+          .get();
+
+      // Get target user's followers list
+      final targetUserFollowers = await _firestore
+          .collection(_collection)
+          .doc(targetUserId)
+          .collection('followers')
+          .get();
+
+      // Find intersection
+      final currentFollowingIds = currentUserFollowing.docs.map((doc) => doc['userId'] as String).toSet();
+      final targetFollowerIds = targetUserFollowers.docs.map((doc) => doc['userId'] as String).toSet();
+      
+      final mutualIds = currentFollowingIds.intersection(targetFollowerIds);
+
+      // Get user profiles for mutual connections
+      final mutualUsers = <UserProfileModel>[];
+      for (final userId in mutualIds) {
+        final user = await getUserProfile(userId);
+        if (user != null) {
+          mutualUsers.add(user);
+        }
+      }
+
+      return mutualUsers;
+    } catch (e) {
+      LoggerService.e('Error getting mutual followers', error: e);
+      return [];
+    }
+  }
+
+  /// Get recommended users to follow
+  Future<List<UserProfileModel>> getRecommendedUsers({int limit = 10}) async {
+    try {
+      if (currentUserId == null) return [];
+
+      // Get users the current user is not following
+      // This is a simplified recommendation - in production you'd use more sophisticated algorithms
+      final usersSnapshot = await _firestore
+          .collection(_collection)
+          .where('id', isNotEqualTo: currentUserId)
+          .orderBy('stats.followersCount', descending: true)
+          .limit(limit * 2) // Get more to filter out already followed users
+          .get();
+
+      final recommendedUsers = <UserProfileModel>[];
+      
+      for (final doc in usersSnapshot.docs) {
+        final user = UserProfileModel.fromJson(doc.data(), doc.id);
+        
+        // Check if already following
+        final alreadyFollowing = await isFollowing(user.id);
+        if (!alreadyFollowing && recommendedUsers.length < limit) {
+          recommendedUsers.add(user);
+        }
+      }
+
+      return recommendedUsers;
+    } catch (e) {
+      LoggerService.e('Error getting recommended users', error: e);
+      return [];
+    }
+  }
+
+  // ============ NOTIFICATION HELPERS ============
+
+  /// Send user follow notification (non-blocking)
+  void _sendUserFollowNotification(String followedUserId) async {
+    try {
+      if (currentUserId == null) return;
+
+      // Get current user data
+      final currentUserProfile = await getCurrentUserProfile();
+      if (currentUserProfile == null) return;
+
+      if (Get.isRegistered<NotificationService>()) {
+        NotificationService.to.sendUserFollowNotification(
+          followedUserId: followedUserId,
+          followerName: currentUserProfile.displayName.isNotEmpty 
+              ? currentUserProfile.displayName 
+              : 'Ai đó',
+          followerAvatar: currentUserProfile.avatar,
+          followerId: currentUserId!,
+        );
+        LoggerService.d('User follow notification sent to: $followedUserId');
+      }
+    } catch (e) {
+      LoggerService.w('Failed to send user follow notification', error: e);
     }
   }
 }

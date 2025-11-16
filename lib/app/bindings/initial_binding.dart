@@ -10,6 +10,7 @@ import 'package:wanderlust/data/services/listing_service.dart';
 import 'package:wanderlust/data/services/booking_service.dart';
 import 'package:wanderlust/presentation/controllers/auth_controller.dart';
 import 'package:wanderlust/presentation/controllers/app_controller.dart';
+import 'package:wanderlust/shared/core/services/notification_service.dart';
 
 class InitialBinding extends Bindings {
   @override
@@ -17,6 +18,9 @@ class InitialBinding extends Bindings {
     // Core controllers only - required for app startup
     Get.put(AppController(), permanent: true);
     Get.put(AuthController(), permanent: true);
+    
+    // Notification service - essential for app functionality
+    Get.put(NotificationService(), permanent: true);
     
     // Lazy load services - only init when needed
     Get.lazyPut(() => LocationService(), fenix: true);
