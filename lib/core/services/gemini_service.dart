@@ -12,7 +12,7 @@ class GeminiService extends GetxService {
 
   // Gemini API configuration
   static const String _apiKey = 'AIzaSyBLoDJXNEB-RBOapeBAijsOjEMG1dUh4pc';
-  static const String _modelName = 'gemini-1.5-flash';
+  static const String _modelName = 'gemini-2.5-flash';
 
   // Gemini model instance
   late GenerativeModel _model;
@@ -37,16 +37,16 @@ class GeminiService extends GetxService {
         apiKey: _apiKey,
         generationConfig: GenerationConfig(
           temperature: 0.7,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 2048,
           topK: 40,
           topP: 0.95,
           stopSequences: [],
         ),
         safetySettings: [
-          SafetySetting(HarmCategory.harassment, HarmBlockThreshold.low),
-          SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.low),
-          SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.low),
-          SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.low),
+          SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none),
+          SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none),
+          SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.medium),
+          SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.medium),
         ],
       );
 
@@ -136,8 +136,17 @@ class GeminiService extends GetxService {
         final text = chunk.text ?? '';
         fullResponse += text;
         yield fullResponse;
+
+        // Log safety ratings if response is blocked
+        if (text.isEmpty && chunk.candidates.isNotEmpty) {
+          final candidate = chunk.candidates.first;
+          LoggerService.w('Empty response - Safety ratings: ${candidate.safetyRatings}, Finish reason: ${candidate.finishReason}');
+        }
       }
 
+      if (fullResponse.isEmpty) {
+        LoggerService.w('Warning: Gemini returned empty response');
+      }
       LoggerService.i('Message sent successfully, response length: ${fullResponse.length}');
     } catch (e) {
       LoggerService.e('Error sending message', error: e);
@@ -348,15 +357,15 @@ Tập trung vào thời tiết và khí hậu:
         apiKey: _apiKey,
         generationConfig: GenerationConfig(
           temperature: temperature ?? 0.7,
-          maxOutputTokens: maxTokens ?? 1024,
+          maxOutputTokens: maxTokens ?? 2048,
           topK: topK ?? 40,
           topP: topP ?? 0.95,
         ),
         safetySettings: [
-          SafetySetting(HarmCategory.harassment, HarmBlockThreshold.low),
-          SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.low),
-          SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.low),
-          SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.low),
+          SafetySetting(HarmCategory.harassment, HarmBlockThreshold.none),
+          SafetySetting(HarmCategory.hateSpeech, HarmBlockThreshold.none),
+          SafetySetting(HarmCategory.sexuallyExplicit, HarmBlockThreshold.medium),
+          SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.medium),
         ],
       );
 

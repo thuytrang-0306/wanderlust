@@ -104,11 +104,15 @@ class AIStorageService extends GetxService {
       );
 
       await _conversationsBox.put(conversation.id, conversation);
-      await loadConversations();
-      
+
+      // Insert new conversation at the correct position
+      // New conversations go to top unless there are pinned conversations
+      final pinnedCount = conversations.where((c) => c.isPinned).length;
+      conversations.insert(pinnedCount, conversation);
+
       currentConversation.value = conversation;
       LoggerService.i('Created new conversation: ${conversation.id}');
-      
+
       return conversation;
     } catch (e) {
       LoggerService.e('Error creating conversation', error: e);
@@ -126,12 +130,17 @@ class AIStorageService extends GetxService {
     try {
       conversation.updatedAt = DateTime.now();
       await _conversationsBox.put(conversation.id, conversation);
-      await loadConversations();
-      
+
+      // Update in-memory list without reloading from storage
+      final index = conversations.indexWhere((c) => c.id == conversation.id);
+      if (index != -1) {
+        conversations[index] = conversation;
+      }
+
       if (currentConversation.value?.id == conversation.id) {
         currentConversation.value = conversation;
       }
-      
+
       LoggerService.i('Updated conversation: ${conversation.id}');
     } catch (e) {
       LoggerService.e('Error updating conversation', error: e);
