@@ -233,11 +233,15 @@ class AIChatController extends GetxController {
   Future<void> sendMessage() async {
     final message = messageController.text.trim();
     if (message.isEmpty && selectedImages.isEmpty) return;
-    
+
     if (isSending.value) return;
-    
+
     try {
       isSending.value = true;
+
+      // Unfocus keyboard to show AI response clearly
+      FocusManager.instance.primaryFocus?.unfocus();
+
       messageController.clear();
       
       // Create conversation if needed

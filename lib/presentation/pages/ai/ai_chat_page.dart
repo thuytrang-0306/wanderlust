@@ -9,6 +9,7 @@ import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/services/ai_storage_service.dart';
+import 'package:wanderlust/core/widgets/typing_indicator.dart';
 import 'package:wanderlust/data/models/ai_chat_message.dart';
 import 'package:wanderlust/data/models/ai_conversation.dart';
 import 'package:wanderlust/presentation/controllers/ai/ai_chat_controller.dart';
@@ -269,9 +270,15 @@ class AIChatPage extends GetView<AIChatController> {
                 children: [
                   if (message.attachments != null && message.attachments!.isNotEmpty)
                     _buildAttachedImages(message.attachments!),
-                  
+
                   if (message.error != null)
                     _buildErrorMessage(message.error!)
+                  else if (message.role == MessageRole.assistant && displayContent.isEmpty)
+                    // Show typing indicator when AI is processing
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.s2),
+                      child: const TypingIndicator(),
+                    )
                   else if (message.role == MessageRole.assistant && displayContent.isNotEmpty)
                     MarkdownBody(
                       data: displayContent,
@@ -285,7 +292,7 @@ class AIChatPage extends GetView<AIChatController> {
                         ),
                       ),
                     )
-                  else
+                  else if (displayContent.isNotEmpty)
                     Text(
                       displayContent,
                       style: AppTypography.bodyM.copyWith(
@@ -295,16 +302,19 @@ class AIChatPage extends GetView<AIChatController> {
                   
                   // Removed circular progress indicator to fix state issues
                   // The typing animation effect is already shown through streaming text
-                  
-                  SizedBox(height: AppSpacing.s2),
-                  Text(
-                    _formatTime(message.timestamp),
-                    style: AppTypography.bodyXS.copyWith(
-                      color: isUser 
-                          ? Colors.white.withValues(alpha: 0.7) 
-                          : AppColors.neutral500,
+
+                  // Only show timestamp if there's actual content
+                  if (displayContent.isNotEmpty || message.error != null) ...[
+                    SizedBox(height: AppSpacing.s2),
+                    Text(
+                      _formatTime(message.timestamp),
+                      style: AppTypography.bodyXS.copyWith(
+                        color: isUser
+                            ? Colors.white.withValues(alpha: 0.7)
+                            : AppColors.neutral500,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
