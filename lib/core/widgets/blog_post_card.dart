@@ -79,7 +79,8 @@ class BlogPostCard extends StatelessWidget {
       images: blog.images,
       location: blog.destinations.isNotEmpty ? blog.destinations.first : '',
       timeAgo: _getTimeAgo(blog.createdAt),
-      likeCount: blog.likes,
+      // Sanitize: ensure like count never negative (fix legacy bad data)
+      likeCount: blog.likes < 0 ? 0 : blog.likes,
       commentCount: blog.commentsCount,
       isLiked: isLiked,
       isBookmarked: isBookmarked,

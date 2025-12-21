@@ -28,7 +28,8 @@ class PostViewModel {
     required int initialLikeCount,
     required bool initialIsLiked,
     required bool initialIsBookmarked,
-  })  : likeCount = initialLikeCount.obs,
+  })  : // Sanitize: ensure like count never negative (fix legacy bad data)
+        likeCount = (initialLikeCount < 0 ? 0 : initialLikeCount).obs,
         isLiked = initialIsLiked.obs,
         isBookmarked = initialIsBookmarked.obs;
 
@@ -79,7 +80,8 @@ class PostViewModel {
 
   /// Sync with actual like count from backend
   void syncLikeCount(int actualCount) {
-    likeCount.value = actualCount;
+    // Sanitize: ensure like count never negative (fix legacy bad data)
+    likeCount.value = actualCount < 0 ? 0 : actualCount;
   }
 
   /// Sync like status

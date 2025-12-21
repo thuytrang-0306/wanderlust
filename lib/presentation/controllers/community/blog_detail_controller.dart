@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
@@ -56,7 +57,8 @@ class BlogDetailController extends BaseController {
       if (passedBlogPost != null && passedBlogPost is BlogPostModel) {
         // Use the passed data immediately - no loading spinner!
         blogPost.value = passedBlogPost;
-        likeCount.value = passedBlogPost.likes;
+        // Sanitize: ensure like count never negative (fix legacy bad data)
+        likeCount.value = passedBlogPost.likes < 0 ? 0 : passedBlogPost.likes;
         commentCount.value = passedBlogPost.commentsCount;
         isLoadingData.value = false;
 
@@ -99,7 +101,8 @@ class BlogDetailController extends BaseController {
 
       if (post != null) {
         blogPost.value = post;
-        likeCount.value = post.likes;
+        // Sanitize: ensure like count never negative (fix legacy bad data)
+        likeCount.value = post.likes < 0 ? 0 : post.likes;
         commentCount.value = post.commentsCount;
         // Check if user has liked/bookmarked this post
         if (shouldShowLoading) {
@@ -535,7 +538,8 @@ class BlogDetailController extends BaseController {
       if (updatedPost != null) {
         // Atomic sync: update both like status and count together
         isLiked.value = await _blogService.isPostLiked(postId!);
-        likeCount.value = updatedPost.likes;
+        // Sanitize: ensure like count never negative (fix legacy bad data)
+        likeCount.value = updatedPost.likes < 0 ? 0 : updatedPost.likes;
 
         // Update cached post silently (no UI rebuild)
         if (blogPost.value != null) {
@@ -579,10 +583,37 @@ class BlogDetailController extends BaseController {
   Future<void> shareArticle() async {
     if (postId == null || blogPost.value == null) return;
 
-    // Increment share count
-    await _blogService.incrementShares(postId!);
+    try {
+      final post = blogPost.value!;
 
-    // Share functionality will be added with share_plus package
-    AppSnackbar.showInfo(title: 'Chia sẻ', message: 'Tính năng chia sẻ sẽ sớm ra mắt');
+      // Create share text with post info
+      final shareText = '''
+📖 ${post.title}
+
+${post.excerpt.isNotEmpty ? post.excerpt : post.content.substring(0, post.content.length > 200 ? 200 : post.content.length)}${post.content.length > 200 ? '...' : ''}
+
+✍️ Bởi: ${post.authorName}
+${post.destinations.isNotEmpty ? '📍 ${post.destinations.join(", ")}' : ''}
+
+---
+Đọc thêm trên Wanderlust Travel App 🌍
+''';
+
+      // Share using share_plus
+      await Share.share(
+        shareText,
+        subject: post.title,
+      );
+
+      // Increment share count (optimistically assume user shared)
+      await _blogService.incrementShares(postId!);
+      LoggerService.i('Article shared: $postId');
+    } catch (e) {
+      LoggerService.e('Error sharing article', error: e);
+      AppSnackbar.showError(
+        title: 'Lỗi',
+        message: 'Không thể chia sẻ bài viết. Vui lòng thử lại.',
+      );
+    }
   }
 }
