@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/presentation/pages/community/community_page.dart';
+import 'package:wanderlust/presentation/view_models/post_view_model.dart';
 import 'package:wanderlust/app/routes/app_pages.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
@@ -30,10 +31,13 @@ class CommunityController extends GetxController {
   }
 
   // Observable lists
-  final RxList<PostModel> posts = <PostModel>[].obs;
+  final RxList<PostViewModel> posts = <PostViewModel>[].obs;
   final RxList<ReviewModel> reviews = <ReviewModel>[].obs;
   final RxList<ListingModel> businessPosts = <ListingModel>[].obs;
   final RxBool isLoading = false.obs;
+
+  // Store BlogPostModel for navigation
+  final RxMap<String, BlogPostModel> blogPostsCache = <String, BlogPostModel>{}.obs;
 
   // User interaction tracking
   final RxSet<String> likedPostIds = <String>{}.obs;
@@ -76,43 +80,19 @@ class CommunityController extends GetxController {
   }
 
   void _updatePostLikeStatus() {
-    for (int i = 0; i < posts.length; i++) {
-      final post = posts[i];
-      final isLiked = likedPostIds.contains(post.id);
-      if (post.isLiked != isLiked) {
-        posts[i] = PostModel(
-          id: post.id,
-          userName: post.userName,
-          userAvatar: post.userAvatar,
-          timeAndLocation: post.timeAndLocation,
-          content: post.content,
-          images: post.images,
-          likeCount: post.likeCount,
-          commentCount: post.commentCount,
-          isLiked: isLiked,
-          isBookmarked: post.isBookmarked,
-        );
+    for (final post in posts) {
+      final shouldBeLiked = likedPostIds.contains(post.id);
+      if (post.isLiked.value != shouldBeLiked) {
+        post.syncLikeStatus(shouldBeLiked);
       }
     }
   }
 
   void _updatePostBookmarkStatus() {
-    for (int i = 0; i < posts.length; i++) {
-      final post = posts[i];
-      final isBookmarked = bookmarkedPostIds.contains(post.id);
-      if (post.isBookmarked != isBookmarked) {
-        posts[i] = PostModel(
-          id: post.id,
-          userName: post.userName,
-          userAvatar: post.userAvatar,
-          timeAndLocation: post.timeAndLocation,
-          content: post.content,
-          images: post.images,
-          likeCount: post.likeCount,
-          commentCount: post.commentCount,
-          isLiked: post.isLiked,
-          isBookmarked: isBookmarked,
-        );
+    for (final post in posts) {
+      final shouldBeBookmarked = bookmarkedPostIds.contains(post.id);
+      if (post.isBookmarked.value != shouldBeBookmarked) {
+        post.syncBookmarkStatus(shouldBeBookmarked);
       }
     }
   }
@@ -126,32 +106,72 @@ class CommunityController extends GetxController {
           .getPublishedPosts(limit: 20)
           .listen(
             (blogPosts) {
-              // Convert BlogPostModel to PostModel for UI
-              posts.value =
-                  blogPosts.map((blog) {
-                    // Calculate relative time
-                    String timeAndLocation = _getRelativeTime(blog.publishedAt ?? blog.createdAt);
-                    if (blog.destinations.isNotEmpty) {
-                      timeAndLocation += ' · ${blog.destinations.first}';
-                    }
+              // Cache BlogPostModel for navigation
+              for (final blog in blogPosts) {
+                blogPostsCache[blog.id] = blog;
+              }
 
-                    return PostModel(
+              // OPTIMIZATION: Update existing PostViewModel instead of recreating
+              final existingPostsMap = <String, PostViewModel>{};
+              for (final post in posts) {
+                existingPostsMap[post.id] = post;
+              }
+
+              final updatedPosts = <PostViewModel>[];
+
+              for (final blog in blogPosts) {
+                // Calculate relative time
+                String timeAndLocation = _getRelativeTime(blog.publishedAt ?? blog.createdAt);
+                if (blog.destinations.isNotEmpty) {
+                  timeAndLocation += ' · ${blog.destinations.first}';
+                }
+
+                // Check if PostViewModel already exists
+                final existingPost = existingPostsMap[blog.id];
+
+                if (existingPost != null) {
+                  // UPDATE existing PostViewModel - NO rebuild images!
+                  existingPost.syncLikeCount(blog.likes);
+                  existingPost.syncLikeStatus(likedPostIds.contains(blog.id));
+                  existingPost.syncBookmarkStatus(_savedBlogsService.isBlogSaved(blog.id));
+                  updatedPosts.add(existingPost);
+                } else {
+                  // CREATE new PostViewModel only for new posts
+                  updatedPosts.add(
+                    PostViewModel.fromBlogPost(
                       id: blog.id,
-                      userName: blog.authorName,
-                      userAvatar:
-                          blog.authorAvatar.isEmpty
-                              ? 'https://i.pravatar.cc/150?img=${blog.id.hashCode % 10}'
-                              : blog.authorAvatar,
+                      authorName: blog.authorName,
+                      authorAvatar: blog.authorAvatar,
                       timeAndLocation: timeAndLocation,
                       content: '${blog.title}\n${blog.excerpt}',
                       images:
                           [blog.coverImage, ...blog.images].where((img) => img.isNotEmpty).toList(),
-                      likeCount: blog.likes,
                       commentCount: blog.commentsCount,
+                      likes: blog.likes,
                       isLiked: likedPostIds.contains(blog.id),
                       isBookmarked: _savedBlogsService.isBlogSaved(blog.id),
-                    );
-                  }).toList();
+                    ),
+                  );
+                }
+              }
+
+              // Only assign if list ACTUALLY changed (deep check)
+              bool hasChanged = posts.length != updatedPosts.length;
+
+              if (!hasChanged) {
+                // Check if any PostViewModel instance is different (by reference)
+                for (int i = 0; i < posts.length; i++) {
+                  if (!identical(posts[i], updatedPosts[i])) {
+                    hasChanged = true;
+                    break;
+                  }
+                }
+              }
+
+              if (hasChanged) {
+                posts.value = updatedPosts;
+              }
+              // Else: Same instances, no need to reassign → NO rebuild!
 
               isLoading.value = false;
             },
@@ -242,68 +262,53 @@ class CommunityController extends GetxController {
   }
 
   Future<void> toggleLike(String postId) async {
-    final index = posts.indexWhere((p) => p.id == postId);
-    if (index != -1) {
-      final post = posts[index];
-      // Optimistic update
-      posts[index] = PostModel(
-        id: post.id,
-        userName: post.userName,
-        userAvatar: post.userAvatar,
-        timeAndLocation: post.timeAndLocation,
-        content: post.content,
-        images: post.images,
-        likeCount: post.isLiked ? post.likeCount - 1 : post.likeCount + 1,
-        commentCount: post.commentCount,
-        isLiked: !post.isLiked,
-        isBookmarked: post.isBookmarked,
-      );
+    final post = posts.firstWhereOrNull((p) => p.id == postId);
+    if (post == null) return;
 
-      // Update backend
-      final newStatus = await _blogService.toggleLike(postId);
+    // Optimistic update - only updates observable properties
+    post.toggleLike();
 
-      // Update local tracking
-      if (newStatus) {
-        likedPostIds.add(postId);
-      } else {
-        likedPostIds.remove(postId);
-      }
+    // Update backend
+    final newStatus = await _blogService.toggleLike(postId);
+
+    // Update local tracking
+    if (newStatus) {
+      likedPostIds.add(postId);
+    } else {
+      likedPostIds.remove(postId);
     }
+
+    // Note: NO need to re-fetch post here!
+    // The Firestore stream listener will automatically sync the actual like count
+    // This prevents double updates and image flickering
   }
 
   Future<void> toggleBookmark(String postId) async {
-    // First get the blog post data from BlogService
-    final blogPost = await _blogService.getPost(postId);
+    // Get blog post from cache or fetch
+    BlogPostModel? blogPost = blogPostsCache[postId];
     if (blogPost == null) {
-      AppSnackbar.showError(message: 'Không thể tải bài viết');
-      return;
+      blogPost = await _blogService.getPost(postId);
+      if (blogPost == null) {
+        AppSnackbar.showError(message: 'Không thể tải bài viết');
+        return;
+      }
+      blogPostsCache[postId] = blogPost;
     }
-    
+
+    final post = posts.firstWhereOrNull((p) => p.id == postId);
+
     // Check if already saved
     final isSaved = _savedBlogsService.isBlogSaved(postId);
-    
+
     if (isSaved) {
       // If saved, remove from all collections
       await _savedBlogsService.removeBlogFromCollection(postId, 'all');
-      
+
       // Update UI
-      final index = posts.indexWhere((p) => p.id == postId);
-      if (index != -1) {
-        final post = posts[index];
-        posts[index] = PostModel(
-          id: post.id,
-          userName: post.userName,
-          userAvatar: post.userAvatar,
-          timeAndLocation: post.timeAndLocation,
-          content: post.content,
-          images: post.images,
-          likeCount: post.likeCount,
-          commentCount: post.commentCount,
-          isLiked: post.isLiked,
-          isBookmarked: false,
-        );
+      if (post != null) {
+        post.syncBookmarkStatus(false);
       }
-      
+
       AppSnackbar.showInfo(message: 'Đã bỏ lưu bài viết');
     } else {
       // Show collection selector
@@ -512,21 +517,9 @@ class CommunityController extends GetxController {
   }
   
   void _updateBookmarkInUI(String postId, bool isBookmarked) {
-    final index = posts.indexWhere((p) => p.id == postId);
-    if (index != -1) {
-      final post = posts[index];
-      posts[index] = PostModel(
-        id: post.id,
-        userName: post.userName,
-        userAvatar: post.userAvatar,
-        timeAndLocation: post.timeAndLocation,
-        content: post.content,
-        images: post.images,
-        likeCount: post.likeCount,
-        commentCount: post.commentCount,
-        isLiked: post.isLiked,
-        isBookmarked: isBookmarked,
-      );
+    final post = posts.firstWhereOrNull((p) => p.id == postId);
+    if (post != null) {
+      post.syncBookmarkStatus(isBookmarked);
     }
   }
   

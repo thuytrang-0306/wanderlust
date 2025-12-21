@@ -196,10 +196,12 @@ class AIChatPage extends GetView<AIChatController> {
   Widget _buildMessageBubble(AIChatMessage message) {
     final isUser = message.role == MessageRole.user;
     final isStreaming = message.isStreaming;
-    
-    // Only wrap streaming messages in Obx
+
+    // Only wrap streaming assistant messages in Obx for reactivity
+    // After streaming finishes, isStreaming is set to false, so no Obx overhead
     if (isStreaming && message.role == MessageRole.assistant) {
       return Obx(() {
+        // Only use streaming content if this is the active streaming message
         String displayContent = message.content;
         if (controller.streamingMessageId.value == message.id) {
           displayContent = controller.streamingMessage.value;
@@ -207,8 +209,8 @@ class AIChatPage extends GetView<AIChatController> {
         return _buildMessageContent(message, isUser, displayContent);
       });
     }
-    
-    // Non-streaming messages don't need Obx
+
+    // Non-streaming messages don't need Obx wrapper
     return _buildMessageContent(message, isUser, message.content);
   }
   

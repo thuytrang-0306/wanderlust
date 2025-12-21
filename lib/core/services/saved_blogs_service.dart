@@ -112,7 +112,7 @@ class SavedBlogsService extends GetxService {
         }
       }
       
-      // Cache blog data for offline access
+      // Cache blog STATIC data only (no likes/comments - those are fetched fresh)
       savedBlogsCache[blog.id] = SavedBlogData(
         id: blog.id,
         title: blog.title,
@@ -121,8 +121,6 @@ class SavedBlogsService extends GetxService {
         authorAvatar: blog.authorAvatar,
         location: blog.destinations.isNotEmpty ? blog.destinations.first : '',
         savedAt: DateTime.now(),
-        likeCount: blog.likes,
-        commentCount: blog.commentsCount,
       );
       
       // Save to storage asynchronously to avoid blocking UI
@@ -279,9 +277,8 @@ class SavedBlogData {
   final String authorAvatar;
   final String location;
   final DateTime savedAt;
-  final int likeCount;
-  final int commentCount;
-  
+  // REMOVED: likeCount and commentCount - these are dynamic and should be fetched fresh
+
   SavedBlogData({
     required this.id,
     required this.title,
@@ -290,8 +287,6 @@ class SavedBlogData {
     required this.authorAvatar,
     required this.location,
     required this.savedAt,
-    required this.likeCount,
-    required this.commentCount,
   });
   
   Map<String, dynamic> toJson() => {
@@ -302,10 +297,8 @@ class SavedBlogData {
     'authorAvatar': authorAvatar,
     'location': location,
     'savedAt': savedAt.toIso8601String(),
-    'likeCount': likeCount,
-    'commentCount': commentCount,
   };
-  
+
   factory SavedBlogData.fromJson(Map<String, dynamic> json) => SavedBlogData(
     id: json['id'],
     title: json['title'],
@@ -314,8 +307,6 @@ class SavedBlogData {
     authorAvatar: json['authorAvatar'] ?? '',
     location: json['location'] ?? '',
     savedAt: DateTime.parse(json['savedAt']),
-    likeCount: json['likeCount'] ?? 0,
-    commentCount: json['commentCount'] ?? 0,
   );
   
   // Helper getter for time ago

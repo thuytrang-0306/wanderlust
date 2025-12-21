@@ -21,6 +21,9 @@ class CollectionDetailController extends BaseController {
   final RxList<BlogPostModel> blogPosts = <BlogPostModel>[].obs;
   final RxBool isLoadingData = false.obs;
 
+  // Cache for navigation
+  final RxMap<String, BlogPostModel> blogPostsCache = <String, BlogPostModel>{}.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -34,19 +37,26 @@ class CollectionDetailController extends BaseController {
 
   void loadPosts() async {
     if (collectionId.value.isEmpty) return;
-    
+
     isLoadingData.value = true;
-    
+
     try {
       // Get saved blogs IDs from service
       final savedBlogs = _savedBlogsService.getSavedBlogsForCollection(collectionId.value);
-      
+
       // Load all blog data in parallel for better performance
       final futures = savedBlogs.map((savedBlog) => _blogService.getPost(savedBlog.id)).toList();
       final results = await Future.wait(futures);
-      
-      // Filter out null values and assign
-      blogPosts.value = results.where((blog) => blog != null).cast<BlogPostModel>().toList();
+
+      // Filter out null values
+      final validBlogs = results.where((blog) => blog != null).cast<BlogPostModel>().toList();
+
+      // Cache for navigation (avoid re-fetching)
+      for (final blog in validBlogs) {
+        blogPostsCache[blog.id] = blog;
+      }
+
+      blogPosts.value = validBlogs;
     } finally {
       isLoadingData.value = false;
     }
@@ -58,18 +68,26 @@ class CollectionDetailController extends BaseController {
   
   Future<void> toggleLike(String postId) async {
     await _blogService.toggleLike(postId);
-    // Refresh the specific blog
+    // Refresh the specific blog to get updated like count
     final index = blogPosts.indexWhere((b) => b.id == postId);
     if (index != -1) {
       final updatedBlog = await _blogService.getPost(postId);
       if (updatedBlog != null) {
         blogPosts[index] = updatedBlog;
+        // Update cache as well
+        blogPostsCache[postId] = updatedBlog;
       }
     }
   }
 
   void openBlogDetail(String postId) {
-    Get.toNamed('/blog-detail', arguments: {'postId': postId});
+    // Pass cached BlogPostModel to avoid loading spinner
+    final blogPost = blogPostsCache[postId];
+    Get.toNamed('/blog-detail', arguments: {
+      'postId': postId,
+      if (blogPost != null) 'blogPost': blogPost,
+      'heroTag': 'saved-blog-image-$postId', // Unique hero tag for saved blogs
+    });
   }
 
   void toggleBookmark(String postId) async {

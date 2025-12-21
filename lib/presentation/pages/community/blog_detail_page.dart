@@ -138,30 +138,42 @@ class BlogDetailPage extends StatelessWidget {
       );
     }
 
+    // Get controller to access heroTag
+    final controller = Get.find<BlogDetailController>();
+    final heroTag = controller.heroTag;
+
     if (images.length == 1) {
-      return Padding(
-        padding: EdgeInsets.all(16.w),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12.r),
-          child: AppImage(
-            imageData: images[0],
-            height: 200.h,
-            width: double.infinity,
-            fit: BoxFit.cover,
-          ),
+      final imageWidget = ClipRRect(
+        borderRadius: BorderRadius.circular(12.r),
+        child: AppImage(
+          imageData: images[0],
+          height: 200.h,
+          width: double.infinity,
+          fit: BoxFit.cover,
         ),
       );
+
+      return Padding(
+        padding: EdgeInsets.all(16.w),
+        child: heroTag != null
+            ? Hero(tag: heroTag, child: imageWidget)
+            : imageWidget,
+      );
     }
+
+    final firstImageWidget = ClipRRect(
+      borderRadius: BorderRadius.circular(12.r),
+      child: AppImage(imageData: images[0], height: 140.h, fit: BoxFit.cover),
+    );
 
     return Padding(
       padding: EdgeInsets.all(16.w),
       child: Row(
         children: [
           Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12.r),
-              child: AppImage(imageData: images[0], height: 140.h, fit: BoxFit.cover),
-            ),
+            child: heroTag != null
+                ? Hero(tag: heroTag, child: firstImageWidget)
+                : firstImageWidget,
           ),
           SizedBox(width: 8.w),
           Expanded(

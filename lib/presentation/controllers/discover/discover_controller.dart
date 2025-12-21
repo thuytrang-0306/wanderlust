@@ -194,7 +194,11 @@ class DiscoverController extends BaseController {
   }
 
   void onBlogTapped(BlogPostModel blog) {
-    Get.toNamed('/blog-detail', arguments: {'postId': blog.id});
+    Get.toNamed('/blog-detail', arguments: {
+      'postId': blog.id,
+      'blogPost': blog, // Pass the full object to avoid re-fetching
+      'heroTag': 'discover-blog-image-${blog.id}', // Pass hero tag for animation
+    });
   }
 
   Future<void> loadComboTours() async {

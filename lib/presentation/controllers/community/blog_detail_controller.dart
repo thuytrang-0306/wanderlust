@@ -35,21 +35,41 @@ class BlogDetailController extends BaseController {
   final RxList<BlogComment> comments = <BlogComment>[].obs;
   final RxList<Map<String, dynamic>> suggestions = <Map<String, dynamic>>[].obs;
 
-  // Post ID from route arguments
+  // Post ID and Hero tag from route arguments
   String? postId;
+  String? heroTag;
 
   @override
   void onInit() {
     super.onInit();
-    // Get post ID from arguments
+    // Get post ID, optional blogPost, and heroTag from arguments
     final args = Get.arguments;
     if (args != null && args is Map) {
       postId = args['postId'] as String?;
+      heroTag = args['heroTag'] as String?;
+
+      // Check if BlogPostModel was passed (optimistic loading)
+      final passedBlogPost = args['blogPost'];
+      if (passedBlogPost != null && passedBlogPost is BlogPostModel) {
+        // Use the passed data immediately - no loading spinner!
+        blogPost.value = passedBlogPost;
+        likeCount.value = passedBlogPost.likes;
+        commentCount.value = passedBlogPost.commentsCount;
+        isLoadingData.value = false;
+
+        // Check user interactions
+        checkUserInteractions();
+
+        // Background refresh to sync latest data (likes, comments, etc.)
+        loadBlogData();
+      } else {
+        // Fallback: fetch from server
+        loadBlogData();
+      }
+
+      loadComments();
     } else if (args != null && args is String) {
       postId = args;
-    }
-
-    if (postId != null) {
       loadBlogData();
       loadComments();
     } else {
@@ -57,6 +77,7 @@ class BlogDetailController extends BaseController {
       isLoadingData.value = false;
       setError('No post ID provided');
     }
+
     loadSuggestions();
   }
 
@@ -64,8 +85,13 @@ class BlogDetailController extends BaseController {
     if (postId == null) return;
 
     try {
-      isLoadingData.value = true;
-      setLoading();
+      // Only show loading if we don't already have data
+      final shouldShowLoading = blogPost.value == null;
+      if (shouldShowLoading) {
+        isLoadingData.value = true;
+        setLoading();
+      }
+
       final post = await _blogService.getPost(postId!);
 
       if (post != null) {
@@ -73,13 +99,18 @@ class BlogDetailController extends BaseController {
         likeCount.value = post.likes;
         commentCount.value = post.commentsCount;
         // Check if user has liked/bookmarked this post
-        await checkUserInteractions();
-      } else {
+        if (shouldShowLoading) {
+          await checkUserInteractions();
+        }
+      } else if (shouldShowLoading) {
         AppSnackbar.showError(title: 'Lỗi', message: 'Không tìm thấy bài viết');
       }
     } catch (e) {
       LoggerService.e('Error loading blog post', error: e);
-      AppSnackbar.showError(title: 'Lỗi', message: 'Không thể tải bài viết');
+      if (blogPost.value == null) {
+        // Only show error if we don't have cached data
+        AppSnackbar.showError(title: 'Lỗi', message: 'Không thể tải bài viết');
+      }
     } finally {
       isLoadingData.value = false;
       setIdle();
@@ -468,7 +499,7 @@ class BlogDetailController extends BaseController {
   Future<void> toggleLike() async {
     if (postId == null) return;
 
-    // Optimistic update
+    // Optimistic update - only update observable properties
     final previousState = isLiked.value;
     isLiked.value = !previousState;
     likeCount.value += isLiked.value ? 1 : -1;
@@ -476,14 +507,18 @@ class BlogDetailController extends BaseController {
     // Update in backend
     final newLikeStatus = await _blogService.toggleLike(postId!);
 
+    // Sync with backend if needed
     if (newLikeStatus != isLiked.value) {
-      // Backend returned different state, update UI
       isLiked.value = newLikeStatus;
-      // Recalculate like count based on actual state change
-      if (previousState != newLikeStatus) {
-        likeCount.value = blogPost.value?.likes ?? 0;
-        // Re-fetch post to get accurate count
-        loadBlogData();
+    }
+
+    // Background sync: fetch accurate count without triggering full reload
+    final updatedPost = await _blogService.getPost(postId!);
+    if (updatedPost != null) {
+      likeCount.value = updatedPost.likes;
+      // Update cached post silently (no UI rebuild)
+      if (blogPost.value != null) {
+        blogPost.value = updatedPost;
       }
     }
   }

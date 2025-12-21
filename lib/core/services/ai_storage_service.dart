@@ -139,6 +139,8 @@ class AIStorageService extends GetxService {
 
       if (currentConversation.value?.id == conversation.id) {
         currentConversation.value = conversation;
+        // Force reactive update to ensure UI refreshes
+        currentConversation.refresh();
       }
 
       LoggerService.i('Updated conversation: ${conversation.id}');
@@ -195,11 +197,11 @@ class AIStorageService extends GetxService {
       if (conversation != null) {
         // Save message to messages box
         await _messagesBox.put(message.id, message);
-        
+
         // Add to conversation
         conversation.addMessage(message);
         await updateConversation(conversation);
-        
+
         LoggerService.i('Added message to conversation: $conversationId');
       }
     } catch (e) {
@@ -218,8 +220,10 @@ class AIStorageService extends GetxService {
       if (conversation != null) {
         conversation.updateLastMessage(content);
         await _conversationsBox.put(conversationId, conversation);
-        
+
         // Update in current conversation if it's the active one
+        // Note: No refresh() here to avoid excessive rebuilds during streaming
+        // UI updates are handled by streamingMessage reactive variable in controller
         if (currentConversation.value?.id == conversationId) {
           currentConversation.value = conversation;
         }

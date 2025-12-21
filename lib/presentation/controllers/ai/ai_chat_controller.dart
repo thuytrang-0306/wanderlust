@@ -252,17 +252,21 @@ class AIChatController extends GetxController {
         content: message,
         attachments: selectedImages.isNotEmpty ? List.from(selectedImages) : null,
       );
-      
+
       await _storageService.addMessageToConversation(
         conversation.id,
         userMessage,
       );
-      
+
+      // Force UI update to show user message immediately
+      currentConversation.refresh();
+
       // Clear selected images after sending
       final imagesToSend = List<String>.from(selectedImages);
       selectedImages.clear();
-      
-      // Scroll to bottom
+
+      // Scroll to bottom after UI updated
+      await Future.delayed(const Duration(milliseconds: 50));
       _scrollToBottom();
       
       // Create assistant message for streaming
@@ -279,32 +283,44 @@ class AIChatController extends GetxController {
       // Get streaming response
       streamingMessage.value = '';
       streamingMessageId.value = assistantMessage.id;
-      
+
       final responseStream = _geminiService.sendMessageStream(
         conversation: conversation,
         message: message,
         imageBase64List: imagesToSend.isNotEmpty ? imagesToSend : null,
       );
-      
-      // Process stream with character-by-character animation
+
+      // Process stream with optimized batch updates
+      DateTime lastSave = DateTime.now();
+      String latestContent = '';
+
       await for (final chunk in responseStream) {
         streamingMessage.value = chunk;
-        
-        // Update message in storage for persistence
-        await _storageService.updateMessage(
-          conversation.id,
-          assistantMessage.id,
-          chunk,
-        );
-        
-        // Force UI update
-        currentConversation.refresh();
-        
+        latestContent = chunk;
+
+        // Batch Hive updates - only save every 500ms for performance
+        final now = DateTime.now();
+        if (now.difference(lastSave).inMilliseconds > 500) {
+          await _storageService.updateMessage(
+            conversation.id,
+            assistantMessage.id,
+            chunk,
+          );
+          lastSave = now;
+        }
+
         // Small delay for smoother animation
         await Future.delayed(const Duration(milliseconds: 10));
         _scrollToBottom();
       }
-      
+
+      // Final save to ensure latest content is persisted
+      await _storageService.updateMessage(
+        conversation.id,
+        assistantMessage.id,
+        latestContent,
+      );
+
       // Finish streaming
       await _storageService.finishStreaming(conversation.id);
       

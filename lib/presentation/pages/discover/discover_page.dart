@@ -310,45 +310,51 @@ class DiscoverPage extends GetView<DiscoverController> {
   Widget _buildSearchBar() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-      child: GestureDetector(
-        onTap: () => Get.toNamed('/search-filter'),
-        child: Container(
-          height: 48.h,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMD),
-            gradient: const LinearGradient(
-              colors: [Color(0xFFC4CDF4), Color(0xFFEDE0FF)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF54189A).withValues(alpha: 0.2),
-                offset: const Offset(-1, 0),
-                blurRadius: 7,
-                spreadRadius: 0,
-              ),
-            ],
-          ),
-          child: Container(
-            margin: EdgeInsets.all(1.5.w), // Border width
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMD - 1.5.w),
-            ),
-            child: Row(
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-                  child: Icon(Icons.search, color: AppColors.textTertiary, size: 24.sp),
+      child: Hero(
+        tag: 'search-bar-hero',
+        child: Material(
+          color: Colors.transparent,
+          child: GestureDetector(
+            onTap: () => Get.toNamed('/search-filter'),
+            child: Container(
+              height: 48.h,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMD),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFC4CDF4), Color(0xFFEDE0FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                Expanded(
-                  child: Text(
-                    'Tìm kiếm địa điểm, tour...',
-                    style: AppTypography.bodyM.copyWith(color: AppColors.textTertiary),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF54189A).withValues(alpha: 0.2),
+                    offset: const Offset(-1, 0),
+                    blurRadius: 7,
+                    spreadRadius: 0,
                   ),
+                ],
+              ),
+              child: Container(
+                margin: EdgeInsets.all(1.5.w), // Border width
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMD - 1.5.w),
                 ),
-              ],
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+                      child: Icon(Icons.search, color: AppColors.textTertiary, size: 24.sp),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Tìm kiếm địa điểm, tour...',
+                        style: AppTypography.bodyM.copyWith(color: AppColors.textTertiary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -587,31 +593,34 @@ class DiscoverPage extends GetView<DiscoverController> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Image
-                        Container(
-                          height: 120.h,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
-                            color: AppColors.neutral100,
+                        // Image with Hero animation
+                        Hero(
+                          tag: 'discover-blog-image-${blog.id}',
+                          child: Container(
+                            height: 120.h,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                              color: AppColors.neutral100,
+                            ),
+                            child:
+                                blog.coverImage.isNotEmpty
+                                    ? ClipRRect(
+                                      borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                                      child: AppImage(
+                                        imageData: blog.coverImage,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                    : Center(
+                                      child: Icon(
+                                        Icons.article,
+                                        size: 40.sp,
+                                        color: AppColors.neutral400,
+                                      ),
+                                    ),
                           ),
-                          child:
-                              blog.coverImage.isNotEmpty
-                                  ? ClipRRect(
-                                    borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
-                                    child: AppImage(
-                                      imageData: blog.coverImage,
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                  : Center(
-                                    child: Icon(
-                                      Icons.article,
-                                      size: 40.sp,
-                                      color: AppColors.neutral400,
-                                    ),
-                                  ),
                         ),
 
                         // Content

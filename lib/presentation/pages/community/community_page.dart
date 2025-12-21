@@ -105,9 +105,17 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Widget _buildPostCard(PostModel post) {
+  Widget _buildPostCard(post) {
     return GestureDetector(
-      onTap: () => Get.toNamed('/blog-detail', arguments: {'postId': post.id}),
+      onTap: () {
+        // Pass both postId and cached BlogPostModel
+        final blogPost = controller.blogPostsCache[post.id];
+        Get.toNamed('/blog-detail', arguments: {
+          'postId': post.id,
+          if (blogPost != null) 'blogPost': blogPost,
+          'heroTag': 'community-blog-image-${post.id}', // Pass hero tag for animation
+        });
+      },
       child: Container(
         margin: EdgeInsets.only(bottom: AppSpacing.s3),
         padding: EdgeInsets.all(AppSpacing.s4),
@@ -172,29 +180,31 @@ class CommunityPage extends GetView<CommunityController> {
             // Post Images
             if (post.images.isNotEmpty) ...[
               SizedBox(height: AppSpacing.s3),
-              _buildPostImages(post.images),
+              _buildPostImages(post.images, post.id),
             ],
 
             // Interactions
             SizedBox(height: AppSpacing.s3),
             Row(
               children: [
-                // Like
+                // Like - Wrapped in Obx for reactive updates
                 GestureDetector(
                   onTap: () => controller.toggleLike(post.id),
-                  child: Row(
-                    children: [
-                      Icon(
-                        post.isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                        size: 20.sp,
-                        color: post.isLiked ? AppColors.primary : const Color(0xFF6B7280),
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        _formatCount(post.likeCount),
-                        style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
-                      ),
-                    ],
+                  child: Obx(
+                    () => Row(
+                      children: [
+                        Icon(
+                          post.isLiked.value ? Icons.thumb_up : Icons.thumb_up_outlined,
+                          size: 20.sp,
+                          color: post.isLiked.value ? AppColors.primary : const Color(0xFF6B7280),
+                        ),
+                        SizedBox(width: 6.w),
+                        Text(
+                          _formatCount(post.likeCount.value),
+                          style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 SizedBox(width: AppSpacing.s5),
@@ -216,13 +226,15 @@ class CommunityPage extends GetView<CommunityController> {
 
                 const Spacer(),
 
-                // Bookmark
+                // Bookmark - Wrapped in Obx for reactive updates
                 GestureDetector(
                   onTap: () => controller.toggleBookmark(post.id),
-                  child: Icon(
-                    post.isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-                    size: 22.sp,
-                    color: post.isBookmarked ? AppColors.primary : const Color(0xFF6B7280),
+                  child: Obx(
+                    () => Icon(
+                      post.isBookmarked.value ? Icons.bookmark : Icons.bookmark_outline,
+                      size: 22.sp,
+                      color: post.isBookmarked.value ? AppColors.primary : const Color(0xFF6B7280),
+                    ),
                   ),
                 ),
               ],
@@ -233,24 +245,32 @@ class CommunityPage extends GetView<CommunityController> {
     );
   }
 
-  Widget _buildPostImages(List<String> images) {
+  Widget _buildPostImages(List<String> images, String postId) {
+    if (images.isEmpty) return const SizedBox();
+
     if (images.length == 1) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12.r),
-        child: AppImage(
-          imageData: images[0],
-          height: 200.h,
-          width: double.infinity,
-          fit: BoxFit.cover,
+      return Hero(
+        tag: 'community-blog-image-$postId', // Prefix to avoid conflict with discover page
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12.r),
+          child: AppImage(
+            imageData: images[0],
+            height: 200.h,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          ),
         ),
       );
-    } else if (images.length == 2) {
+    } else if (images.length >= 2) {
       return Row(
         children: [
           Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12.r),
-              child: AppImage(imageData: images[0], height: 150.h, fit: BoxFit.cover),
+            child: Hero(
+              tag: 'community-blog-image-$postId', // Prefix to avoid conflict
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12.r),
+                child: AppImage(imageData: images[0], height: 150.h, fit: BoxFit.cover),
+              ),
             ),
           ),
           SizedBox(width: AppSpacing.s2),

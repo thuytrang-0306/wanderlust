@@ -41,35 +41,41 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                 onPressed: () => Get.back(),
                 padding: EdgeInsets.zero,
               ),
-              // Search field
+              // Search field with Hero animation
               Expanded(
-                child: Container(
-                  height: 48.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.neutral100,
-                    borderRadius: BorderRadius.circular(24.r),
-                  ),
-                  child: TextField(
-                    controller: controller.searchController,
-                    onChanged: controller.onSearchChanged,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: 'Tìm kiếm địa điểm, khách sạn, tour...',
-                      hintStyle: AppTypography.bodyM.copyWith(color: AppColors.textTertiary),
-                      prefixIcon: Icon(Icons.search, color: AppColors.neutral500, size: 24.sp),
-                      suffixIcon: Obx(
-                        () =>
-                            controller.searchQuery.value.isNotEmpty
-                                ? IconButton(
-                                  icon: Icon(Icons.clear, color: AppColors.neutral500, size: 20.sp),
-                                  onPressed: controller.clearSearch,
-                                )
-                                : const SizedBox.shrink(),
+                child: Hero(
+                  tag: 'search-bar-hero',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      height: 48.h,
+                      decoration: BoxDecoration(
+                        color: AppColors.neutral100,
+                        borderRadius: BorderRadius.circular(24.r),
                       ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s4,
-                        vertical: AppSpacing.s3,
+                      child: TextField(
+                        controller: controller.searchController,
+                        onChanged: controller.onSearchChanged,
+                        autofocus: true,
+                        decoration: InputDecoration(
+                          hintText: 'Tìm kiếm địa điểm, khách sạn, tour...',
+                          hintStyle: AppTypography.bodyM.copyWith(color: AppColors.textTertiary),
+                          prefixIcon: Icon(Icons.search, color: AppColors.neutral500, size: 24.sp),
+                          suffixIcon: Obx(
+                            () =>
+                                controller.searchQuery.value.isNotEmpty
+                                    ? IconButton(
+                                      icon: Icon(Icons.clear, color: AppColors.neutral500, size: 20.sp),
+                                      onPressed: controller.clearSearch,
+                                    )
+                                    : const SizedBox.shrink(),
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.s4,
+                            vertical: AppSpacing.s3,
+                          ),
+                        ),
                       ),
                     ),
                   ),

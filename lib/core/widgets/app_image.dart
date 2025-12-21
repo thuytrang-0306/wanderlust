@@ -86,10 +86,16 @@ class AppImage extends StatelessWidget {
 
       return Image.memory(
         bytes,
+        key: ValueKey(imageData),
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (context, error, stackTrace) => _buildErrorWidget(),
+        gaplessPlayback: true, // ← Smooth transition when rebuilt
+        errorBuilder: (context, error, stackTrace) {
+          // Debug: log error to understand issue
+          debugPrint('AppImage Error: $error');
+          return _buildErrorWidget();
+        },
       );
     } catch (e) {
       return _buildErrorWidget();
@@ -98,12 +104,18 @@ class AppImage extends StatelessWidget {
 
   Widget _buildNetworkImage() {
     return CachedNetworkImage(
+      key: ValueKey(imageData),
       imageUrl: imageData,
       width: width,
       height: height,
       fit: fit,
       placeholder: (context, url) => placeholder ?? _buildPlaceholder(),
-      errorWidget: (context, url, error) => errorWidget ?? _buildErrorWidget(),
+      errorWidget: (context, url, error) {
+        debugPrint('CachedNetworkImage Error: $error');
+        return errorWidget ?? _buildErrorWidget();
+      },
+      fadeInDuration: const Duration(milliseconds: 200),
+      fadeOutDuration: const Duration(milliseconds: 100),
     );
   }
 
