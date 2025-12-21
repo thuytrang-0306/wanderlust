@@ -10,6 +10,7 @@ import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/data/services/blog_service.dart';
 import 'package:wanderlust/data/services/listing_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/presentation/controllers/main_navigation_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -164,7 +165,14 @@ class DiscoverController extends BaseController {
   RxInt get currentPage => currentBannerIndex;
 
   void createTrip() {
-    onPlanTrip();
+    // Navigate to Planning tab (index 2)
+    try {
+      final mainNavController = Get.find<MainNavigationController>();
+      mainNavController.changeTab(2);
+    } catch (e) {
+      // Fallback to route navigation if controller not found
+      onPlanTrip();
+    }
   }
 
   void onSearchSubmitted(String query) {

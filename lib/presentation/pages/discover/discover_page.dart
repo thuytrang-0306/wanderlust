@@ -520,48 +520,114 @@ class DiscoverPage extends GetView<DiscoverController> {
 
   Widget _buildPlanningSection() {
     return Container(
+      width: 343.w,
+      height: 183.h,
       margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-      padding: EdgeInsets.all(AppSpacing.s5),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [const Color(0xFFE6F5C5), const Color(0xFFD0FCEF)]),
-        borderRadius: BorderRadius.circular(16.r),
+        gradient: const LinearGradient(
+          begin: Alignment(0.95, -0.31), // 248.78 degrees
+          end: Alignment(-0.95, 0.31),
+          stops: [0.1553, 0.719],
+          colors: [Color(0xFFC4CDF4), Color(0xFFEDE0FF)],
+        ),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusXXL),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Expanded(
+          // Decoration image at bottom right
+          Positioned(
+            bottom: -15.h,
+            right: 0,
+            child: Image.asset(
+              AppAssets.planningDecoration,
+              width: 147.w,
+              height: 147.h,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+            ),
+          ),
+
+          // Content
+          Padding(
+            padding: EdgeInsets.only(
+              left: AppSpacing.s5,
+              right: AppSpacing.s5,
+              top: AppSpacing.s4,
+              bottom: 24.h,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Lập kế hoạch\ncho chuyến đi',
-                  style: AppTypography.h4.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: AppSpacing.s3),
-                ElevatedButton(
-                  onPressed: controller.createTrip,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s5,
-                      vertical: AppSpacing.s3,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Subtitle
+                    Text(
+                      'Nhanh chóng chỉ với 1 thao tác',
+                      style: TextStyle(
+                        fontFamily: 'Gilroy',
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                        height: 1.5, // 21px / 14px
+                        color: const Color(0xFF74798E),
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
-                  ),
-                  child: Text(
-                    'Bắt đầu',
-                    style: AppTypography.bodyM.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    SizedBox(height: AppSpacing.s1_5),
+
+                    // Main title
+                    Text(
+                      'Lên lịch trình cho chuyến đi\ntiếp theo của bạn',
+                      style: TextStyle(
+                        fontFamily: 'Gilroy',
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2, // 24px / 20px
+                        color: const Color(0xFF9455FD),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Button with exact size
+                SizedBox(
+                  width: 176.w,
+                  height: 42.h,
+                  child: ElevatedButton(
+                    onPressed: controller.createTrip,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF9455FD).withValues(alpha: 0.8), // #9455FDCC
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24.r),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.flight,
+                          size: 20.sp,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: AppSpacing.s2),
+                        Text(
+                          'Tạo lịch trình mới',
+                          style: AppTypography.bodyM.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          Icon(Icons.map_outlined, size: 80.sp, color: AppColors.primary.withOpacity(0.3)),
         ],
       ),
     );

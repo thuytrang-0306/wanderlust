@@ -279,10 +279,13 @@ class BlogDetailPage extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 16.h),
 
-          // Excerpt
-          if (post.excerpt.isNotEmpty) ...[
+          // Dynamic spacing based on content availability
+          SizedBox(height: 12.h),
+
+          // Excerpt - only if different from title
+          if (post.excerpt.trim().isNotEmpty &&
+              post.excerpt.trim() != post.title.trim()) ...[
             Text(
               post.excerpt,
               style: TextStyle(
@@ -292,16 +295,29 @@ class BlogDetailPage extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 12.h),
           ],
 
-          // Content
-          Text(
-            post.content,
-            style: TextStyle(fontSize: 15.sp, color: AppColors.textSecondary, height: 1.6),
-          ),
+          // Content - only if not empty and different from title/excerpt
+          if ((() {
+            final cleanContent = post.content.trim();
+            final cleanTitle = post.title.trim();
+            final cleanExcerpt = post.excerpt.trim();
 
-          SizedBox(height: 24.h),
+            if (cleanContent.isEmpty) return false;
+            if (cleanContent == cleanTitle) return false;
+            if (cleanExcerpt.isNotEmpty && cleanContent == cleanExcerpt) return false;
+
+            return true;
+          })()) ...[
+            Text(
+              post.content,
+              style: TextStyle(fontSize: 15.sp, color: AppColors.textSecondary, height: 1.6),
+            ),
+            SizedBox(height: 12.h),
+          ],
+
+          SizedBox(height: 12.h),
 
           // Stats row
           Row(

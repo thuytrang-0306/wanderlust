@@ -35,6 +35,9 @@ class AppAssets {
   static const String regionCard2 = '$_imagesPath/region_card_2.png';
   static const String regionCard3 = '$_imagesPath/region_card_3.png';
 
+  // Planning Section
+  static const String planningDecoration = '$_imagesPath/planning_decoration.png';
+
   // ============= ICONS =============
   // Bottom Navigation icons (PNG with multi-resolution)
   static const String iconTabHome = '$_iconsPath/tab_home.png';
