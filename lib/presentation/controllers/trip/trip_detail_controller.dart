@@ -1,10 +1,12 @@
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/data/models/trip_model.dart';
 import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/core/widgets/app_snackbar.dart';
 
 class TripDetailController extends BaseController {
   // Services
@@ -104,7 +106,53 @@ class TripDetailController extends BaseController {
         'date': dayDate,
         'startTime': '8:00',
         'locations': [], // Will be populated from itineraries
+        'note': '', // Initialize note field
       });
+    }
+
+    // Load day notes and private locations from Firestore
+    loadDayNotesAndLocations(tripModel.id);
+  }
+
+  // Load day notes and private locations from Firestore
+  Future<void> loadDayNotesAndLocations(String tripId) async {
+    try {
+      // Read directly from Firestore to get custom fields (dayNotes, privateLocations)
+      final doc = await FirebaseFirestore.instance.collection('trips').doc(tripId).get();
+
+      if (doc.exists) {
+        final data = doc.data();
+        if (data != null) {
+          // Load day notes (Map<String, String>)
+          final dayNotes = data['dayNotes'] as Map<String, dynamic>?;
+          if (dayNotes != null) {
+            dayNotes.forEach((key, value) {
+              final dayIndex = int.tryParse(key);
+              if (dayIndex != null && dayIndex > 0 && dayIndex <= tripDays.length) {
+                tripDays[dayIndex - 1]['note'] = value.toString();
+              }
+            });
+          }
+
+          // Load private locations (List<Map>)
+          final privateLocations = data['privateLocations'] as List<dynamic>?;
+          if (privateLocations != null) {
+            for (var location in privateLocations) {
+              final locationMap = location as Map<String, dynamic>;
+              final dayIndex = locationMap['dayIndex'] as int?;
+              if (dayIndex != null && dayIndex >= 0 && dayIndex < tripDays.length) {
+                final locations = tripDays[dayIndex]['locations'] as List;
+                locations.add(locationMap);
+              }
+            }
+          }
+
+          tripDays.refresh();
+          LoggerService.i('Loaded day notes and private locations');
+        }
+      }
+    } catch (e) {
+      LoggerService.e('Failed to load day notes and locations', error: e);
     }
   }
 
@@ -178,16 +226,25 @@ class TripDetailController extends BaseController {
   }
 
   // Edit trip
-  void editTrip() {
-    // Navigate to edit page
-    Get.toNamed(
-      '/trip-edit',
-      arguments: {
-        'tripName': tripName.value,
-        'dateRange': tripDateRange.value,
-        'peopleCount': peopleCount.value,
-      },
-    );
+  void editTrip() async {
+    if (trip.value != null) {
+      // Navigate to edit page with trip model
+      final result = await Get.toNamed(
+        '/trip-edit',
+        arguments: {
+          'trip': trip.value,
+        },
+      );
+
+      // Reload trip data if updated successfully
+      if (result != null && result is Map<String, dynamic> && result['success'] == true) {
+        final tripId = result['tripId'] as String?;
+        if (tripId != null) {
+          loadTripById(tripId);
+          LoggerService.i('Trip updated, reloaded trip detail');
+        }
+      }
+    }
   }
 
   // Add location to current day
@@ -204,11 +261,38 @@ class TripDetailController extends BaseController {
   }
 
   // Update note for current day
-  void updateDayNote(Map<String, dynamic> noteData) {
+  void updateDayNote(Map<String, dynamic> noteData) async {
     final dayIndex = selectedDay.value;
     if (dayIndex < tripDays.length) {
+      // Update UI immediately
       tripDays[dayIndex]['note'] = noteData['note'];
       tripDays.refresh();
+
+      // Save to database in background
+      if (trip.value != null) {
+        try {
+          // Build day notes map from current tripDays
+          final dayNotesMap = <String, String>{};
+          for (int i = 0; i < tripDays.length; i++) {
+            final note = tripDays[i]['note'] as String?;
+            if (note != null && note.isNotEmpty) {
+              dayNotesMap['${i + 1}'] = note; // Key as "1", "2", etc.
+            }
+          }
+
+          await _tripService.updateTrip(trip.value!.id, {
+            'dayNotes': dayNotesMap, // Save all day notes as map
+            'updatedAt': DateTime.now(),
+          });
+          LoggerService.i('Note saved to database for day ${dayIndex + 1}');
+
+          // Show success snackbar
+          AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã lưu ghi chú');
+        } catch (e) {
+          LoggerService.e('Failed to save note', error: e);
+          AppSnackbar.showError(title: 'Lỗi', message: 'Không thể lưu ghi chú');
+        }
+      }
     }
   }
 
@@ -236,15 +320,64 @@ class TripDetailController extends BaseController {
     }
   }
 
+  // Delete location from current day
+  void deleteLocation(int locationIndex) async {
+    if (selectedDay.value < tripDays.length) {
+      final locations = List<Map<String, dynamic>>.from(tripDays[selectedDay.value]['locations'] ?? []);
+
+      if (locationIndex >= 0 && locationIndex < locations.length) {
+        final deletedLocation = locations[locationIndex];
+
+        // Remove from UI immediately
+        locations.removeAt(locationIndex);
+        tripDays[selectedDay.value]['locations'] = locations;
+        tripDays.refresh();
+
+        // If it's a private location, also remove from database
+        if (deletedLocation['type'] == 'private' && trip.value != null) {
+          try {
+            // Get current private locations from trip
+            final doc = await FirebaseFirestore.instance.collection('trips').doc(trip.value!.id).get();
+            final data = doc.data();
+
+            if (data != null) {
+              final privateLocations = (data['privateLocations'] as List<dynamic>?)?.map((e) => e as Map<String, dynamic>).toList() ?? [];
+
+              // Remove the matching location
+              privateLocations.removeWhere((loc) =>
+                loc['dayIndex'] == selectedDay.value &&
+                loc['title'] == deletedLocation['title'] &&
+                loc['time'] == deletedLocation['time']
+              );
+
+              // Update database
+              await _tripService.updateTrip(trip.value!.id, {
+                'privateLocations': privateLocations,
+                'updatedAt': DateTime.now(),
+              });
+
+              LoggerService.i('Deleted private location from database');
+            }
+          } catch (e) {
+            LoggerService.e('Failed to delete private location from database', error: e);
+          }
+        }
+
+        AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã xóa địa điểm');
+      }
+    }
+  }
+
   // Add private location
-  void addPrivateLocation(Map<String, dynamic> locationData) {
+  void addPrivateLocation(Map<String, dynamic> locationData) async {
     // Add the location to current day's locations
     if (selectedDay.value < tripDays.length) {
       final currentDayData = tripDays[selectedDay.value];
       final locations = List<Map<String, dynamic>>.from(currentDayData['locations'] ?? []);
 
       // Add new location with time
-      locations.add({
+      final newLocation = {
+        'dayIndex': selectedDay.value, // Track which day this location belongs to
         'time':
             '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}',
         'title': locationData['name'],
@@ -253,11 +386,33 @@ class TripDetailController extends BaseController {
         'image': null,
         'latitude': locationData['latitude'],
         'longitude': locationData['longitude'],
-      });
+        'type': 'private',
+        'addedAt': DateTime.now(),
+      };
 
-      // Update the day's locations
+      locations.add(newLocation);
+
+      // Update UI immediately
       tripDays[selectedDay.value]['locations'] = locations;
       tripDays.refresh();
+
+      // Save to database in background
+      if (trip.value != null) {
+        try {
+          // Save private location to trip's custom data
+          await _tripService.updateTrip(trip.value!.id, {
+            'privateLocations': [...(trip.value!.notes.isNotEmpty ? [] : []), newLocation],
+            'updatedAt': DateTime.now(),
+          });
+          LoggerService.i('Private location saved to database');
+
+          // Show success snackbar
+          AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã thêm địa điểm riêng tư');
+        } catch (e) {
+          LoggerService.e('Failed to save private location', error: e);
+          AppSnackbar.showError(title: 'Lỗi', message: 'Không thể thêm địa điểm');
+        }
+      }
     }
   }
 }

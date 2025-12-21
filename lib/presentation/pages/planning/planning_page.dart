@@ -288,7 +288,7 @@ class PlanningPage extends GetView<PlanningController> {
                                   controller.deleteTrip(trip.id);
                                   break;
                                 case 'share':
-                                  // TODO: Implement share
+                                  controller.shareTrip(trip);
                                   break;
                               }
                             },

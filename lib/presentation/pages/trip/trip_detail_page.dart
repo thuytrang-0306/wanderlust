@@ -219,7 +219,12 @@ class TripDetailPage extends StatelessWidget {
                                   ],
                                 ),
 
-                                SizedBox(height: 32.h),
+                                SizedBox(height: 24.h),
+
+                                // Day note section
+                                _buildNoteSection(controller),
+
+                                SizedBox(height: 24.h),
 
                                 // Check if day has items
                                 if (controller.dayHasItems(controller.selectedDay.value))
@@ -394,24 +399,6 @@ class TripDetailPage extends StatelessWidget {
               ),
               SizedBox(height: 12.h),
               _buildActionButton(
-                icon: Icons.note_add_outlined,
-                text: 'Thêm ghi chú ngày ${controller.selectedDay.value + 1}',
-                onTap: () {
-                  Get.toNamed(
-                    '/add-note',
-                    arguments: {
-                      'dayNumber': controller.selectedDay.value + 1,
-                      'existingNote': controller.getDayNote(controller.selectedDay.value),
-                    },
-                  )?.then((result) {
-                    if (result != null) {
-                      controller.updateDayNote(result);
-                    }
-                  });
-                },
-              ),
-              SizedBox(height: 12.h),
-              _buildActionButton(
                 icon: Icons.add,
                 text: 'Thêm địa điểm riêng tư',
                 onTap: () {
@@ -428,6 +415,85 @@ class TripDetailPage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Widget _buildNoteSection(TripDetailController controller) {
+    return Obx(() {
+      final note = controller.getDayNote(controller.selectedDay.value);
+      final hasNote = note.isNotEmpty;
+
+      return GestureDetector(
+        onTap: () {
+          Get.toNamed(
+            '/add-note',
+            arguments: {
+              'dayNumber': controller.selectedDay.value + 1,
+              'existingNote': note,
+            },
+          )?.then((result) {
+            if (result != null) {
+              controller.updateDayNote(result);
+            }
+          });
+        },
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: hasNote ? const Color(0xFFFFFBEB) : AppColors.white,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: hasNote ? const Color(0xFFFBBF24) : const Color(0xFFE5E7EB),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                hasNote ? Icons.event_note : Icons.note_add_outlined,
+                size: 20.sp,
+                color: hasNote ? const Color(0xFFFBBF24) : const Color(0xFF6B7280),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasNote ? 'Ghi chú' : 'Thêm ghi chú cho ngày này',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: hasNote ? const Color(0xFFF59E0B) : const Color(0xFF6B7280),
+                      ),
+                    ),
+                    if (hasNote) ...[
+                      SizedBox(height: 4.h),
+                      Text(
+                        note,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: const Color(0xFF374151),
+                          height: 1.5,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(
+                hasNote ? Icons.edit_outlined : Icons.add,
+                size: 20.sp,
+                color: hasNote ? const Color(0xFFF59E0B) : const Color(0xFF6B7280),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildActionButton({
@@ -470,6 +536,8 @@ class TripDetailPage extends StatelessWidget {
       ) {
         final location = controller.getLocationsForDay(controller.selectedDay.value)[index];
         return _buildTimelineItem(
+          controller: controller,
+          locationIndex: index,
           time: location['time'],
           title: location['title'],
           address: location['address'],
@@ -482,6 +550,8 @@ class TripDetailPage extends StatelessWidget {
   }
 
   Widget _buildTimelineItem({
+    required TripDetailController controller,
+    required int locationIndex,
     required String time,
     required String title,
     required String address,
@@ -603,7 +673,7 @@ class TripDetailPage extends StatelessWidget {
                 // More button
                 IconButton(
                   icon: Icon(Icons.more_horiz, size: 20.sp, color: const Color(0xFF6B7280)),
-                  onPressed: () {},
+                  onPressed: () => _showLocationMenu(controller, locationIndex, title),
                 ),
               ],
             ),
@@ -655,4 +725,128 @@ class _MountainPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Show location menu bottom sheet
+void _showLocationMenu(TripDetailController controller, int locationIndex, String locationTitle) {
+  Get.bottomSheet(
+    Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.r),
+          topRight: Radius.circular(24.r),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            width: 40.w,
+            height: 4.h,
+            margin: EdgeInsets.symmetric(vertical: 12.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE5E7EB),
+              borderRadius: BorderRadius.circular(2.r),
+            ),
+          ),
+
+          // Title
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+            child: Text(
+              locationTitle,
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.black,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ),
+
+          Divider(height: 1.h, color: const Color(0xFFE5E7EB)),
+
+          // Menu options
+          _buildMenuOption(
+            icon: Icons.delete_outline,
+            text: 'Xóa địa điểm',
+            color: AppColors.error,
+            onTap: () async {
+              Get.back(); // Close bottom sheet first
+
+              // Show confirmation dialog
+              final confirmed = await Get.dialog<bool>(
+                AlertDialog(
+                  title: Text(
+                    'Xóa địa điểm',
+                    style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+                  ),
+                  content: Text(
+                    'Bạn có chắc chắn muốn xóa địa điểm "$locationTitle" khỏi lịch trình?',
+                    style: TextStyle(fontSize: 16.sp),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Get.back(result: false),
+                      child: Text(
+                        'Hủy',
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 16.sp),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Get.back(result: true),
+                      child: Text(
+                        'Xóa',
+                        style: TextStyle(color: AppColors.error, fontSize: 16.sp),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirmed == true) {
+                controller.deleteLocation(locationIndex);
+              }
+            },
+          ),
+
+          SizedBox(height: 20.h),
+        ],
+      ),
+    ),
+    isDismissible: true,
+    enableDrag: true,
+  );
+}
+
+Widget _buildMenuOption({
+  required IconData icon,
+  required String text,
+  required Color color,
+  required VoidCallback onTap,
+}) {
+  return InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      child: Row(
+        children: [
+          Icon(icon, size: 24.sp, color: color),
+          SizedBox(width: 12.w),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 16.sp,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

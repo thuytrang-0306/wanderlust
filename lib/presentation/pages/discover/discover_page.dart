@@ -42,14 +42,24 @@ class DiscoverPage extends GetView<DiscoverController> {
                 SizedBox(height: AppSpacing.s6),
 
                 // Business Listings Section
-                _buildBusinessListings(),
+                Obx(() {
+                  if (controller.isLoadingBusinessListings.value || controller.businessListings.isNotEmpty) {
+                    return _buildBusinessListings();
+                  }
+                  return const SizedBox.shrink();
+                }),
 
-                SizedBox(height: AppSpacing.s6),
-
-                // Featured Tours
-                _buildFeaturedTours(),
-
-                SizedBox(height: AppSpacing.s6),
+                // Featured Tours (optional - with balanced spacing)
+                Obx(() {
+                  if (controller.isLoadingTours.value || controller.featuredTours.isNotEmpty) {
+                    return Padding(
+                      padding: EdgeInsets.only(top: AppSpacing.s3, bottom: AppSpacing.s3),
+                      child: _buildFeaturedTours(),
+                    );
+                  }
+                  // If Featured Tours empty, add 24h spacing
+                  return SizedBox(height: AppSpacing.s6);
+                }),
 
                 // Planning Section
                 _buildPlanningSection(),
@@ -59,10 +69,18 @@ class DiscoverPage extends GetView<DiscoverController> {
                 // Explore by Region
                 _buildExploreByRegion(),
 
-                SizedBox(height: AppSpacing.s6),
-
-                // Combo Tours Section
-                _buildComboToursSection(),
+                // Combo Tours Section (optional - with own spacing)
+                Obx(() {
+                  if (controller.isLoadingCombos.value || controller.comboTours.isNotEmpty) {
+                    return Column(
+                      children: [
+                        SizedBox(height: AppSpacing.s6),
+                        _buildComboToursSection(),
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
 
                 SizedBox(height: AppSpacing.s6),
 
@@ -72,7 +90,12 @@ class DiscoverPage extends GetView<DiscoverController> {
                 SizedBox(height: AppSpacing.s6),
 
                 // Popular Destinations
-                _buildPopularDestinations(),
+                Obx(() {
+                  if (controller.isLoadingDestinations.value || controller.popularDestinations.isNotEmpty) {
+                    return _buildPopularDestinations();
+                  }
+                  return const SizedBox.shrink();
+                }),
 
                 // Bottom padding
                 SizedBox(height: 100.h),
@@ -366,30 +389,10 @@ class DiscoverPage extends GetView<DiscoverController> {
 
   Widget _buildFeaturedTours() {
     return Obx(() {
-      // Show shimmer while loading
-      if (controller.isLoadingTours.value) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ShimmerText(width: 120, height: 20),
-                  ShimmerText(width: 70, height: 16),
-                ],
-              ),
-            ),
-            SizedBox(height: AppSpacing.s3),
-            const ShimmerTourCard(itemCount: 3),
-          ],
-        );
-      }
-
       final tours = controller.featuredTours;
 
-      if (tours.isEmpty) {
+      // Don't show shimmer - only show content when data available
+      if (controller.isLoadingTours.value || tours.isEmpty) {
         return const SizedBox.shrink();
       }
 
@@ -1126,30 +1129,10 @@ class DiscoverPage extends GetView<DiscoverController> {
 
   Widget _buildComboToursSection() {
     return Obx(() {
-      // Show shimmer while loading
-      if (controller.isLoadingCombos.value) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ShimmerText(width: 140, height: 20),
-                  ShimmerText(width: 70, height: 16),
-                ],
-              ),
-            ),
-            SizedBox(height: AppSpacing.s3),
-            const ShimmerComboCard(itemCount: 3),
-          ],
-        );
-      }
-
       final combos = controller.comboTours;
 
-      if (combos.isEmpty) {
+      // Don't show shimmer - only show content when data available
+      if (controller.isLoadingCombos.value || combos.isEmpty) {
         return const SizedBox.shrink();
       }
 
@@ -1412,41 +1395,62 @@ class DiscoverPage extends GetView<DiscoverController> {
           ),
           
           SizedBox(height: AppSpacing.s4),
-          
+
           // Business Listings Horizontal List
           SizedBox(
-            height: 280.h,
+            height: 252.h, // Increased height to prevent overflow with rating
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              clipBehavior: Clip.none, // Prevent shadow clipping
               itemCount: controller.businessListings.take(6).length,
               itemBuilder: (context, index) {
                 final listing = controller.businessListings[index];
                 return Container(
                   width: 200.w,
-                  margin: EdgeInsets.only(right: AppSpacing.s3),
+                  margin: EdgeInsets.only(right: AppSpacing.s3, bottom: 8.h), // Increased bottom margin for shadow
                   child: GestureDetector(
                     onTap: () {
-                      // Navigate to accommodation detail (reuse existing UI)
                       Get.toNamed('/accommodation-detail', arguments: {
                         'listingId': listing.id,
                       });
                     },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Image
-                        Container(
-                          height: 140.h,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12.r),
-                            color: AppColors.neutral200,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFFFF),
+                        borderRadius: BorderRadius.circular(12.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFC097EA).withValues(alpha: 0.15),
+                            offset: const Offset(0, 4),
+                            blurRadius: 4,
+                            spreadRadius: 0,
                           ),
+                        ],
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Image
+                          Container(
+                            height: 140.h,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(12.r),
+                                topRight: Radius.circular(12.r),
+                              ),
+                              color: AppColors.neutral200,
+                            ),
                           child: Stack(
                             children: [
                               if (listing.images.isNotEmpty)
                                 ClipRRect(
-                                  borderRadius: BorderRadius.circular(12.r),
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(12.r),
+                                    topRight: Radius.circular(12.r),
+                                  ),
                                   child: AppImage(
                                     imageData: listing.images.first,
                                     fit: BoxFit.cover,
@@ -1513,84 +1517,98 @@ class DiscoverPage extends GetView<DiscoverController> {
                             ],
                           ),
                         ),
-                        
-                        SizedBox(height: AppSpacing.s2),
-                        
-                        // Business Name
-                        Text(
-                          listing.businessName,
-                          style: AppTypography.bodyXS.copyWith(
-                            color: AppColors.neutral600,
+
+                        // Content with padding
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 10.h,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        
-                        // Title
-                        Text(
-                          listing.title,
-                          style: AppTypography.bodyM.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.neutral900,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        
-                        SizedBox(height: AppSpacing.s1),
-                        
-                        // Rating
-                        if (listing.rating > 0)
-                          Row(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.star,
-                                size: 14.sp,
-                                color: AppColors.warning,
-                              ),
-                              SizedBox(width: 4.w),
+                              // Business Name
                               Text(
-                                listing.rating.toStringAsFixed(1),
-                                style: AppTypography.bodyS.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                ' (${listing.reviews})',
-                                style: AppTypography.bodyS.copyWith(
+                                listing.businessName,
+                                style: AppTypography.bodyXS.copyWith(
                                   color: AppColors.neutral600,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+
+                              SizedBox(height: 2.h),
+
+                              // Title
+                              Text(
+                                listing.title,
+                                style: AppTypography.bodyM.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.neutral900,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+
+                              SizedBox(height: 6.h),
+
+                              // Rating
+                              if (listing.rating > 0) ...[
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      size: 14.sp,
+                                      color: AppColors.warning,
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      listing.rating.toStringAsFixed(1),
+                                      style: AppTypography.bodyS.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      ' (${listing.reviews})',
+                                      style: AppTypography.bodyS.copyWith(
+                                        color: AppColors.neutral600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 6.h),
+                              ],
+
+                              // Price
+                              Row(
+                                children: [
+                                  if (listing.hasDiscount)
+                                    Text(
+                                      listing.formattedPrice,
+                                      style: AppTypography.bodyS.copyWith(
+                                        color: AppColors.neutral500,
+                                        decoration: TextDecoration.lineThrough,
+                                      ),
+                                    ),
+                                  if (listing.hasDiscount)
+                                    SizedBox(width: 6.w),
+                                  Text(
+                                    listing.hasDiscount
+                                        ? listing.formattedDiscountPrice
+                                        : listing.formattedPrice,
+                                    style: AppTypography.bodyM.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        
-                        Spacer(),
-                        
-                        // Price
-                        Row(
-                          children: [
-                            if (listing.hasDiscount)
-                              Text(
-                                listing.formattedPrice,
-                                style: AppTypography.bodyS.copyWith(
-                                  color: AppColors.neutral500,
-                                  decoration: TextDecoration.lineThrough,
-                                ),
-                              ),
-                            if (listing.hasDiscount)
-                              SizedBox(width: 6.w),
-                            Text(
-                              listing.hasDiscount 
-                                  ? listing.formattedDiscountPrice 
-                                  : listing.formattedPrice,
-                              style: AppTypography.bodyM.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
                         ),
                       ],
+                    ),
                     ),
                   ),
                 );

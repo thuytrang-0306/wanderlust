@@ -304,10 +304,11 @@ class TripEditController extends BaseController {
         final success = await _tripService.updateTrip(editingTrip!.id, updates);
 
         if (success) {
+          // Navigate back immediately
+          Get.back(result: {'success': true, 'tripId': editingTrip!.id});
+
+          // Show success message after navigation
           AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã cập nhật chuyến đi');
-          // Small delay to allow snackbar to show
-          await Future.delayed(const Duration(milliseconds: 500));
-          Get.back(result: true);
         } else {
           AppSnackbar.showError(title: 'Lỗi', message: 'Không thể cập nhật chuyến đi');
         }
@@ -347,10 +348,12 @@ class TripEditController extends BaseController {
 
         if (tripId != null) {
           LoggerService.i('Trip created successfully with ID: $tripId');
+
+          // Navigate back immediately (controller will auto-dispose and clear form)
+          Get.back(result: {'success': true, 'tripId': tripId});
+
+          // Show success message after navigation
           AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã tạo chuyến đi mới');
-          // Small delay to allow snackbar to show
-          await Future.delayed(const Duration(milliseconds: 500));
-          Get.back(result: true);
         } else {
           LoggerService.e('Failed to create trip - returned null');
           AppSnackbar.showError(title: 'Lỗi', message: 'Không thể tạo chuyến đi');

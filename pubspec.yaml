@@ -141,7 +141,6 @@ flutter:
     - assets/icons/
     - assets/icons/2x/
     - assets/icons/3x/
-    - assets/animations/
     - assets/fonts/
     - .env
 

@@ -6,6 +6,7 @@ import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/services/location_service.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/data/models/location_point.dart';
+import 'package:wanderlust/core/utils/logger_service.dart';
 
 class AddPrivateLocationController extends BaseController {
   // Text controllers
@@ -99,7 +100,13 @@ class AddPrivateLocationController extends BaseController {
   }
 
   void saveLocation() {
+    LoggerService.i('saveLocation called');
+    LoggerService.i('Validation state: isValid=${isValid.value}');
+    LoggerService.i('Name: "${nameController.text}", Address: "${addressController.text}"');
+    LoggerService.i('Lat: "${latitudeController.text}", Lng: "${longitudeController.text}"');
+
     if (!isValid.value) {
+      LoggerService.w('Validation failed - showing error');
       AppSnackbar.showError(title: 'Lỗi', message: 'Vui lòng điền đầy đủ thông tin');
       return;
     }
@@ -113,15 +120,11 @@ class AddPrivateLocationController extends BaseController {
       'type': 'private',
       'addedAt': DateTime.now(),
     };
+    LoggerService.i('Location data created: $locationData');
 
-    // Save to Firestore if needed in the future
-    // For now, just return the data to the previous screen
-    // which will handle the persistence
-
-    AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã thêm địa điểm riêng tư');
-
-    // Return data to previous page for processing
+    // Navigate back with result (parent controller will show snackbar)
     Get.back(result: locationData);
+    LoggerService.i('Location saved and navigated back');
   }
 
   void navigateToCurrentLocation() async {

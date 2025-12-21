@@ -6,6 +6,8 @@ import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:intl/intl.dart';
 
 class PlanningController extends BaseController {
   // Services
@@ -234,6 +236,35 @@ class PlanningController extends BaseController {
       'totalSpent': totalSpent,
       'budgetRemaining': totalBudget - totalSpent,
     };
+  }
+
+  Future<void> shareTrip(TripModel trip) async {
+    try {
+      // Format dates
+      final dateFormat = DateFormat('dd/MM/yyyy');
+      final startDateStr = dateFormat.format(trip.startDate);
+      final endDateStr = dateFormat.format(trip.endDate);
+
+      // Build share text
+      final shareText = '''
+🌍 ${trip.title}
+
+📍 Điểm đến: ${trip.destination}
+📅 Thời gian: $startDateStr - $endDateStr
+👥 Số người: ${trip.travelers.length}
+⏱️ Thời lượng: ${trip.duration} ngày
+💰 Ngân sách: ${trip.budget > 0 ? '${NumberFormat('#,###').format(trip.budget)} VNĐ' : 'Chưa xác định'}
+
+${trip.description.isNotEmpty ? '📝 ${trip.description}\n' : ''}
+Chia sẻ từ ứng dụng Wanderlust 🧳
+''';
+
+      await Share.share(shareText);
+      LoggerService.i('Shared trip: ${trip.title}');
+    } catch (e) {
+      LoggerService.e('Error sharing trip', error: e);
+      AppSnackbar.showError(title: 'Lỗi', message: 'Không thể chia sẻ chuyến đi');
+    }
   }
 
   // Clear all trips - USE WITH CAUTION!

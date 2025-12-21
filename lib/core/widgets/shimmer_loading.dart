@@ -279,6 +279,17 @@ class ShimmerBlogCard extends StatelessWidget {
           return Container(
             width: 260.w,
             margin: EdgeInsets.only(right: AppSpacing.s4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
             child: ShimmerLoading(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,7 +307,9 @@ class ShimmerBlogCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(height: 14.h, width: double.infinity, color: Colors.white),
+                        Container(height: 16.h, width: double.infinity, color: Colors.white),
+                        SizedBox(height: 4.h),
+                        Container(height: 16.h, width: 200.w, color: Colors.white),
                         SizedBox(height: AppSpacing.s1),
                         Container(height: 12.h, width: 80.w, color: Colors.white),
                       ],
@@ -328,6 +341,17 @@ class ShimmerDestinationList extends StatelessWidget {
       itemBuilder: (context, index) {
         return Container(
           margin: EdgeInsets.only(bottom: AppSpacing.s3),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           child: ShimmerLoading(
             child: Row(
               children: [
@@ -372,17 +396,31 @@ class ShimmerBusinessCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 280.h,
+      height: 252.h,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+        clipBehavior: Clip.none,
         itemCount: itemCount,
         itemBuilder: (context, index) {
           return Container(
             width: 200.w,
-            margin: EdgeInsets.only(right: AppSpacing.s3),
+            margin: EdgeInsets.only(right: AppSpacing.s3, bottom: 8.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFC097EA).withValues(alpha: 0.15),
+                  offset: const Offset(0, 4),
+                  blurRadius: 4,
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
             child: ShimmerLoading(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Image
@@ -390,23 +428,35 @@ class ShimmerBusinessCard extends StatelessWidget {
                     height: 140.h,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12.r),
+                        topRight: Radius.circular(12.r),
+                      ),
                     ),
                   ),
-                  SizedBox(height: AppSpacing.s2),
-                  // Business name
-                  Container(height: 12.h, width: 100.w, color: Colors.white),
-                  SizedBox(height: AppSpacing.s1),
-                  // Title
-                  Container(height: 14.h, width: double.infinity, color: Colors.white),
-                  SizedBox(height: AppSpacing.s1),
-                  Container(height: 14.h, width: 150.w, color: Colors.white),
-                  SizedBox(height: AppSpacing.s2),
-                  // Rating
-                  Container(height: 12.h, width: 80.w, color: Colors.white),
-                  const Spacer(),
-                  // Price
-                  Container(height: 16.h, width: 100.w, color: Colors.white),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Business name
+                        Container(height: 12.h, width: 100.w, color: Colors.white),
+                        SizedBox(height: 2.h),
+                        // Title line 1
+                        Container(height: 16.h, width: double.infinity, color: Colors.white),
+                        SizedBox(height: 4.h),
+                        // Title line 2
+                        Container(height: 16.h, width: 150.w, color: Colors.white),
+                        SizedBox(height: 6.h),
+                        // Rating
+                        Container(height: 14.h, width: 80.w, color: Colors.white),
+                        SizedBox(height: 6.h),
+                        // Price
+                        Container(height: 16.h, width: 100.w, color: Colors.white),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

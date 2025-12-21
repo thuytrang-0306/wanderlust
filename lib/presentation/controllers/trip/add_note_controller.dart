@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
+import 'package:wanderlust/core/utils/logger_service.dart';
 
 class AddNoteController extends BaseController {
   // Text controller
@@ -46,22 +47,23 @@ class AddNoteController extends BaseController {
   }
 
   void saveNote() {
+    LoggerService.i('saveNote called');
     final note = noteController.text.trim();
+    LoggerService.i('Note content: "$note", length: ${note.length}');
 
     if (note.isEmpty) {
+      LoggerService.w('Note is empty - showing warning');
       AppSnackbar.showWarning(title: 'Thông báo', message: 'Ghi chú không được để trống');
       return;
     }
 
     // Create note data
     final noteData = {'dayNumber': dayNumber.value, 'note': note, 'updatedAt': DateTime.now()};
+    LoggerService.i('Note data created: $noteData');
 
-    // TODO: Save to database/repository
-
-    AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã lưu ghi chú');
-
-    // Return data to previous page
+    // Navigate back with result (parent controller will show snackbar)
     Get.back(result: noteData);
+    LoggerService.i('Note saved and navigated back');
   }
 
   // Check if there are unsaved changes

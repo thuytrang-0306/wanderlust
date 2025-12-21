@@ -4,6 +4,7 @@ import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/core/widgets/app_dialogs.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:wanderlust/core/utils/logger_service.dart';
 
 class MyTripsController extends BaseController with GetTickerProviderStateMixin {
   late TabController tabController;
@@ -42,16 +43,28 @@ class MyTripsController extends BaseController with GetTickerProviderStateMixin 
     }
   }
 
-  void createNewTrip() {
-    Get.toNamed('/trip-edit');
+  void createNewTrip() async {
+    final result = await Get.toNamed('/trip-edit');
+
+    // Refresh list if trip was created successfully
+    if (result != null && result is Map<String, dynamic> && result['success'] == true) {
+      loadTrips(); // Refresh to show new trip
+      LoggerService.i('New trip created, list refreshed');
+    }
   }
 
   void navigateToTripDetail(Map<String, dynamic> trip) {
     Get.toNamed('/trip-detail', arguments: trip);
   }
 
-  void editTrip(Map<String, dynamic> trip) {
-    Get.toNamed('/trip-edit', arguments: trip);
+  void editTrip(Map<String, dynamic> trip) async {
+    final result = await Get.toNamed('/trip-edit', arguments: trip);
+
+    // Refresh list if trip was updated successfully
+    if (result != null && result is Map<String, dynamic> && result['success'] == true) {
+      loadTrips(); // Refresh to show updated trip
+      LoggerService.i('Trip updated, list refreshed');
+    }
   }
 
   void shareTrip(Map<String, dynamic> trip) async {
