@@ -52,6 +52,30 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
     ever(selectedRating, (_) => _updateActiveFilters());
     ever(selectedCategories, (_) => _updateActiveFilters());
     ever(selectedAmenities, (_) => _updateActiveFilters());
+
+    // Handle preset filters from navigation arguments
+    _handleNavigationArguments();
+  }
+
+  void _handleNavigationArguments() {
+    final args = Get.arguments;
+    if (args != null && args is Map) {
+      // Preset region filter
+      if (args['regionFilter'] != null) {
+        final region = args['regionFilter'] as String;
+        selectedLocation.value = region;
+        searchQuery.value = region;
+        searchController.text = region;
+        LoggerService.i('Search filter preset with region: $region');
+      }
+
+      // Auto search if requested
+      if (args['autoSearch'] == true) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          performSearch();
+        });
+      }
+    }
   }
 
   @override

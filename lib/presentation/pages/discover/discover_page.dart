@@ -886,6 +886,12 @@ class DiscoverPage extends GetView<DiscoverController> {
       AppAssets.regionCard3,
     ];
 
+    final regionNames = [
+      'Miền Bắc',
+      'Miền Trung',
+      'Miền Nam',
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -908,31 +914,43 @@ class DiscoverPage extends GetView<DiscoverController> {
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
             itemCount: regionCards.length,
             itemBuilder: (context, index) {
-              return Container(
-                width: 164.w,
-                margin: EdgeInsets.only(right: 10.w),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusLG),
-                  child: Image.asset(
-                    regionCards[index],
-                    width: 164.w,
-                    height: 227.h,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 164.w,
-                        height: 227.h,
-                        decoration: BoxDecoration(
-                          color: AppColors.neutral100,
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusLG),
-                        ),
-                        child: Icon(
-                          Icons.image,
-                          size: 40.sp,
-                          color: AppColors.neutral400,
-                        ),
-                      );
+              return GestureDetector(
+                onTap: () {
+                  // Navigate to search filter with region preset
+                  Get.toNamed(
+                    '/search-filter',
+                    arguments: {
+                      'regionFilter': regionNames[index],
+                      'autoSearch': true,
                     },
+                  );
+                },
+                child: Container(
+                  width: 164.w,
+                  margin: EdgeInsets.only(right: 10.w),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusLG),
+                    child: Image.asset(
+                      regionCards[index],
+                      width: 164.w,
+                      height: 227.h,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 164.w,
+                          height: 227.h,
+                          decoration: BoxDecoration(
+                            color: AppColors.neutral100,
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusLG),
+                          ),
+                          child: Icon(
+                            Icons.image,
+                            size: 40.sp,
+                            color: AppColors.neutral400,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               );

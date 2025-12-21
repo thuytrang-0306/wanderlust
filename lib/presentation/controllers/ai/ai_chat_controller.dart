@@ -83,12 +83,7 @@ class AIChatController extends GetxController {
   @override
   void onReady() {
     super.onReady();
-    // Ensure scroll position after widget is ready
-    if (currentConversation.value?.messages.isNotEmpty ?? false) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        _scrollToBottom(animated: false);
-      });
-    }
+    // Scroll is now handled in _loadInitialData after conversation is loaded
   }
   
   // Load user profile (name and avatar)
@@ -126,29 +121,32 @@ class AIChatController extends GetxController {
   // Load initial data
   Future<void> _loadInitialData() async {
     try {
+      isLoading.value = true;
+
       // Wait for storage to be ready
       int retries = 0;
       while (!_storageService.isInitialized.value && retries < 10) {
         await Future.delayed(const Duration(milliseconds: 100));
         retries++;
       }
-      
+
       // Reload conversations from storage
       await _storageService.loadConversations();
-      
-      // Only show loading for first time (no conversations)
+
       if (allConversations.isEmpty) {
-        isLoading.value = true;
         // Create first conversation for new users
         await createNewConversation();
       } else {
-        // Load existing conversation
-        if (currentConversation.value == null) {
-          currentConversation.value = allConversations.first;
-          selectedContext.value = currentConversation.value!.context;
-        }
+        // Load most recent conversation
+        currentConversation.value = allConversations.first;
+        selectedContext.value = currentConversation.value!.context;
+
+        // Trigger scroll after conversation loaded
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _scrollToBottom(animated: false);
+        });
       }
-      
+
       // Load context suggestions
       _loadContextSuggestions();
     } catch (e) {
