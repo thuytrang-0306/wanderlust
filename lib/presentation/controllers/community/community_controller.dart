@@ -134,19 +134,30 @@ class CommunityController extends GetxController {
 
                 if (existingPost != null) {
                   // UPDATE existing PostViewModel - NO rebuild images!
-                  existingPost.syncLikeCount(blog.likes);
-                  existingPost.syncLikeStatus(likedPostIds.contains(blog.id));
+
+                  // CRITICAL: Skip like sync if currently toggling to prevent race condition override
+                  if (!_togglingLikeIds.contains(blog.id)) {
+                    existingPost.syncLikeCount(blog.likes);
+                    existingPost.syncLikeStatus(likedPostIds.contains(blog.id));
+                  }
+                  // Bookmark sync is safe (no optimistic update)
                   existingPost.syncBookmarkStatus(_savedBlogsService.isBlogSaved(blog.id));
                   updatedPosts.add(existingPost);
                 } else {
                   // CREATE new PostViewModel only for new posts
+                  // Smart content: Show title + excerpt, but handle empty excerpt gracefully
+                  String displayContent = blog.title;
+                  if (blog.excerpt.isNotEmpty && blog.excerpt != blog.title) {
+                    displayContent = '${blog.title}\n${blog.excerpt}';
+                  }
+
                   updatedPosts.add(
                     PostViewModel.fromBlogPost(
                       id: blog.id,
                       authorName: blog.authorName,
                       authorAvatar: blog.authorAvatar,
                       timeAndLocation: timeAndLocation,
-                      content: '${blog.title}\n${blog.excerpt}',
+                      content: displayContent,
                       images:
                           [blog.coverImage, ...blog.images].where((img) => img.isNotEmpty).toList(),
                       commentCount: blog.commentsCount,
@@ -290,9 +301,15 @@ class CommunityController extends GetxController {
         likedPostIds.remove(postId);
       }
 
-      // Note: NO need to re-fetch post here!
-      // The Firestore stream listener will automatically sync the actual like count
-      // This prevents double updates and image flickering
+      // Background sync: Get accurate count after toggle completes
+      final updatedBlog = await _blogService.getPost(postId);
+      if (updatedBlog != null) {
+        // Sync with actual data from server
+        post.syncLikeCount(updatedBlog.likes);
+        post.syncLikeStatus(newStatus);
+        // Update cache
+        blogPostsCache[postId] = updatedBlog;
+      }
     } finally {
       _togglingLikeIds.remove(postId);
     }
@@ -614,32 +631,60 @@ class CommunityController extends GetxController {
     );
   }
 
-  void openComments(String postId) {
-    // Navigate to blog detail page
-    Get.toNamed(Routes.BLOG_DETAIL, arguments: {'postId': postId});
+  Future<void> openComments(String postId) async {
+    // Pass cached BlogPostModel for instant load (no spinner)
+    final blogPost = blogPostsCache[postId];
+    await Get.toNamed(
+      Routes.BLOG_DETAIL,
+      arguments: {
+        'postId': postId,
+        if (blogPost != null) 'blogPost': blogPost,
+        'heroTag': 'community-blog-image-$postId',
+      },
+    );
+
+    // Sync comment count after returning from detail
+    final updatedBlog = await _blogService.getPost(postId);
+    if (updatedBlog != null) {
+      // Update cache
+      blogPostsCache[postId] = updatedBlog;
+
+      // Update PostViewModel comment count
+      final post = posts.firstWhereOrNull((p) => p.id == postId);
+      if (post != null) {
+        // Sync comment count (PostViewModel doesn't have syncCommentCount, need to add it)
+        // For now, force reload by syncing all data
+        final updatedPost = PostViewModel.fromBlogPost(
+          id: updatedBlog.id,
+          authorName: updatedBlog.authorName,
+          authorAvatar: updatedBlog.authorAvatar,
+          timeAndLocation: post.timeAndLocation,
+          content: post.content,
+          images: post.images,
+          commentCount: updatedBlog.commentsCount,  // ← Updated count
+          likes: updatedBlog.likes,
+          isLiked: post.isLiked.value,
+          isBookmarked: post.isBookmarked.value,
+        );
+
+        // Replace in list
+        final index = posts.indexWhere((p) => p.id == postId);
+        if (index != -1) {
+          posts[index] = updatedPost;
+          posts.refresh(); // Trigger UI update
+        }
+      }
+    }
   }
 
   void createPost() async {
     // Navigate to create post page
     final result = await Get.toNamed(Routes.CREATE_POST);
 
-    if (result != null && result is Map<String, dynamic>) {
-      // Create post via BlogService
-      final post = await _blogService.createPost(
-        title: result['title'] ?? '',
-        content: result['content'] ?? '',
-        excerpt: result['excerpt'] ?? '',
-        coverImage: result['coverImage'] ?? '',
-        category: result['category'] ?? 'Du lịch',
-        tags: result['tags'] ?? [],
-        destinations: result['destinations'] ?? [],
-        images: result['images'] ?? [],
-        publish: true,
-      );
-
-      if (post != null) {
-        Get.snackbar('Thành công', 'Đã đăng bài viết mới', snackPosition: SnackPosition.BOTTOM);
-      }
+    // Check if post was created successfully (CreatePostController already created it)
+    if (result != null && result is Map<String, dynamic> && result['success'] == true) {
+      // Post already created - Firestore stream will auto-update the feed
+      LoggerService.i('New post created successfully');
     }
   }
 

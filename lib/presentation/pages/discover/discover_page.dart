@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:wanderlust/core/constants/app_assets.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
@@ -878,6 +879,72 @@ class DiscoverPage extends GetView<DiscoverController> {
 
 
   Widget _buildExploreByRegion() {
+    // Static region cards - always show
+    final regionCards = [
+      AppAssets.regionCard1,
+      AppAssets.regionCard2,
+      AppAssets.regionCard3,
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Title
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+          child: Text(
+            'Khám phá theo vùng',
+            style: AppTypography.h4.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
+
+        SizedBox(height: AppSpacing.s3),
+
+        // Region Cards - Horizontal Scroll
+        SizedBox(
+          height: 227.h,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+            itemCount: regionCards.length,
+            itemBuilder: (context, index) {
+              return Container(
+                width: 164.w,
+                margin: EdgeInsets.only(right: 10.w),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusLG),
+                  child: Image.asset(
+                    regionCards[index],
+                    width: 164.w,
+                    height: 227.h,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 164.w,
+                        height: 227.h,
+                        decoration: BoxDecoration(
+                          color: AppColors.neutral100,
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusLG),
+                        ),
+                        child: Icon(
+                          Icons.image,
+                          size: 40.sp,
+                          color: AppColors.neutral400,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Keep old dynamic implementation for future use
+  Widget _buildExploreByRegionDynamic() {
     return Obx(() {
       final regions = controller.exploreRegions;
 

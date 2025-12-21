@@ -30,6 +30,11 @@ class AppAssets {
   // AI Assistant FAB icon
   static const String aiFabIcon = '$_imagesPath/ai_fab_icon.png';
 
+  // Region Cards (Khám phá theo vùng)
+  static const String regionCard1 = '$_imagesPath/region_card_1.png';
+  static const String regionCard2 = '$_imagesPath/region_card_2.png';
+  static const String regionCard3 = '$_imagesPath/region_card_3.png';
+
   // ============= ICONS =============
   // Bottom Navigation icons (PNG with multi-resolution)
   static const String iconTabHome = '$_iconsPath/tab_home.png';

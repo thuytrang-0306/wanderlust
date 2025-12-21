@@ -179,6 +179,8 @@ class CommunityPage extends GetView<CommunityController> {
             Text(
               post.content,
               style: TextStyle(fontSize: 14.sp, color: const Color(0xFF374151), height: 1.5),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
             ),
 
             // Post Images

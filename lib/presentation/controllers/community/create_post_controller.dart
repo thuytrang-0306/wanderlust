@@ -150,10 +150,8 @@ class CreatePostController extends GetxController {
               : 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800';
 
       // Create excerpt from description (first 150 chars)
+      // DON'T fallback to title - causes duplicate display in UI
       String excerpt = descriptionController.text.trim();
-      if (excerpt.isEmpty) {
-        excerpt = titleController.text.trim();
-      }
       if (excerpt.length > 150) {
         excerpt = '${excerpt.substring(0, 147)}...';
       }
@@ -178,13 +176,14 @@ class CreatePostController extends GetxController {
       }
 
       if (post != null) {
+        // Clear form first
+        _clearForm();
+
+        // Navigate back immediately with success flag (prevent duplicate post creation)
+        Get.back(result: {'success': true, 'post': post});
+
+        // Show success message after navigation
         AppSnackbar.showSuccess(title: 'Thành công', message: 'Bài viết đã được chia sẻ');
-
-        // Wait a bit for snackbar to show
-        await Future.delayed(const Duration(milliseconds: 500));
-
-        // Return to previous page with result
-        Get.back(result: {'postId': post.id, 'title': post.title});
       } else {
         AppSnackbar.showError(title: 'Lỗi', message: 'Không thể tạo bài viết');
       }
@@ -197,5 +196,20 @@ class CreatePostController extends GetxController {
       isUploading.value = false;
       _updateShareButton();
     }
+  }
+
+  void _clearForm() {
+    // Clear all text controllers
+    titleController.clear();
+    tagController.clear();
+    descriptionController.clear();
+
+    // Clear images and tags
+    selectedImages.clear();
+    selectedTags.clear();
+
+    // Reset state
+    descriptionLength.value = 0;
+    canShare.value = false;
   }
 }

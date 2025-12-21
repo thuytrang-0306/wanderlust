@@ -522,7 +522,8 @@ class BlogDetailController extends BaseController {
       if (isLiked.value) {
         likeCount.value += 1;
       } else {
-        likeCount.value = (likeCount.value - 1).clamp(0, double.infinity.toInt());
+        final newCount = likeCount.value - 1;
+        likeCount.value = newCount < 0 ? 0 : newCount;
       }
 
       // Update in backend
