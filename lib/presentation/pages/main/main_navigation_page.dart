@@ -150,33 +150,49 @@ class MainNavigationPage extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 10.h),
       child: FloatingActionButton(
         onPressed: () => Get.toNamed(Routes.AI_CHAT),
-        backgroundColor: AppColors.primary,
-        elevation: 8,
+        backgroundColor: Colors.transparent, // Transparent background
+        elevation: 0, // No elevation
+        highlightElevation: 0, // No elevation on press
+        focusElevation: 0, // No elevation on focus
+        hoverElevation: 0, // No elevation on hover
         child: Container(
           width: 56.w,
           height: 56.h,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.primary,
-                AppColors.primary.withOpacity(0.8),
-              ],
-            ),
+            color: Colors.transparent, // Transparent container
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
+                color: AppColors.black.withOpacity(0.2),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: Icon(
-            Icons.smart_toy,
-            color: Colors.white,
-            size: 28.sp,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28.w), // Half of the width/height to maintain circle
+            child: Image.asset(
+              AppAssets.aiFabIcon,
+              width: 28.w,
+              height: 28.h,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback to icon if image fails to load
+                return Container(
+                  width: 28.w,
+                  height: 28.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.smart_toy,
+                    color: Colors.white,
+                    size: 16.sp,
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),

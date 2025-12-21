@@ -147,7 +147,7 @@ class WanderlustApp extends StatelessWidget {
           initialBinding: InitialBinding(),
           initialRoute: initialRoute,
           getPages: AppPages.routes,
-          defaultTransition: Transition.fadeIn,
+          defaultTransition: Transition.cupertino,
           transitionDuration: const Duration(milliseconds: 300),
         );
       },

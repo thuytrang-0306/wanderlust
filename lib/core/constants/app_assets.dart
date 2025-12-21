@@ -27,6 +27,9 @@ class AppAssets {
   // 3D Illustrations (TODO: Add actual files when available)
   static const String travel3d = '$_imagesPath/travel_3d.png';
 
+  // AI Assistant FAB icon
+  static const String aiFabIcon = '$_imagesPath/ai_fab_icon.png';
+
   // ============= ICONS =============
   // Bottom Navigation icons (PNG with multi-resolution)
   static const String iconTabHome = '$_iconsPath/tab_home.png';

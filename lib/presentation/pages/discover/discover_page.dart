@@ -39,6 +39,11 @@ class DiscoverPage extends GetView<DiscoverController> {
 
                 SizedBox(height: AppSpacing.s6),
 
+                // Business Listings Section
+                _buildBusinessListings(),
+
+                SizedBox(height: AppSpacing.s6),
+
                 // Featured Tours
                 _buildFeaturedTours(),
 
@@ -66,11 +71,6 @@ class DiscoverPage extends GetView<DiscoverController> {
 
                 // Popular Destinations
                 _buildPopularDestinations(),
-
-                SizedBox(height: AppSpacing.s6),
-
-                // Business Listings Section
-                _buildBusinessListings(),
 
                 // Bottom padding
                 SizedBox(height: 100.h),
@@ -137,12 +137,6 @@ class DiscoverPage extends GetView<DiscoverController> {
                 }),
               ],
             ),
-          ),
-
-          // Notification Icon
-          IconButton(
-            icon: Icon(Icons.notifications_outlined, color: AppColors.textPrimary, size: 24.sp),
-            onPressed: () => Get.toNamed('/notifications'),
           ),
         ],
       ),
@@ -321,22 +315,41 @@ class DiscoverPage extends GetView<DiscoverController> {
         child: Container(
           height: 48.h,
           decoration: BoxDecoration(
-            color: AppColors.neutral50,
-            borderRadius: BorderRadius.circular(24.r),
-          ),
-          child: Row(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-                child: Icon(Icons.search, color: AppColors.textTertiary, size: 24.sp),
-              ),
-              Expanded(
-                child: Text(
-                  'Tìm kiếm địa điểm, tour...',
-                  style: AppTypography.bodyM.copyWith(color: AppColors.textTertiary),
-                ),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMD),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFC4CDF4), Color(0xFFEDE0FF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF54189A).withValues(alpha: 0.2),
+                offset: const Offset(-1, 0),
+                blurRadius: 7,
+                spreadRadius: 0,
               ),
             ],
+          ),
+          child: Container(
+            margin: EdgeInsets.all(1.5.w), // Border width
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMD - 1.5.w),
+            ),
+            child: Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+                  child: Icon(Icons.search, color: AppColors.textTertiary, size: 24.sp),
+                ),
+                Expanded(
+                  child: Text(
+                    'Tìm kiếm địa điểm, tour...',
+                    style: AppTypography.bodyM.copyWith(color: AppColors.textTertiary),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -348,7 +361,7 @@ class DiscoverPage extends GetView<DiscoverController> {
       final tours = controller.featuredTours;
 
       if (tours.isEmpty) {
-        return _buildEmptyTours();
+        return const SizedBox.shrink();
       }
 
       return Column(
@@ -638,7 +651,7 @@ class DiscoverPage extends GetView<DiscoverController> {
       final destinations = controller.popularDestinations;
 
       if (destinations.isEmpty) {
-        return _buildEmptyDestinations();
+        return const SizedBox.shrink();
       }
 
       return Column(
@@ -752,65 +765,6 @@ class DiscoverPage extends GetView<DiscoverController> {
     });
   }
 
-  Widget _buildEmptyDestinations() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-      padding: EdgeInsets.all(AppSpacing.s6),
-      decoration: BoxDecoration(
-        color: AppColors.neutral50,
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.explore_outlined, size: 48.sp, color: AppColors.neutral400),
-          SizedBox(height: AppSpacing.s3),
-          Text(
-            'Khám phá thế giới',
-            style: AppTypography.bodyL.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: AppSpacing.s2),
-          Text(
-            'Chưa có điểm đến nào được thêm.\nHãy bắt đầu khám phá ngay!',
-            style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyTours() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-      padding: EdgeInsets.all(AppSpacing.s6),
-      decoration: BoxDecoration(
-        color: AppColors.neutral50,
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.tour_outlined, size: 48.sp, color: AppColors.neutral400),
-          SizedBox(height: AppSpacing.s3),
-          Text(
-            'Chưa có tour nào',
-            style: AppTypography.bodyL.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: AppSpacing.s2),
-          Text(
-            'Các tour du lịch sẽ sớm được cập nhật.\nVui lòng quay lại sau!',
-            style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildEmptyBlogs() {
     return Container(
@@ -855,72 +809,13 @@ class DiscoverPage extends GetView<DiscoverController> {
     );
   }
 
-  Widget _buildEmptyRegions() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-      padding: EdgeInsets.all(AppSpacing.s6),
-      decoration: BoxDecoration(
-        color: AppColors.neutral50,
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.map_outlined, size: 48.sp, color: AppColors.neutral400),
-          SizedBox(height: AppSpacing.s3),
-          Text(
-            'Khám phá theo vùng',
-            style: AppTypography.bodyL.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: AppSpacing.s2),
-          Text(
-            'Tính năng đang được phát triển.\nVui lòng quay lại sau!',
-            style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyCombos() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-      padding: EdgeInsets.all(AppSpacing.s6),
-      decoration: BoxDecoration(
-        color: AppColors.neutral50,
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.card_giftcard_outlined, size: 48.sp, color: AppColors.neutral400),
-          SizedBox(height: AppSpacing.s3),
-          Text(
-            'Combo tour đặc biệt',
-            style: AppTypography.bodyL.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: AppSpacing.s2),
-          Text(
-            'Combo tour giá ưu đãi sẽ sớm ra mắt.\nĐừng bỏ lỡ!',
-            style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildExploreByRegion() {
     return Obx(() {
       final regions = controller.exploreRegions;
 
       if (regions.isEmpty) {
-        return _buildEmptyRegions();
+        return const SizedBox.shrink();
       }
 
       return Column(
@@ -1016,7 +911,7 @@ class DiscoverPage extends GetView<DiscoverController> {
       final combos = controller.comboTours;
 
       if (combos.isEmpty) {
-        return _buildEmptyCombos();
+        return const SizedBox.shrink();
       }
 
       return Column(

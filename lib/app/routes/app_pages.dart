@@ -61,185 +61,185 @@ class AppPages {
     GetPage(
       name: Routes.REGISTER,
       page: () => const RegisterPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.FORGOT_PASSWORD,
       page: () => const ForgotPasswordPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.VERIFY_EMAIL,
       page: () => const VerifyEmailPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(name: Routes.MAIN_NAVIGATION, page: () => const MainNavigationPage()),
     GetPage(
       name: Routes.TRIP_EDIT,
       page: () => const TripEditPage(),
       binding: TripEditBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.TRIP_DETAIL,
       page: () => const TripDetailPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.ADD_PRIVATE_LOCATION,
       page: () => const AddPrivateLocationPage(),
       binding: AddPrivateLocationBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.ADD_NOTE,
       page: () => const AddNotePage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.SEARCH_LOCATION,
       page: () => const SearchLocationPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.CREATE_POST,
       page: () => const CreatePostPage(),
       binding: CreatePostBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.BLOG_DETAIL,
       page: () => const BlogDetailPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.SAVED_COLLECTIONS,
       page: () => const SavedCollectionsPage(),
       binding: SavedCollectionsBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.COLLECTION_DETAIL,
       page: () => const CollectionDetailPage(),
       binding: CollectionDetailBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.ACCOMMODATION_DETAIL,
       page: () => const AccommodationDetailPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.BOOKING_INFO,
       page: () => const BookingInfoPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.CUSTOMER_INFO,
       page: () => const CustomerInfoPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.PAYMENT_METHOD,
       page: () => const PaymentMethodPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.COMBO_DETAIL,
       page: () => const ComboDetailPage(),
       binding: ComboDetailBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.PAYMENT_SUCCESS,
       page: () => const PaymentSuccessPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.USER_PROFILE,
       page: () => const UserProfilePage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.EDIT_PROFILE,
       page: () => const EditProfilePage(),
       binding: EditProfileBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.SEARCH_FILTER,
       page: () => const SearchFilterPage(),
       binding: SearchFilterBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.SETTINGS,
       page: () => const SettingsPage(),
       binding: SettingsBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.MY_TRIPS,
       page: () => const MyTripsPage(),
       binding: MyTripsBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.BOOKING_HISTORY,
       page: () => const BookingHistoryPage(),
       binding: BookingHistoryBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.AI_CHAT,
       page: () => const AIChatPage(),
       binding: AIChatBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     // Business routes
     GetPage(
       name: Routes.BUSINESS_REGISTRATION,
       page: () => const BusinessTypeSelectionPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.BUSINESS_INFO_FORM,
       page: () => const BusinessInfoFormPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.BUSINESS_DASHBOARD,
       page: () => const BusinessDashboardPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     // Unified Listing routes
     GetPage(
       name: Routes.CREATE_LISTING,
       page: () => CreateListingPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     // Settings routes
     GetPage(
       name: Routes.CHANGE_PASSWORD,
       page: () => const ChangePasswordPage(),
       binding: ChangePasswordBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.HELP_SUPPORT,
       page: () => const HelpSupportPage(),
       binding: HelpSupportBinding(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.PRIVACY_POLICY,
       page: () => const PrivacyPolicyPage(),
-      transition: Transition.rightToLeft,
+      
     ),
     GetPage(
       name: Routes.TERMS_OF_SERVICE,
       page: () => const TermsOfServicePage(),
-      transition: Transition.rightToLeft,
+      
     ),
   ];
 }
