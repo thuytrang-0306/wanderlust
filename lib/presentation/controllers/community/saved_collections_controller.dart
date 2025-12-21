@@ -6,22 +6,28 @@ import 'package:wanderlust/core/services/saved_blogs_service.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 
 class SavedCollectionsController extends BaseController {
-  // Lazy load SavedBlogsService  
+  // Lazy load SavedBlogsService
   SavedBlogsService get _savedBlogsService {
     if (!Get.isRegistered<SavedBlogsService>()) {
       Get.put(SavedBlogsService());
     }
     return Get.find<SavedBlogsService>();
   }
-  
+
   // Observable collections from service
   RxList<BlogCollection> get collections => _savedBlogsService.collections;
-  
+
   @override
   void onInit() {
     super.onInit();
+    _loadCollections();
+  }
+
+  void _loadCollections() async {
+    setLoading();
     // Ensure service is initialized
     _savedBlogsService;
+    setSuccess();
   }
 
   void openCollection(BlogCollection collection) {

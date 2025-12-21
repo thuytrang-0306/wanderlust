@@ -5,6 +5,7 @@ import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/presentation/controllers/community/community_controller.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
+import 'package:wanderlust/core/widgets/shimmer_loading.dart';
 
 class CommunityPage extends GetView<CommunityController> {
   const CommunityPage({super.key});
@@ -21,6 +22,17 @@ class CommunityPage extends GetView<CommunityController> {
             child: Container(
               color: const Color(0xFFF5F7F8),
               child: Obx(() {
+                // Show shimmer while loading
+                if (controller.isLoading.value) {
+                  return SingleChildScrollView(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.s5),
+                      child: const ShimmerCommunityPost(itemCount: 3),
+                    ),
+                  );
+                }
+
+                // Show empty state if no posts
                 if (controller.posts.isEmpty) {
                   return _buildEmptyState();
                 }
@@ -29,7 +41,7 @@ class CommunityPage extends GetView<CommunityController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Business Highlights Section  
+                      // Business Highlights Section
                       if (controller.businessPosts.isNotEmpty) ...[
                         _buildBusinessHighlights(),
                         SizedBox(height: AppSpacing.s4),

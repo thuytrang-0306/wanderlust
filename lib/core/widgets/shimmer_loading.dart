@@ -477,3 +477,291 @@ class ShimmerComboCard extends StatelessWidget {
     );
   }
 }
+
+// ============= COMMUNITY PAGE SPECIFIC SHIMMERS =============
+
+// Shimmer for blog post cards - matches BlogPostCard structure
+class ShimmerBlogPostCard extends StatelessWidget {
+  final int itemCount;
+
+  const ShimmerBlogPostCard({super.key, this.itemCount = 3});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: EdgeInsets.only(bottom: AppSpacing.s3),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ShimmerLoading(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Cover Image
+                Container(
+                  height: 200.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+                  ),
+                ),
+
+                Padding(
+                  padding: EdgeInsets.all(AppSpacing.s4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Author info row (avatar + name + time)
+                      Row(
+                        children: [
+                          Container(
+                            width: 40.w,
+                            height: 40.w,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          SizedBox(width: AppSpacing.s3),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(height: 16.h, width: 120.w, color: Colors.white),
+                                SizedBox(height: 4.h),
+                                Container(height: 14.h, width: 80.w, color: Colors.white),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: AppSpacing.s3),
+
+                      // Title
+                      Container(height: 18.h, width: double.infinity, color: Colors.white),
+                      SizedBox(height: 8.h),
+                      Container(height: 18.h, width: 200.w, color: Colors.white),
+
+                      SizedBox(height: AppSpacing.s2),
+
+                      // Content
+                      Container(height: 16.h, width: double.infinity, color: Colors.white),
+                      SizedBox(height: 6.h),
+                      Container(height: 16.h, width: double.infinity, color: Colors.white),
+                      SizedBox(height: 6.h),
+                      Container(height: 16.h, width: 250.w, color: Colors.white),
+
+                      SizedBox(height: AppSpacing.s3),
+
+                      // Interaction buttons row
+                      Row(
+                        children: [
+                          Row(
+                            children: [
+                              Container(height: 20.h, width: 20.w, color: Colors.white),
+                              SizedBox(width: 6.w),
+                              Container(height: 14.h, width: 30.w, color: Colors.white),
+                            ],
+                          ),
+                          SizedBox(width: AppSpacing.s5),
+                          Row(
+                            children: [
+                              Container(height: 20.h, width: 20.w, color: Colors.white),
+                              SizedBox(width: 6.w),
+                              Container(height: 14.h, width: 30.w, color: Colors.white),
+                            ],
+                          ),
+                          const Spacer(),
+                          Container(height: 22.h, width: 22.w, color: Colors.white),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Shimmer for community post cards (user feed style - avatar first)
+class ShimmerCommunityPost extends StatelessWidget {
+  final int itemCount;
+
+  const ShimmerCommunityPost({super.key, this.itemCount = 3});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: EdgeInsets.only(bottom: AppSpacing.s3),
+          padding: EdgeInsets.all(AppSpacing.s4),
+          decoration: const BoxDecoration(color: Colors.white),
+          child: ShimmerLoading(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // User info row (avatar + name + time)
+                Row(
+                  children: [
+                    Container(
+                      width: 40.w,
+                      height: 40.w,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: AppSpacing.s3),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(height: 15.h, width: 120.w, color: Colors.white),
+                          SizedBox(height: 2.h),
+                          Container(height: 13.h, width: 80.w, color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: AppSpacing.s3),
+                // Content text
+                Container(height: 14.h, width: double.infinity, color: Colors.white),
+                SizedBox(height: 6.h),
+                Container(height: 14.h, width: 250.w, color: Colors.white),
+                SizedBox(height: AppSpacing.s3),
+                // Image
+                Container(
+                  height: 200.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+                SizedBox(height: AppSpacing.s3),
+                // Interaction buttons row
+                Row(
+                  children: [
+                    Row(
+                      children: [
+                        Container(height: 20.h, width: 20.w, color: Colors.white),
+                        SizedBox(width: 6.w),
+                        Container(height: 14.h, width: 30.w, color: Colors.white),
+                      ],
+                    ),
+                    SizedBox(width: AppSpacing.s5),
+                    Row(
+                      children: [
+                        Container(height: 20.h, width: 20.w, color: Colors.white),
+                        SizedBox(width: 6.w),
+                        Container(height: 14.h, width: 30.w, color: Colors.white),
+                      ],
+                    ),
+                    const Spacer(),
+                    Container(height: 22.h, width: 22.w, color: Colors.white),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Shimmer for saved collections grid
+class ShimmerCollectionGrid extends StatelessWidget {
+  final int itemCount;
+
+  const ShimmerCollectionGrid({super.key, this.itemCount = 6});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.all(AppSpacing.s5),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: AppSpacing.s4,
+        crossAxisSpacing: AppSpacing.s4,
+        childAspectRatio: 1.0,
+      ),
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        return ShimmerLoading(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: Stack(
+              children: [
+                // Background image placeholder
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                ),
+                // Bottom gradient overlay area
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    height: 60.h,
+                    padding: EdgeInsets.all(AppSpacing.s3),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(bottom: Radius.circular(16.r)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.3),
+                        ],
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(height: 14.h, width: 100.w, color: Colors.white),
+                        SizedBox(height: AppSpacing.s1),
+                        Container(height: 12.h, width: 60.w, color: Colors.white),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

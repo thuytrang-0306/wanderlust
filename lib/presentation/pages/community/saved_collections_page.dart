@@ -5,6 +5,7 @@ import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/services/saved_blogs_service.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
+import 'package:wanderlust/core/widgets/shimmer_loading.dart';
 import 'package:wanderlust/presentation/controllers/community/saved_collections_controller.dart';
 
 class SavedCollectionsPage extends GetView<SavedCollectionsController> {
@@ -46,6 +47,12 @@ class SavedCollectionsPage extends GetView<SavedCollectionsController> {
         ],
       ),
       body: Obx(() {
+        // Show shimmer while loading
+        if (controller.isLoading) {
+          return const ShimmerCollectionGrid(itemCount: 6);
+        }
+
+        // Show empty state if no collections
         if (controller.collections.isEmpty) {
           return _buildEmptyState();
         }

@@ -80,10 +80,16 @@ class CollectionDetailController extends BaseController {
         }
       }
 
-      // Instant display with cached data (no spinner!)
+      // Instant display with cached data
       if (cachedBlogs.isNotEmpty) {
         blogPosts.value = cachedBlogs;
-        isLoadingData.value = false;
+
+        // CHỈ show shimmer nếu cached chưa đủ (cần fetch thêm)
+        if (cachedBlogs.length >= savedBlogs.length) {
+          // Đã có đủ cached data → không cần shimmer indicator
+          isLoadingData.value = false;
+        }
+        // Else: keep isLoadingData = true to show shimmer while fetching missing blogs
       }
       // Else: keep loading = true until fetch completes
 

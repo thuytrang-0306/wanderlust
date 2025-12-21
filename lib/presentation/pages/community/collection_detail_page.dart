@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/widgets/blog_post_card.dart';
+import 'package:wanderlust/core/widgets/shimmer_loading.dart';
 import 'package:wanderlust/presentation/controllers/community/collection_detail_controller.dart';
 
 class CollectionDetailPage extends GetView<CollectionDetailController> {
@@ -33,14 +34,23 @@ class CollectionDetailPage extends GetView<CollectionDetailController> {
         ),
       ),
       body: Obx(() {
-        if (controller.isLoadingData.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        
-        if (controller.blogPosts.isEmpty) {
+        // Show empty state if no posts AND not loading
+        if (controller.blogPosts.isEmpty && !controller.isLoadingData.value) {
           return _buildEmptyState();
         }
 
+        // Show full screen shimmer only when loading AND no cached data
+        if (controller.isLoadingData.value && controller.blogPosts.isEmpty) {
+          return Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.s4,
+              vertical: AppSpacing.s3,
+            ),
+            child: const ShimmerBlogPostCard(itemCount: 3),
+          );
+        }
+
+        // Show data (with optional shimmer at bottom if still loading)
         return RefreshIndicator(
           onRefresh: controller.refreshPosts,
           child: ListView.builder(
@@ -48,8 +58,13 @@ class CollectionDetailPage extends GetView<CollectionDetailController> {
               horizontal: AppSpacing.s4,
               vertical: AppSpacing.s3,
             ),
-            itemCount: controller.blogPosts.length,
+            itemCount: controller.blogPosts.length + (controller.isLoadingData.value ? 1 : 0),
             itemBuilder: (context, index) {
+              // Show shimmer at bottom while loading more
+              if (index >= controller.blogPosts.length) {
+                return const ShimmerBlogPostCard(itemCount: 1);
+              }
+
               final blog = controller.blogPosts[index];
               return BlogPostCard.fromBlogPost(
                 blog: blog,
