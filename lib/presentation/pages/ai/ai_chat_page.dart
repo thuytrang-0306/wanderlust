@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:wanderlust/core/constants/app_assets.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
@@ -220,13 +221,24 @@ class AIChatPage extends GetView<AIChatController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            CircleAvatar(
-              radius: 16.r,
-              backgroundColor: AppColors.primary,
-              child: Icon(
-                Icons.smart_toy,
-                size: 20.sp,
-                color: Colors.white,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16.r),
+              child: Image.asset(
+                AppAssets.aiFabIcon,
+                width: 32.r,
+                height: 32.r,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return CircleAvatar(
+                    radius: 16.r,
+                    backgroundColor: AppColors.primary,
+                    child: Icon(
+                      Icons.smart_toy,
+                      size: 20.sp,
+                      color: Colors.white,
+                    ),
+                  );
+                },
               ),
             ),
             SizedBox(width: AppSpacing.s2),
