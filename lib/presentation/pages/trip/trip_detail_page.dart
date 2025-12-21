@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
+import 'package:wanderlust/core/widgets/shimmer_loading.dart';
+import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/presentation/controllers/trip/trip_detail_controller.dart';
 
 class TripDetailPage extends StatelessWidget {
@@ -27,28 +29,29 @@ class TripDetailPage extends StatelessWidget {
                 automaticallyImplyLeading: false,
                 backgroundColor: Colors.transparent,
                 flexibleSpace: FlexibleSpaceBar(
-                  background: Obx(
-                    () => SizedBox(
-                      height: 207.h,
-                      child:
-                          controller.tripImage.value.isNotEmpty
-                              ? AppImage(
+                  background: SizedBox(
+                    height: 207.h,
+                    child:
+                        controller.tripImage.value.isNotEmpty
+                            ? Hero(
+                              tag: 'trip-cover-${controller.trip.value!.id}',
+                              child: AppImage(
                                 imageData: controller.tripImage.value,
                                 width: double.infinity,
                                 height: double.infinity,
                                 fit: BoxFit.cover,
-                              )
-                              : Container(
-                                color: AppColors.primary.withOpacity(0.8),
-                                child: Center(
-                                  child: Icon(
-                                    Icons.travel_explore,
-                                    size: 50.sp,
-                                    color: Colors.white.withOpacity(0.7),
-                                  ),
+                              ),
+                            )
+                            : Container(
+                              color: AppColors.primary.withOpacity(0.8),
+                              child: Center(
+                                child: Icon(
+                                  Icons.travel_explore,
+                                  size: 50.sp,
+                                  color: Colors.white.withOpacity(0.7),
                                 ),
                               ),
-                    ),
+                            ),
                   ),
                 ),
               ),
@@ -183,6 +186,11 @@ class TripDetailPage extends StatelessWidget {
                         Padding(
                           padding: EdgeInsets.all(20.w),
                           child: Obx(() {
+                            // Show shimmer only for content area while loading
+                            if (controller.isInitialLoading.value) {
+                              return _buildContentShimmer();
+                            }
+
                             // Day header
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -676,6 +684,85 @@ class TripDetailPage extends StatelessWidget {
                   onPressed: () => _showLocationMenu(controller, locationIndex, title),
                 ),
               ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContentShimmer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Day title shimmer
+        ShimmerLoading(
+          child: Container(
+            width: 100.w,
+            height: 28.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4.r),
+            ),
+          ),
+        ),
+        SizedBox(height: 8.h),
+
+        // Date row shimmer
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            ShimmerLoading(
+              child: Container(
+                width: 150.w,
+                height: 16.h,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+              ),
+            ),
+            ShimmerLoading(
+              child: Container(
+                width: 100.w,
+                height: 16.h,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 24.h),
+
+        // Note section shimmer
+        ShimmerLoading(
+          child: Container(
+            width: double.infinity,
+            height: 80.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+          ),
+        ),
+        SizedBox(height: 24.h),
+
+        // Location cards shimmer
+        ...List.generate(
+          2,
+          (index) => Padding(
+            padding: EdgeInsets.only(bottom: 16.h),
+            child: ShimmerLoading(
+              child: Container(
+                width: double.infinity,
+                height: 100.h,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
             ),
           ),
         ),

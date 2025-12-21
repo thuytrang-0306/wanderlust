@@ -31,6 +31,9 @@ class TripDetailController extends BaseController {
   // Trip days generated from date range
   final RxList<Map<String, dynamic>> tripDays = <Map<String, dynamic>>[].obs;
 
+  // Loading state for initial data load
+  final RxBool isInitialLoading = true.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -42,16 +45,18 @@ class TripDetailController extends BaseController {
       if (Get.arguments['trip'] != null) {
         // Load full trip model
         final TripModel passedTrip = Get.arguments['trip'] as TripModel;
-        loadTrip(passedTrip);
+        loadTrip(passedTrip); // Fire and forget - loading state will be managed
       } else if (Get.arguments['tripId'] != null) {
         // Load trip by ID
-        loadTripById(Get.arguments['tripId'] as String);
+        loadTripById(Get.arguments['tripId'] as String); // Fire and forget
       }
     }
   }
 
   // Load trip from passed model
-  void loadTrip(TripModel tripModel) {
+  Future<void> loadTrip(TripModel tripModel) async {
+    isInitialLoading.value = true;
+
     trip.value = tripModel;
 
     // Update UI bindings
@@ -66,36 +71,39 @@ class TripDetailController extends BaseController {
     final endStr = formatter.format(tripModel.endDate);
     tripDateRange.value = '$startStr - $endStr';
 
-    // Generate trip days structure
-    generateTripDays(tripModel);
+    // Generate trip days structure and wait for data to load
+    await generateTripDays(tripModel);
 
     // Load itineraries
-    loadItineraries(tripModel.id);
+    await loadItineraries(tripModel.id);
+
+    // All data loaded
+    isInitialLoading.value = false;
   }
 
   // Load trip by ID from backend
   Future<void> loadTripById(String tripId) async {
     try {
-      setLoading();
+      isInitialLoading.value = true;
       final trips = await _tripService.getUserTrips();
       final tripModel = trips.firstWhereOrNull((t) => t.id == tripId);
       if (tripModel != null) {
-        loadTrip(tripModel);
+        await loadTrip(tripModel);
       } else {
+        isInitialLoading.value = false;
         Get.back();
         Get.snackbar('Lỗi', 'Không tìm thấy chuyến đi');
       }
     } catch (e) {
       LoggerService.e('Error loading trip', error: e);
+      isInitialLoading.value = false;
       Get.back();
       Get.snackbar('Lỗi', 'Không thể tải thông tin chuyến đi');
-    } finally {
-      setLoading();
     }
   }
 
   // Generate trip days structure
-  void generateTripDays(TripModel tripModel) {
+  Future<void> generateTripDays(TripModel tripModel) async {
     tripDays.clear();
 
     final startDate = tripModel.startDate;
@@ -110,8 +118,8 @@ class TripDetailController extends BaseController {
       });
     }
 
-    // Load day notes and private locations from Firestore
-    loadDayNotesAndLocations(tripModel.id);
+    // Load day notes and private locations from Firestore (await completion)
+    await loadDayNotesAndLocations(tripModel.id);
   }
 
   // Load day notes and private locations from Firestore
@@ -240,7 +248,7 @@ class TripDetailController extends BaseController {
       if (result != null && result is Map<String, dynamic> && result['success'] == true) {
         final tripId = result['tripId'] as String?;
         if (tripId != null) {
-          loadTripById(tripId);
+          await loadTripById(tripId);
           LoggerService.i('Trip updated, reloaded trip detail');
         }
       }

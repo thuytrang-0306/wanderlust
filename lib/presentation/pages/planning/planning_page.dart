@@ -216,11 +216,14 @@ class PlanningPage extends GetView<PlanningController> {
               Positioned.fill(
                 child:
                     trip.coverImage.isNotEmpty
-                        ? AppImage(
-                          imageData: trip.coverImage,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
+                        ? Hero(
+                          tag: 'trip-cover-${trip.id}',
+                          child: AppImage(
+                            imageData: trip.coverImage,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          ),
                         )
                         : Container(
                           color: AppColors.neutral200,

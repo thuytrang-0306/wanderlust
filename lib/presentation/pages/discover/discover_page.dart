@@ -673,84 +673,169 @@ class DiscoverPage extends GetView<DiscoverController> {
           SizedBox(height: AppSpacing.s3),
 
           SizedBox(
-            height: 200.h,
+            height: 292.h,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              clipBehavior: Clip.none,
               itemCount: blogs.length,
               itemBuilder: (context, index) {
                 final blog = blogs[index];
 
-                return GestureDetector(
-                  onTap: () => controller.onBlogTapped(blog),
-                  child: Container(
-                    width: 260.w,
-                    margin: EdgeInsets.only(right: AppSpacing.s4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Image with Hero animation
+                return Container(
+                  width: 280.w,
+                  margin: EdgeInsets.only(right: AppSpacing.s4, bottom: 8.h),
+                  child: GestureDetector(
+                    onTap: () => controller.onBlogTapped(blog),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                        // Image with Hero animation and hashtag overlay
                         Hero(
                           tag: 'discover-blog-image-${blog.id}',
                           child: Container(
-                            height: 120.h,
+                            height: 180.h,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
                               color: AppColors.neutral100,
                             ),
-                            child:
-                                blog.coverImage.isNotEmpty
-                                    ? ClipRRect(
-                                      borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
-                                      child: AppImage(
-                                        imageData: blog.coverImage,
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        fit: BoxFit.cover,
+                            child: Stack(
+                              children: [
+                                if (blog.coverImage.isNotEmpty)
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                                    child: AppImage(
+                                      imageData: blog.coverImage,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                else
+                                  Center(
+                                    child: Icon(
+                                      Icons.article,
+                                      size: 40.sp,
+                                      color: AppColors.neutral400,
+                                    ),
+                                  ),
+
+                                // Hashtag overlay (first tag)
+                                if (blog.tags.isNotEmpty)
+                                  Positioned(
+                                    left: 12.w,
+                                    bottom: 12.h,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 8.w,
+                                        vertical: 4.h,
                                       ),
-                                    )
-                                    : Center(
-                                      child: Icon(
-                                        Icons.article,
-                                        size: 40.sp,
-                                        color: AppColors.neutral400,
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.6),
+                                        borderRadius: BorderRadius.circular(6.r),
+                                      ),
+                                      child: Text(
+                                        '#${blog.tags.first}',
+                                        style: AppTypography.bodyXS.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                     ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
 
                         // Content
                         Padding(
-                          padding: EdgeInsets.all(AppSpacing.s3),
+                          padding: EdgeInsets.all(12.w),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                blog.title,
-                                style: AppTypography.bodyM.copyWith(fontWeight: FontWeight.bold),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                              // Title - Fixed height for alignment
+                              SizedBox(
+                                height: 44.h,
+                                child: Text(
+                                  blog.title,
+                                  style: AppTypography.bodyM.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.neutral900,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              SizedBox(height: AppSpacing.s1),
-                              Text(
-                                blog.formattedDate,
-                                style: AppTypography.bodyXS.copyWith(color: AppColors.textTertiary),
+
+                              SizedBox(height: 8.h),
+
+                              // Author info with time - Always at same position
+                              Row(
+                                children: [
+                                  // Avatar
+                                  CircleAvatar(
+                                    radius: 12.r,
+                                    backgroundColor: AppColors.neutral200,
+                                    child: blog.authorAvatar.isNotEmpty
+                                        ? ClipOval(
+                                            child: AppImage(
+                                              imageData: blog.authorAvatar,
+                                              width: 24.r,
+                                              height: 24.r,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          )
+                                        : Icon(
+                                            Icons.person,
+                                            size: 14.sp,
+                                            color: AppColors.neutral500,
+                                          ),
+                                  ),
+
+                                  SizedBox(width: 6.w),
+
+                                  // Author name
+                                  Expanded(
+                                    child: Text(
+                                      blog.authorName,
+                                      style: AppTypography.bodyXS.copyWith(
+                                        color: AppColors.neutral700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+
+                                  // Time
+                                  Text(
+                                    blog.formattedDate,
+                                    style: AppTypography.bodyXS.copyWith(
+                                      color: AppColors.neutral500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
                       ],
+                    ),
                     ),
                   ),
                 );
@@ -1398,7 +1483,7 @@ class DiscoverPage extends GetView<DiscoverController> {
 
           // Business Listings Horizontal List
           SizedBox(
-            height: 252.h, // Increased height to prevent overflow with rating
+            height: 260.h, // Optimized height with reduced spacing
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
@@ -1528,59 +1613,69 @@ class DiscoverPage extends GetView<DiscoverController> {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Business Name
-                              Text(
-                                listing.businessName,
-                                style: AppTypography.bodyXS.copyWith(
-                                  color: AppColors.neutral600,
+                              // Business Name - Fixed height for alignment
+                              SizedBox(
+                                height: 16.h,
+                                child: Text(
+                                  listing.businessName,
+                                  style: AppTypography.bodyXS.copyWith(
+                                    color: AppColors.neutral600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
 
                               SizedBox(height: 2.h),
 
-                              // Title
-                              Text(
-                                listing.title,
-                                style: AppTypography.bodyM.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.neutral900,
+                              // Title - Fixed height for alignment
+                              SizedBox(
+                                height: 40.h,
+                                child: Text(
+                                  listing.title,
+                                  style: AppTypography.bodyM.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.neutral900,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
                               ),
 
-                              SizedBox(height: 6.h),
+                              SizedBox(height: 3.h),
 
-                              // Rating
-                              if (listing.rating > 0) ...[
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.star,
-                                      size: 14.sp,
-                                      color: AppColors.warning,
-                                    ),
-                                    SizedBox(width: 4.w),
-                                    Text(
-                                      listing.rating.toStringAsFixed(1),
-                                      style: AppTypography.bodyS.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Text(
-                                      ' (${listing.reviews})',
-                                      style: AppTypography.bodyS.copyWith(
-                                        color: AppColors.neutral600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 6.h),
-                              ],
+                              // Rating - Fixed height for alignment
+                              SizedBox(
+                                height: 10.h,
+                                child: listing.rating > 0
+                                    ? Row(
+                                        children: [
+                                          Icon(
+                                            Icons.star,
+                                            size: 14.sp,
+                                            color: AppColors.warning,
+                                          ),
+                                          SizedBox(width: 4.w),
+                                          Text(
+                                            listing.rating.toStringAsFixed(1),
+                                            style: AppTypography.bodyS.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Text(
+                                            ' (${listing.reviews})',
+                                            style: AppTypography.bodyS.copyWith(
+                                              color: AppColors.neutral600,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
 
-                              // Price
+                              SizedBox(height: 3.h),
+
+                              // Price - Always at same position
                               Row(
                                 children: [
                                   if (listing.hasDiscount)
