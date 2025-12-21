@@ -7,6 +7,7 @@ import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/presentation/controllers/discover/discover_controller.dart';
 import 'package:wanderlust/presentation/controllers/account/user_profile_controller.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
+import 'package:wanderlust/core/widgets/shimmer_loading.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class DiscoverPage extends GetView<DiscoverController> {
@@ -364,6 +365,27 @@ class DiscoverPage extends GetView<DiscoverController> {
 
   Widget _buildFeaturedTours() {
     return Obx(() {
+      // Show shimmer while loading
+      if (controller.isLoadingTours.value) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ShimmerText(width: 120, height: 20),
+                  ShimmerText(width: 70, height: 16),
+                ],
+              ),
+            ),
+            SizedBox(height: AppSpacing.s3),
+            const ShimmerTourCard(itemCount: 3),
+          ],
+        );
+      }
+
       final tours = controller.featuredTours;
 
       if (tours.isEmpty) {
@@ -546,6 +568,21 @@ class DiscoverPage extends GetView<DiscoverController> {
 
   Widget _buildRecentBlogs() {
     return Obx(() {
+      // Show shimmer while loading
+      if (controller.isLoadingBlogs.value) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              child: ShimmerText(width: 150, height: 20),
+            ),
+            SizedBox(height: AppSpacing.s3),
+            const ShimmerBlogCard(itemCount: 3),
+          ],
+        );
+      }
+
       final blogs = controller.recentBlogs;
 
       if (blogs.isEmpty) {
@@ -657,6 +694,27 @@ class DiscoverPage extends GetView<DiscoverController> {
 
   Widget _buildPopularDestinations() {
     return Obx(() {
+      // Show shimmer while loading
+      if (controller.isLoadingDestinations.value) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ShimmerText(width: 160, height: 20),
+                  ShimmerText(width: 70, height: 16),
+                ],
+              ),
+            ),
+            SizedBox(height: AppSpacing.s3),
+            const ShimmerDestinationList(itemCount: 3),
+          ],
+        );
+      }
+
       final destinations = controller.popularDestinations;
 
       if (destinations.isEmpty) {
@@ -917,6 +975,27 @@ class DiscoverPage extends GetView<DiscoverController> {
 
   Widget _buildComboToursSection() {
     return Obx(() {
+      // Show shimmer while loading
+      if (controller.isLoadingCombos.value) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ShimmerText(width: 140, height: 20),
+                  ShimmerText(width: 70, height: 16),
+                ],
+              ),
+            ),
+            SizedBox(height: AppSpacing.s3),
+            const ShimmerComboCard(itemCount: 3),
+          ],
+        );
+      }
+
       final combos = controller.comboTours;
 
       if (combos.isEmpty) {
@@ -1101,8 +1180,39 @@ class DiscoverPage extends GetView<DiscoverController> {
 
   Widget _buildBusinessListings() {
     return Obx(() {
+      // Show shimmer while loading
+      if (controller.isLoadingBusinessListings.value) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section Header Shimmer
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ShimmerText(width: 150, height: 24),
+                      SizedBox(height: 4.h),
+                      ShimmerText(width: 180, height: 14),
+                    ],
+                  ),
+                  ShimmerText(width: 70, height: 16),
+                ],
+              ),
+            ),
+            SizedBox(height: AppSpacing.s4),
+            // Business Cards Shimmer
+            const ShimmerBusinessCard(itemCount: 3),
+          ],
+        );
+      }
+
+      // Hide if no data after loading
       if (controller.businessListings.isEmpty) {
-        return SizedBox();
+        return const SizedBox.shrink();
       }
 
       return Column(

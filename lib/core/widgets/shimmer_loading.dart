@@ -201,3 +201,279 @@ class ShimmerGrid extends StatelessWidget {
     );
   }
 }
+
+// ============= DISCOVERY PAGE SPECIFIC SHIMMERS =============
+
+// Shimmer for tour cards (featured tours section)
+class ShimmerTourCard extends StatelessWidget {
+  final int itemCount;
+
+  const ShimmerTourCard({super.key, this.itemCount = 3});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 220.h,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+        itemCount: itemCount,
+        itemBuilder: (context, index) {
+          return Container(
+            width: 280.w,
+            margin: EdgeInsets.only(right: AppSpacing.s4),
+            child: ShimmerLoading(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Image
+                  Container(
+                    height: 140.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(AppSpacing.s3),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(height: 16.h, width: 200.w, color: Colors.white),
+                        SizedBox(height: AppSpacing.s1),
+                        Row(
+                          children: [
+                            Container(height: 14.h, width: 80.w, color: Colors.white),
+                            const Spacer(),
+                            Container(height: 16.h, width: 100.w, color: Colors.white),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Shimmer for blog cards
+class ShimmerBlogCard extends StatelessWidget {
+  final int itemCount;
+
+  const ShimmerBlogCard({super.key, this.itemCount = 3});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 200.h,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+        itemCount: itemCount,
+        itemBuilder: (context, index) {
+          return Container(
+            width: 260.w,
+            margin: EdgeInsets.only(right: AppSpacing.s4),
+            child: ShimmerLoading(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Image
+                  Container(
+                    height: 120.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(AppSpacing.s3),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(height: 14.h, width: double.infinity, color: Colors.white),
+                        SizedBox(height: AppSpacing.s1),
+                        Container(height: 12.h, width: 80.w, color: Colors.white),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Shimmer for destination list
+class ShimmerDestinationList extends StatelessWidget {
+  final int itemCount;
+
+  const ShimmerDestinationList({super.key, this.itemCount = 3});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: EdgeInsets.only(bottom: AppSpacing.s3),
+          child: ShimmerLoading(
+            child: Row(
+              children: [
+                // Image
+                Container(
+                  width: 100.w,
+                  height: 80.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.horizontal(left: Radius.circular(12.r)),
+                  ),
+                ),
+                SizedBox(width: AppSpacing.s3),
+                // Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(height: 16.h, width: double.infinity, color: Colors.white),
+                      SizedBox(height: AppSpacing.s2),
+                      Container(height: 14.h, width: 200.w, color: Colors.white),
+                      SizedBox(height: AppSpacing.s1),
+                      Container(height: 14.h, width: 150.w, color: Colors.white),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Shimmer for business listing cards
+class ShimmerBusinessCard extends StatelessWidget {
+  final int itemCount;
+
+  const ShimmerBusinessCard({super.key, this.itemCount = 3});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 280.h,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+        itemCount: itemCount,
+        itemBuilder: (context, index) {
+          return Container(
+            width: 200.w,
+            margin: EdgeInsets.only(right: AppSpacing.s3),
+            child: ShimmerLoading(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Image
+                  Container(
+                    height: 140.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.s2),
+                  // Business name
+                  Container(height: 12.h, width: 100.w, color: Colors.white),
+                  SizedBox(height: AppSpacing.s1),
+                  // Title
+                  Container(height: 14.h, width: double.infinity, color: Colors.white),
+                  SizedBox(height: AppSpacing.s1),
+                  Container(height: 14.h, width: 150.w, color: Colors.white),
+                  SizedBox(height: AppSpacing.s2),
+                  // Rating
+                  Container(height: 12.h, width: 80.w, color: Colors.white),
+                  const Spacer(),
+                  // Price
+                  Container(height: 16.h, width: 100.w, color: Colors.white),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Shimmer for combo tour cards
+class ShimmerComboCard extends StatelessWidget {
+  final int itemCount;
+
+  const ShimmerComboCard({super.key, this.itemCount = 3});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 280.h,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+        itemCount: itemCount,
+        itemBuilder: (context, index) {
+          return Container(
+            width: 240.w,
+            margin: EdgeInsets.only(right: AppSpacing.s4),
+            child: ShimmerLoading(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Image
+                  Container(
+                    height: 160.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(AppSpacing.s3),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(height: 14.h, width: double.infinity, color: Colors.white),
+                        SizedBox(height: AppSpacing.s2),
+                        Container(height: 14.h, width: 180.w, color: Colors.white),
+                        SizedBox(height: AppSpacing.s2),
+                        Container(height: 12.h, width: 120.w, color: Colors.white),
+                        SizedBox(height: AppSpacing.s2),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(height: 12.h, width: 60.w, color: Colors.white),
+                            Container(height: 16.h, width: 80.w, color: Colors.white),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

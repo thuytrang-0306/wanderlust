@@ -38,6 +38,7 @@ class DiscoverController extends BaseController {
   final RxBool isLoadingTours = true.obs;
   final RxBool isLoadingBlogs = true.obs;
   final RxBool isLoadingCombos = true.obs;
+  final RxBool isLoadingBusinessListings = true.obs;
 
   // User info
   final Rx<User?> currentUser = FirebaseAuth.instance.currentUser.obs;
@@ -254,9 +255,11 @@ class DiscoverController extends BaseController {
 
   Future<void> loadBusinessListings() async {
     try {
+      isLoadingBusinessListings.value = true;
+
       // Load all active business listings
       final listings = await _listingService.searchListings();
-      
+
       // Filter active listings and sort by rating/popularity
       final activeListings = listings
           .where((l) => l.isActive)
@@ -267,14 +270,16 @@ class DiscoverController extends BaseController {
           if (ratingCompare != 0) return ratingCompare;
           return b.reviews.compareTo(a.reviews);
         });
-      
+
       // Take top 10 listings
       businessListings.value = activeListings.take(10).toList();
-      
+
       LoggerService.i('Loaded ${businessListings.length} business listings');
     } catch (e) {
       LoggerService.e('Error loading business listings', error: e);
       businessListings.value = [];
+    } finally {
+      isLoadingBusinessListings.value = false;
     }
   }
 
