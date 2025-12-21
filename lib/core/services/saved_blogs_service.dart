@@ -12,6 +12,9 @@ class SavedBlogsService extends GetxService {
   // Observable collections and saved blogs
   final RxList<BlogCollection> collections = <BlogCollection>[].obs;
   final RxMap<String, SavedBlogData> savedBlogsCache = <String, SavedBlogData>{}.obs;
+
+  // Cache full BlogPostModel for instant display (like CommunityController)
+  final RxMap<String, BlogPostModel> blogPostsCache = <String, BlogPostModel>{}.obs;
   
   @override
   void onInit() {
@@ -122,7 +125,10 @@ class SavedBlogsService extends GetxService {
         location: blog.destinations.isNotEmpty ? blog.destinations.first : '',
         savedAt: DateTime.now(),
       );
-      
+
+      // Cache full BlogPostModel for instant display (optimistic loading)
+      blogPostsCache[blog.id] = blog;
+
       // Save to storage asynchronously to avoid blocking UI
       Future.microtask(() async {
         await _saveCollections();

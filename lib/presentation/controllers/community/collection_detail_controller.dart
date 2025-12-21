@@ -27,6 +27,12 @@ class CollectionDetailController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+
+    // CRITICAL: Clear all state first to prevent pollution from previous instance
+    blogPosts.clear();
+    blogPostsCache.clear();
+    isLoadingData.value = false;
+
     final args = Get.arguments;
     if (args != null) {
       collectionId.value = args['collectionId'] ?? '';
@@ -35,28 +41,68 @@ class CollectionDetailController extends BaseController {
     }
   }
 
+  @override
+  void onClose() {
+    // Clean up resources
+    blogPosts.clear();
+    blogPostsCache.clear();
+    super.onClose();
+  }
+
   void loadPosts() async {
     if (collectionId.value.isEmpty) return;
 
-    isLoadingData.value = true;
-
     try {
+      // IMPORTANT: Set loading immediately to prevent flash of old data
+      isLoadingData.value = true;
+
       // Get saved blogs IDs from service
       final savedBlogs = _savedBlogsService.getSavedBlogsForCollection(collectionId.value);
 
-      // Load all blog data in parallel for better performance
-      final futures = savedBlogs.map((savedBlog) => _blogService.getPost(savedBlog.id)).toList();
-      final results = await Future.wait(futures);
-
-      // Filter out null values
-      final validBlogs = results.where((blog) => blog != null).cast<BlogPostModel>().toList();
-
-      // Cache for navigation (avoid re-fetching)
-      for (final blog in validBlogs) {
-        blogPostsCache[blog.id] = blog;
+      // Early return if collection is empty
+      if (savedBlogs.isEmpty) {
+        blogPosts.clear();
+        isLoadingData.value = false;
+        return;
       }
 
-      blogPosts.value = validBlogs;
+      // OPTIMIZATION: Check cache first for instant display
+      final cachedBlogs = <BlogPostModel>[];
+      final needsFetch = <String>[];
+
+      for (final savedBlog in savedBlogs) {
+        final cached = _savedBlogsService.blogPostsCache[savedBlog.id];
+        if (cached != null) {
+          cachedBlogs.add(cached);
+          blogPostsCache[savedBlog.id] = cached; // Local cache
+        } else {
+          needsFetch.add(savedBlog.id);
+        }
+      }
+
+      // Instant display with cached data (no spinner!)
+      if (cachedBlogs.isNotEmpty) {
+        blogPosts.value = cachedBlogs;
+        isLoadingData.value = false;
+      }
+      // Else: keep loading = true until fetch completes
+
+      // Background fetch for blogs not in cache + refresh cached ones
+      if (savedBlogs.isNotEmpty) {
+        final futures = savedBlogs.map((savedBlog) => _blogService.getPost(savedBlog.id)).toList();
+        final results = await Future.wait(futures);
+
+        // Filter out null values
+        final validBlogs = results.where((blog) => blog != null).cast<BlogPostModel>().toList();
+
+        // Update both local and service cache
+        for (final blog in validBlogs) {
+          blogPostsCache[blog.id] = blog;
+          _savedBlogsService.blogPostsCache[blog.id] = blog; // Update service cache
+        }
+
+        blogPosts.value = validBlogs;
+      }
     } finally {
       isLoadingData.value = false;
     }
@@ -74,8 +120,9 @@ class CollectionDetailController extends BaseController {
       final updatedBlog = await _blogService.getPost(postId);
       if (updatedBlog != null) {
         blogPosts[index] = updatedBlog;
-        // Update cache as well
+        // Update both local and service cache
         blogPostsCache[postId] = updatedBlog;
+        _savedBlogsService.blogPostsCache[postId] = updatedBlog;
       }
     }
   }

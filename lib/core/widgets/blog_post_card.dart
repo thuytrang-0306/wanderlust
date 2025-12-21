@@ -28,6 +28,7 @@ class BlogPostCard extends StatelessWidget {
   final VoidCallback? onBookmark;
   final bool showInteractions;
   final bool isCompact;
+  final String? heroTag; // Hero animation tag for image
 
   const BlogPostCard({
     super.key,
@@ -51,6 +52,7 @@ class BlogPostCard extends StatelessWidget {
     this.onBookmark,
     this.showInteractions = true,
     this.isCompact = false,
+    this.heroTag,
   });
 
   // Factory constructor from BlogPostModel
@@ -64,6 +66,7 @@ class BlogPostCard extends StatelessWidget {
     bool isCompact = false,
     bool isLiked = false,
     bool isBookmarked = false,
+    String? heroTag,
   }) {
     return BlogPostCard(
       blogPost: blog,
@@ -86,6 +89,7 @@ class BlogPostCard extends StatelessWidget {
       onBookmark: onBookmark,
       showInteractions: showInteractions,
       isCompact: isCompact,
+      heroTag: heroTag,
     );
   }
 
@@ -139,31 +143,7 @@ class BlogPostCard extends StatelessWidget {
           children: [
             // Cover Image
             if (coverImage != null && coverImage!.isNotEmpty)
-              Container(
-                height: 200.h,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
-                  color: AppColors.neutral100,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
-                  child: AppImage(
-                    imageData: coverImage!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorWidget: Container(
-                      color: AppColors.neutral200,
-                      child: Icon(
-                        Icons.image_not_supported,
-                        size: 40.sp,
-                        color: AppColors.neutral400,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              _buildCoverImage(),
 
             Padding(
               padding: EdgeInsets.all(AppSpacing.s4),
@@ -334,6 +314,44 @@ class BlogPostCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildCoverImage() {
+    final imageWidget = Container(
+      height: 200.h,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+        color: AppColors.neutral100,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+        child: AppImage(
+          imageData: coverImage!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorWidget: Container(
+            color: AppColors.neutral200,
+            child: Icon(
+              Icons.image_not_supported,
+              size: 40.sp,
+              color: AppColors.neutral400,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Wrap in Hero if heroTag is provided
+    if (heroTag != null) {
+      return Hero(
+        tag: heroTag!,
+        child: imageWidget,
+      );
+    }
+
+    return imageWidget;
   }
 
   Widget _buildCompactCard() {

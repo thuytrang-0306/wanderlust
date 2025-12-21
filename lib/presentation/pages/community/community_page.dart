@@ -81,20 +81,12 @@ class CommunityPage extends GetView<CommunityController> {
                 children: [
                   GestureDetector(
                     onTap: controller.createPost,
-                    child: Container(
-                      width: 32.w,
-                      height: 32.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary, width: 2),
-                      ),
-                      child: Icon(Icons.add, color: AppColors.primary, size: 20.sp),
-                    ),
+                    child: Icon(Icons.add_circle_outline, color: AppColors.primary, size: 28.sp),
                   ),
                   SizedBox(width: AppSpacing.s3),
                   GestureDetector(
                     onTap: controller.openBookmarks,
-                    child: Icon(Icons.bookmark_outline, color: AppColors.primary, size: 24.sp),
+                    child: Icon(Icons.bookmark_outline, color: AppColors.primary, size: 28.sp),
                   ),
                 ],
               ),

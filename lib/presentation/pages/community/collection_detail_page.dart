@@ -54,6 +54,8 @@ class CollectionDetailPage extends GetView<CollectionDetailController> {
               return BlogPostCard.fromBlogPost(
                 blog: blog,
                 isBookmarked: true,
+                heroTag: 'saved-blog-image-${blog.id}', // Unique hero tag for saved blogs
+                onTap: () => controller.openBlogDetail(blog.id), // Navigate with cache
                 onBookmark: () => controller.toggleBookmark(blog.id),
                 onLike: () => controller.toggleLike(blog.id),
                 onComment: () => controller.openBlogDetail(blog.id),
