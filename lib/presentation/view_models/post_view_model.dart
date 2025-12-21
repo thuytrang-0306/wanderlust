@@ -64,7 +64,12 @@ class PostViewModel {
   /// Update like state (optimistic update)
   void toggleLike() {
     isLiked.toggle();
-    likeCount.value += isLiked.value ? 1 : -1;
+    if (isLiked.value) {
+      likeCount.value += 1;
+    } else {
+      // Guard: never go below 0
+      likeCount.value = (likeCount.value - 1).clamp(0, double.infinity.toInt());
+    }
   }
 
   /// Update bookmark state

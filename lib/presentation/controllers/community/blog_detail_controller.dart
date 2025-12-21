@@ -30,6 +30,9 @@ class BlogDetailController extends BaseController {
   final RxInt commentCount = 0.obs;
   final RxBool isLoadingData = true.obs;
 
+  // Lock to prevent concurrent toggleLike calls
+  bool _isTogglingLike = false;
+
   // Blog data
   final Rx<BlogPostModel?> blogPost = Rx<BlogPostModel?>(null);
   final RxList<BlogComment> comments = <BlogComment>[].obs;
@@ -499,27 +502,48 @@ class BlogDetailController extends BaseController {
   Future<void> toggleLike() async {
     if (postId == null) return;
 
-    // Optimistic update - only update observable properties
-    final previousState = isLiked.value;
-    isLiked.value = !previousState;
-    likeCount.value += isLiked.value ? 1 : -1;
-
-    // Update in backend
-    final newLikeStatus = await _blogService.toggleLike(postId!);
-
-    // Sync with backend if needed
-    if (newLikeStatus != isLiked.value) {
-      isLiked.value = newLikeStatus;
+    // Prevent concurrent calls (debounce/lock mechanism)
+    if (_isTogglingLike) {
+      LoggerService.w('toggleLike already in progress, ignoring...');
+      return;
     }
 
-    // Background sync: fetch accurate count without triggering full reload
-    final updatedPost = await _blogService.getPost(postId!);
-    if (updatedPost != null) {
-      likeCount.value = updatedPost.likes;
-      // Update cached post silently (no UI rebuild)
-      if (blogPost.value != null) {
-        blogPost.value = updatedPost;
+    try {
+      _isTogglingLike = true;
+
+      // Optimistic update - only update observable properties
+      final previousState = isLiked.value;
+      isLiked.value = !previousState;
+
+      // Guard: never go below 0
+      if (isLiked.value) {
+        likeCount.value += 1;
+      } else {
+        likeCount.value = (likeCount.value - 1).clamp(0, double.infinity.toInt());
       }
+
+      // Update in backend
+      final newLikeStatus = await _blogService.toggleLike(postId!);
+
+      // Sync with backend if needed (atomic update)
+      if (newLikeStatus != isLiked.value) {
+        isLiked.value = newLikeStatus;
+      }
+
+      // Background sync: fetch accurate count without triggering full reload
+      final updatedPost = await _blogService.getPost(postId!);
+      if (updatedPost != null) {
+        // Atomic sync: update both like status and count together
+        isLiked.value = await _blogService.isPostLiked(postId!);
+        likeCount.value = updatedPost.likes;
+
+        // Update cached post silently (no UI rebuild)
+        if (blogPost.value != null) {
+          blogPost.value = updatedPost;
+        }
+      }
+    } finally {
+      _isTogglingLike = false;
     }
   }
 

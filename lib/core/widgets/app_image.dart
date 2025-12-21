@@ -4,6 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 
+/// Memory cache for decoded base64 images to prevent re-decoding
+class _Base64ImageCache {
+  static final _Base64ImageCache _instance = _Base64ImageCache._internal();
+  factory _Base64ImageCache() => _instance;
+  _Base64ImageCache._internal();
+
+  final Map<String, Uint8List> _cache = {};
+  static const int _maxCacheSize = 50; // Limit cache size
+
+  Uint8List? get(String key) => _cache[key];
+
+  void put(String key, Uint8List bytes) {
+    // Simple LRU: remove oldest if cache is full
+    if (_cache.length >= _maxCacheSize) {
+      _cache.remove(_cache.keys.first);
+    }
+    _cache[key] = bytes;
+  }
+
+  void clear() => _cache.clear();
+}
+
 /// Smart image widget that handles both network URLs and base64 data
 /// Automatically detects and displays the right format
 class AppImage extends StatelessWidget {
@@ -74,14 +96,21 @@ class AppImage extends StatelessWidget {
 
   Widget _buildBase64Image({bool isRawBase64 = false}) {
     try {
-      late Uint8List bytes;
+      final cache = _Base64ImageCache();
 
-      if (isRawBase64) {
-        bytes = base64Decode(imageData);
-      } else {
-        // Extract base64 string from data URL
-        final base64String = imageData.split(',').last;
-        bytes = base64Decode(base64String);
+      // Check cache first
+      Uint8List? bytes = cache.get(imageData);
+
+      if (bytes == null) {
+        // Decode and cache
+        if (isRawBase64) {
+          bytes = base64Decode(imageData);
+        } else {
+          // Extract base64 string from data URL
+          final base64String = imageData.split(',').last;
+          bytes = base64Decode(base64String);
+        }
+        cache.put(imageData, bytes);
       }
 
       return Image.memory(
@@ -92,7 +121,6 @@ class AppImage extends StatelessWidget {
         fit: fit,
         gaplessPlayback: true, // ← Smooth transition when rebuilt
         errorBuilder: (context, error, stackTrace) {
-          // Debug: log error to understand issue
           debugPrint('AppImage Error: $error');
           return _buildErrorWidget();
         },

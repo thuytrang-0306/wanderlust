@@ -43,6 +43,9 @@ class CommunityController extends GetxController {
   final RxSet<String> likedPostIds = <String>{}.obs;
   final RxSet<String> bookmarkedPostIds = <String>{}.obs;
 
+  // Lock to prevent concurrent toggleLike on same post
+  final Set<String> _togglingLikeIds = {};
+
   @override
   void onInit() {
     super.onInit();
@@ -265,22 +268,34 @@ class CommunityController extends GetxController {
     final post = posts.firstWhereOrNull((p) => p.id == postId);
     if (post == null) return;
 
-    // Optimistic update - only updates observable properties
-    post.toggleLike();
-
-    // Update backend
-    final newStatus = await _blogService.toggleLike(postId);
-
-    // Update local tracking
-    if (newStatus) {
-      likedPostIds.add(postId);
-    } else {
-      likedPostIds.remove(postId);
+    // Prevent concurrent toggles on same post
+    if (_togglingLikeIds.contains(postId)) {
+      LoggerService.w('toggleLike already in progress for $postId, ignoring...');
+      return;
     }
 
-    // Note: NO need to re-fetch post here!
-    // The Firestore stream listener will automatically sync the actual like count
-    // This prevents double updates and image flickering
+    try {
+      _togglingLikeIds.add(postId);
+
+      // Optimistic update - only updates observable properties
+      post.toggleLike();
+
+      // Update backend
+      final newStatus = await _blogService.toggleLike(postId);
+
+      // Update local tracking
+      if (newStatus) {
+        likedPostIds.add(postId);
+      } else {
+        likedPostIds.remove(postId);
+      }
+
+      // Note: NO need to re-fetch post here!
+      // The Firestore stream listener will automatically sync the actual like count
+      // This prevents double updates and image flickering
+    } finally {
+      _togglingLikeIds.remove(postId);
+    }
   }
 
   Future<void> toggleBookmark(String postId) async {

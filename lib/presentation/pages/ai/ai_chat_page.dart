@@ -734,12 +734,24 @@ class AIChatPage extends GetView<AIChatController> {
                 itemBuilder: (context, index) {
                   final conversation = controller.allConversations[index];
                   return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: _getContextColor(conversation.context),
-                      child: Icon(
-                        _getContextIcon(conversation.context),
-                        color: Colors.white,
-                        size: 20.sp,
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(16.r),
+                      child: Image.asset(
+                        AppAssets.aiFabIcon,
+                        width: 40.r,
+                        height: 40.r,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return CircleAvatar(
+                            radius: 20.r,
+                            backgroundColor: AppColors.primary,
+                            child: Icon(
+                              Icons.smart_toy,
+                              size: 20.sp,
+                              color: Colors.white,
+                            ),
+                          );
+                        },
                       ),
                     ),
                     title: Text(
@@ -896,52 +908,6 @@ class AIChatPage extends GetView<AIChatController> {
         return 'Ẩm thực';
       case ConversationContext.weather:
         return 'Thời tiết';
-    }
-  }
-
-  Color _getContextColor(ConversationContext context) {
-    switch (context) {
-      case ConversationContext.general:
-        return AppColors.primary;
-      case ConversationContext.tripPlanning:
-        return Colors.blue;
-      case ConversationContext.accommodation:
-        return Colors.orange;
-      case ConversationContext.emergency:
-        return Colors.red;
-      case ConversationContext.translation:
-        return Colors.purple;
-      case ConversationContext.budget:
-        return Colors.green;
-      case ConversationContext.cultural:
-        return Colors.teal;
-      case ConversationContext.food:
-        return Colors.amber;
-      case ConversationContext.weather:
-        return Colors.indigo;
-    }
-  }
-
-  IconData _getContextIcon(ConversationContext context) {
-    switch (context) {
-      case ConversationContext.general:
-        return Icons.chat;
-      case ConversationContext.tripPlanning:
-        return Icons.map;
-      case ConversationContext.accommodation:
-        return Icons.hotel;
-      case ConversationContext.emergency:
-        return Icons.warning;
-      case ConversationContext.translation:
-        return Icons.translate;
-      case ConversationContext.budget:
-        return Icons.attach_money;
-      case ConversationContext.cultural:
-        return Icons.museum;
-      case ConversationContext.food:
-        return Icons.restaurant;
-      case ConversationContext.weather:
-        return Icons.wb_sunny;
     }
   }
 
