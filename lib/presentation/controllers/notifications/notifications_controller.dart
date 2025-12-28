@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:wanderlust/shared/core/services/notification_service.dart';
 import 'package:wanderlust/shared/data/models/notification_model.dart';
 import 'package:wanderlust/shared/core/utils/logger_service.dart';
+import 'package:wanderlust/core/widgets/app_snackbar.dart';
+import 'package:wanderlust/presentation/controllers/main_navigation_controller.dart';
 
 class NotificationsController extends GetxController {
   // Get NotificationService instance
@@ -97,6 +99,111 @@ class NotificationsController extends GetxController {
   /// Get notifications by category
   List<NotificationModel> getNotificationsByCategory(String category) {
     return notifications.where((n) => n.category == category).toList();
+  }
+
+  /// Handle notification tap - navigate to appropriate page based on type
+  Future<void> handleNotificationTap(NotificationModel notification) async {
+    try {
+      // Mark as read first
+      await markAsRead(notification.id);
+
+      // Handle navigation based on notification type and metadata
+      switch (notification.type) {
+        // Blog-related notifications
+        case NotificationType.blogLike:
+        case NotificationType.blogComment:
+          final blogId = notification.metadata['blogId'] as String?;
+          if (blogId != null) {
+            Get.toNamed('/blog-detail', arguments: {'postId': blogId});
+          } else {
+            _fallbackToActionUrl(notification);
+          }
+          break;
+
+        // User follow
+        case NotificationType.userFollow:
+          final userId = notification.senderId;
+          if (userId != null) {
+            Get.toNamed('/user-profile', arguments: {'userId': userId});
+          } else {
+            _fallbackToActionUrl(notification);
+          }
+          break;
+
+        // Booking-related notifications
+        case NotificationType.bookingConfirmed:
+        case NotificationType.bookingCancelled:
+        case NotificationType.bookingReminder:
+          final bookingId = notification.metadata['bookingId'] as String?;
+          if (bookingId != null) {
+            Get.toNamed('/booking-history');
+          } else {
+            _fallbackToActionUrl(notification);
+          }
+          break;
+
+        // Payment notifications
+        case NotificationType.paymentConfirmed:
+        case NotificationType.paymentDue:
+          final bookingId = notification.metadata['bookingId'] as String?;
+          if (bookingId != null) {
+            Get.toNamed('/booking-history');
+          } else {
+            _fallbackToActionUrl(notification);
+          }
+          break;
+
+        // Business-related notifications
+        case NotificationType.businessApproved:
+        case NotificationType.businessRejected:
+        case NotificationType.businessPending:
+          // Navigate to business dashboard
+          Get.toNamed('/business-dashboard');
+          break;
+
+        // Welcome notification
+        case NotificationType.welcome:
+          // No specific action needed
+          break;
+
+        // System notifications
+        case NotificationType.systemUpdate:
+        case NotificationType.maintenance:
+          // No specific action needed
+          break;
+
+        default:
+          _fallbackToActionUrl(notification);
+      }
+    } catch (e) {
+      LoggerService.e('Error handling notification tap', error: e);
+      AppSnackbar.showError(message: 'Không thể mở thông báo');
+    }
+  }
+
+  /// Fallback to actionUrl if available
+  void _fallbackToActionUrl(NotificationModel notification) {
+    if (notification.actionUrl != null && notification.actionUrl!.isNotEmpty) {
+      try {
+        Get.toNamed(notification.actionUrl!);
+      } catch (e) {
+        LoggerService.e('Failed to navigate to actionUrl', error: e);
+      }
+    }
+  }
+
+  /// Navigate to Settings (Account tab)
+  void navigateToSettings() {
+    try {
+      if (Get.isRegistered<MainNavigationController>()) {
+        final mainNav = Get.find<MainNavigationController>();
+        mainNav.changeTab(4); // Account tab is index 4
+      } else {
+        LoggerService.w('MainNavigationController not found');
+      }
+    } catch (e) {
+      LoggerService.e('Failed to navigate to settings', error: e);
+    }
   }
 
   @override

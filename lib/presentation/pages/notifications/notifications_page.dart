@@ -117,9 +117,7 @@ class NotificationsPage extends GetView<NotificationsController> {
                     return const SizedBox();
                   }),
                   GestureDetector(
-                    onTap: () {
-                      // Settings action - could open notification preferences
-                    },
+                    onTap: () => controller.navigateToSettings(),
                     child: Icon(Icons.settings_outlined, color: AppColors.primary, size: 24.sp),
                   ),
                 ],
@@ -151,13 +149,7 @@ class NotificationsPage extends GetView<NotificationsController> {
     return Material(
       color: Colors.white,
       child: InkWell(
-        onTap: () {
-          controller.markAsRead(notification.id);
-          // Navigate to actionUrl if available
-          if (notification.actionUrl != null && notification.actionUrl!.isNotEmpty) {
-            Get.toNamed(notification.actionUrl!);
-          }
-        },
+        onTap: () => controller.handleNotificationTap(notification),
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s4),
           decoration: BoxDecoration(

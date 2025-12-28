@@ -148,18 +148,12 @@ class MainNavigationPage extends StatelessWidget {
   Widget _buildAIAssistantFAB() {
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),
-      child: FloatingActionButton(
-        onPressed: () => Get.toNamed(Routes.AI_CHAT),
-        backgroundColor: Colors.transparent, // Transparent background
-        elevation: 0, // No elevation
-        highlightElevation: 0, // No elevation on press
-        focusElevation: 0, // No elevation on focus
-        hoverElevation: 0, // No elevation on hover
+      child: GestureDetector(
+        onTap: () => Get.toNamed(Routes.AI_CHAT),
         child: Container(
-          width: 56.w,
-          height: 56.h,
+          width: 67.w,
+          height: 67.h,
           decoration: BoxDecoration(
-            color: Colors.transparent, // Transparent container
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
@@ -170,17 +164,16 @@ class MainNavigationPage extends StatelessWidget {
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(28.w), // Half of the width/height to maintain circle
+            borderRadius: BorderRadius.circular(34.w),
             child: Image.asset(
               AppAssets.aiFabIcon,
-              width: 28.w,
-              height: 28.h,
-              fit: BoxFit.contain,
+              width: 67.w,
+              height: 67.h,
+              fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
-                // Fallback to icon if image fails to load
                 return Container(
-                  width: 28.w,
-                  height: 28.h,
+                  width: 67.w,
+                  height: 67.h,
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     shape: BoxShape.circle,
@@ -188,7 +181,7 @@ class MainNavigationPage extends StatelessWidget {
                   child: Icon(
                     Icons.smart_toy,
                     color: Colors.white,
-                    size: 16.sp,
+                    size: 19.sp,
                   ),
                 );
               },
