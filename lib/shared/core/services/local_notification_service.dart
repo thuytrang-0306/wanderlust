@@ -60,7 +60,7 @@ class LocalNotificationService extends GetxService {
   Future<void> _requestPermissions() async {
     try {
       // iOS permissions
-      final bool? granted = await _flutterLocalNotificationsPlugin
+      final bool? iosGranted = await _flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(
@@ -69,11 +69,23 @@ class LocalNotificationService extends GetxService {
             sound: true,
           );
 
-      if (granted == true) {
-        LoggerService.i('iOS notification permissions granted');
+      if (iosGranted == true) {
+        LoggerService.i('✅ iOS notification permissions GRANTED');
+      } else if (iosGranted == false) {
+        LoggerService.w('⚠️ iOS notification permissions DENIED');
       }
 
-      // Android 13+ permissions are handled by AndroidManifest
+      // Android 13+ permissions - MUST request at runtime
+      final bool? androidGranted = await _flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
+
+      if (androidGranted == true) {
+        LoggerService.i('✅ Android notification permissions GRANTED');
+      } else if (androidGranted == false) {
+        LoggerService.w('⚠️ Android notification permissions DENIED');
+      }
     } catch (e) {
       LoggerService.e('Failed to request notification permissions', error: e);
     }
