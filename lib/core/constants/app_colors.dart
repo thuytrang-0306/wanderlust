@@ -58,9 +58,9 @@ class AppColors {
 
   // ============= SEMANTIC COLORS =============
   // Colors for specific states and feedback
-  static const Color success = Color(0xFF86FB84);
-  static const Color successLight = Color(0xFFA4FCA2);
-  static const Color successDark = Color(0xFF6ADB68);
+  static const Color success = Color(0xFF10B981); // Green-600 - Better contrast with white text
+  static const Color successLight = Color(0xFF34D399); // Green-400
+  static const Color successDark = Color(0xFF059669); // Green-700
 
   static const Color warning = Color(0xFFFDF28D);
   static const Color warningLight = Color(0xFFFDF5A8);

@@ -730,21 +730,6 @@ class BlogDetailPage extends StatelessWidget {
             onTap: controller.shareArticle,
             child: Icon(Icons.share_outlined, size: 20.sp, color: AppColors.textTertiary),
           ),
-
-          const Spacer(),
-
-          // View likes button
-          TextButton(
-            onPressed: () {},
-            child: Text(
-              'Xem lượt thích',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
         ],
       ),
     );

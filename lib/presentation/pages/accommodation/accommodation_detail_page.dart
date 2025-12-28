@@ -133,6 +133,39 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                         ),
                       ),
                     ),
+
+                    // Discount badge
+                    Obx(() {
+                      final accommodation = controller.accommodation.value;
+                      if (accommodation != null &&
+                          accommodation.originalPrice > accommodation.pricePerNight) {
+                        final discount =
+                            ((accommodation.originalPrice - accommodation.pricePerNight) /
+                                    accommodation.originalPrice *
+                                    100)
+                                .round();
+                        return Positioned(
+                          bottom: 16.h,
+                          right: 16.w,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Text(
+                              '-$discount%',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
                   ],
                 ),
 
@@ -190,6 +223,19 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                     ),
                                   ),
                                 ),
+                                Obx(() {
+                                  final reviews = controller.accommodation.value?.totalReviews ?? 0;
+                                  if (reviews > 0) {
+                                    return Text(
+                                      ' ($reviews)',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: const Color(0xFF9CA3AF),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                }),
                               ],
                             ),
 
@@ -226,102 +272,202 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                             ),
                             SizedBox(height: 12.h),
                             Obx(
-                              () => Text(
-                                controller.accommodation.value?.description ?? 'Đang tải...',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: const Color(0xFF6B7280),
-                                  height: 1.5,
-                                ),
-                                maxLines: controller.isDescriptionExpanded.value ? null : 3,
-                                overflow:
-                                    controller.isDescriptionExpanded.value
-                                        ? TextOverflow.visible
-                                        : TextOverflow.ellipsis,
-                              ),
-                            ),
-                            SizedBox(height: 8.h),
-                            GestureDetector(
-                              onTap: controller.toggleDescription,
-                              child: Text(
-                                'Xem thêm',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                              () {
+                                final description =
+                                    controller.accommodation.value?.description ?? 'Đang tải...';
+                                final isLongText = description.length > 150;
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      description,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: const Color(0xFF6B7280),
+                                        height: 1.5,
+                                      ),
+                                      maxLines: controller.isDescriptionExpanded.value ? null : 3,
+                                      overflow: controller.isDescriptionExpanded.value
+                                          ? TextOverflow.visible
+                                          : TextOverflow.ellipsis,
+                                    ),
+                                    if (isLongText) ...[
+                                      SizedBox(height: 8.h),
+                                      GestureDetector(
+                                        onTap: controller.toggleDescription,
+                                        child: Text(
+                                          controller.isDescriptionExpanded.value
+                                              ? 'Thu gọn'
+                                              : 'Xem thêm',
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                );
+                              },
                             ),
                           ],
                         ),
                       ),
 
-                      // Amenities
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Dịch vụ & Tiện nghi',
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF111827),
-                              ),
+                      // Business/Host info
+                      Obx(() {
+                        final accommodation = controller.accommodation.value;
+                        final hostName = accommodation?.hostName ?? '';
+                        if (hostName.isEmpty || accommodation == null) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return Padding(
+                          padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 0),
+                          child: Container(
+                            padding: EdgeInsets.all(16.w),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(color: const Color(0xFFE5E7EB)),
                             ),
-                            SizedBox(height: 16.h),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48.w,
+                                  height: 48.w,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.business,
+                                    size: 24.sp,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Được cung cấp bởi',
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          color: const Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                      SizedBox(height: 2.h),
+                                      Text(
+                                        hostName,
+                                        style: TextStyle(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF111827),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (accommodation?.isVerified == true)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.success.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.verified,
+                                          size: 14.sp,
+                                          color: AppColors.success,
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          'Đã xác minh',
+                                          style: TextStyle(
+                                            fontSize: 11.sp,
+                                            color: AppColors.success,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
 
-                            // Amenities grid - dynamic
-                            Obx(() {
-                              final amenities = controller.accommodation.value?.amenities ?? [];
-                              if (amenities.isEmpty) {
-                                return Text(
-                                  'Đang tải...',
-                                  style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
-                                );
-                              }
+                      // Amenities - Only show if has data
+                      Obx(() {
+                        final amenities = controller.accommodation.value?.amenities ?? [];
+                        if (amenities.isEmpty) {
+                          return const SizedBox.shrink(); // Hide if no amenities
+                        }
 
-                              return Wrap(
+                        return Padding(
+                          padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Dịch vụ & Tiện nghi',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF111827),
+                                ),
+                              ),
+                              SizedBox(height: 16.h),
+
+                              // Amenities grid
+                              Wrap(
                                 spacing: 24.w,
                                 runSpacing: 20.h,
-                                children:
-                                    amenities.take(6).map((amenity) {
-                                      IconData icon = Icons.check_circle_outline;
-                                      if (amenity.toLowerCase().contains('wifi')) {
-                                        icon = Icons.wifi;
-                                      } else if (amenity.toLowerCase().contains('ti vi') ||
-                                          amenity.toLowerCase().contains('tv'))
-                                        icon = Icons.tv;
-                                      else if (amenity.toLowerCase().contains('bể bơi') ||
-                                          amenity.toLowerCase().contains('hồ bơi'))
-                                        icon = Icons.pool;
-                                      else if (amenity.toLowerCase().contains('điều hòa') ||
-                                          amenity.toLowerCase().contains('ac'))
-                                        icon = Icons.ac_unit;
-                                      else if (amenity.toLowerCase().contains('nhà hàng') ||
-                                          amenity.toLowerCase().contains('bữa'))
-                                        icon = Icons.restaurant;
-                                      else if (amenity.toLowerCase().contains('đỗ xe') ||
-                                          amenity.toLowerCase().contains('parking'))
-                                        icon = Icons.local_parking;
-                                      else if (amenity.toLowerCase().contains('gym'))
-                                        icon = Icons.fitness_center;
-                                      else if (amenity.toLowerCase().contains('spa'))
-                                        icon = Icons.spa;
-                                      else if (amenity.toLowerCase().contains('bar'))
-                                        icon = Icons.local_bar;
+                                children: amenities.take(6).map((amenity) {
+                                  IconData icon = Icons.check_circle_outline;
+                                  if (amenity.toLowerCase().contains('wifi')) {
+                                    icon = Icons.wifi;
+                                  } else if (amenity.toLowerCase().contains('ti vi') ||
+                                      amenity.toLowerCase().contains('tv')) {
+                                    icon = Icons.tv;
+                                  } else if (amenity.toLowerCase().contains('bể bơi') ||
+                                      amenity.toLowerCase().contains('hồ bơi')) {
+                                    icon = Icons.pool;
+                                  } else if (amenity.toLowerCase().contains('điều hòa') ||
+                                      amenity.toLowerCase().contains('ac')) {
+                                    icon = Icons.ac_unit;
+                                  } else if (amenity.toLowerCase().contains('nhà hàng') ||
+                                      amenity.toLowerCase().contains('bữa')) {
+                                    icon = Icons.restaurant;
+                                  } else if (amenity.toLowerCase().contains('đỗ xe') ||
+                                      amenity.toLowerCase().contains('parking')) {
+                                    icon = Icons.local_parking;
+                                  } else if (amenity.toLowerCase().contains('gym')) {
+                                    icon = Icons.fitness_center;
+                                  } else if (amenity.toLowerCase().contains('spa')) {
+                                    icon = Icons.spa;
+                                  } else if (amenity.toLowerCase().contains('bar')) {
+                                    icon = Icons.local_bar;
+                                  }
 
-                                      return SizedBox(
-                                        width: 100.w,
-                                        child: _buildAmenityItem(icon, amenity),
-                                      );
-                                    }).toList(),
-                              );
-                            }),
-                          ],
-                        ),
-                      ),
+                                  return SizedBox(
+                                    width: 100.w,
+                                    child: _buildAmenityItem(icon, amenity),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
 
                       // Gallery preview
                       Padding(
@@ -439,23 +585,30 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                             SizedBox(height: 8.h),
 
                             // Date selection
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF3F0FF),
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    '1 thg1 - 2 thg 1',
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w600,
+                            GestureDetector(
+                              onTap: controller.selectDates,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF3F0FF),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Obx(
+                                      () => Text(
+                                        controller.selectedDates.value.isNotEmpty
+                                            ? controller.selectedDates.value
+                                            : 'Chọn ngày',
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
 
@@ -470,7 +623,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                             // Room and guest selection
                             Row(
                               children: [
-                                // Room count
+                                // Night count
                                 Expanded(
                                   child: Container(
                                     padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
@@ -481,11 +634,13 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          '1 đêm',
-                                          style: TextStyle(
-                                            fontSize: 14.sp,
-                                            color: const Color(0xFF374151),
+                                        Obx(
+                                          () => Text(
+                                            '${controller.totalNights} đêm',
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              color: const Color(0xFF374151),
+                                            ),
                                           ),
                                         ),
                                         Row(
@@ -496,11 +651,13 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                               color: const Color(0xFF9CA3AF),
                                             ),
                                             SizedBox(width: 4.w),
-                                            Text(
-                                              '1',
-                                              style: TextStyle(
-                                                fontSize: 14.sp,
-                                                color: const Color(0xFF374151),
+                                            Obx(
+                                              () => Text(
+                                                '${controller.roomCount.value}',
+                                                style: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  color: const Color(0xFF374151),
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -529,11 +686,13 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                           color: const Color(0xFF9CA3AF),
                                         ),
                                         SizedBox(width: 8.w),
-                                        Text(
-                                          '1',
-                                          style: TextStyle(
-                                            fontSize: 14.sp,
-                                            color: const Color(0xFF374151),
+                                        Obx(
+                                          () => Text(
+                                            '${controller.guestCount.value}',
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              color: const Color(0xFF374151),
+                                            ),
                                           ),
                                         ),
                                         SizedBox(width: 12.w),
