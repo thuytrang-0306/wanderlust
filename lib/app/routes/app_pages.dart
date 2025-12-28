@@ -25,10 +25,12 @@ import 'package:wanderlust/presentation/pages/account/user_profile_page.dart';
 import 'package:wanderlust/presentation/pages/search/search_filter_page.dart';
 import 'package:wanderlust/presentation/pages/trips/my_trips_page.dart';
 import 'package:wanderlust/presentation/pages/booking/booking_history_page.dart';
+import 'package:wanderlust/presentation/pages/favorites/favorites_page.dart';
 import 'package:wanderlust/presentation/bindings/create_post_binding.dart';
 import 'package:wanderlust/presentation/bindings/search_filter_binding.dart';
 import 'package:wanderlust/presentation/bindings/my_trips_binding.dart';
 import 'package:wanderlust/presentation/bindings/booking_history_binding.dart';
+import 'package:wanderlust/presentation/bindings/favorites_binding.dart';
 import 'package:wanderlust/presentation/bindings/add_private_location_binding.dart';
 import 'package:wanderlust/presentation/bindings/combo_detail_binding.dart';
 import 'package:wanderlust/presentation/pages/ai/ai_chat_page.dart';
@@ -180,7 +182,11 @@ class AppPages {
       name: Routes.BOOKING_HISTORY,
       page: () => const BookingHistoryPage(),
       binding: BookingHistoryBinding(),
-      
+    ),
+    GetPage(
+      name: Routes.FAVORITES,
+      page: () => const FavoritesPage(),
+      binding: FavoritesBinding(),
     ),
     GetPage(
       name: Routes.AI_CHAT,

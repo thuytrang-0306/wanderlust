@@ -115,10 +115,13 @@ class AccommodationDetailController extends BaseController {
 
       if (listingData != null) {
         listing.value = listingData;
-        
+
         // Convert listing to accommodation-like data for UI compatibility
         _convertListingToAccommodation(listingData);
-        
+
+        // Check if favorited
+        isBookmarked.value = await _listingService.isFavorited(listingId!);
+
         setSuccess();
       } else {
         setError('Không tìm thấy thông tin');
@@ -190,10 +193,19 @@ class AccommodationDetailController extends BaseController {
   }
 
   Future<void> toggleBookmark() async {
-    if (accommodationId == null) return;
-
     try {
-      final success = await _accommodationService.toggleFavorite(accommodationId!);
+      bool success;
+
+      // Use listing service if from listing flow, otherwise use accommodation service
+      if (isListingSource && listingId != null) {
+        success = await _listingService.toggleFavorite(listingId!);
+      } else if (accommodationId != null) {
+        success = await _accommodationService.toggleFavorite(accommodationId!);
+      } else {
+        LoggerService.w('No ID available to toggle bookmark');
+        return;
+      }
+
       isBookmarked.value = success;
 
       if (success) {

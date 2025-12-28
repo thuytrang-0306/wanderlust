@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:wanderlust/data/models/listing_model.dart';
@@ -8,10 +9,15 @@ import 'package:wanderlust/data/services/business_service.dart';
 /// Simple, powerful, maintainable
 class ListingService extends GetxService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final BusinessService _businessService = Get.find<BusinessService>();
-  
+
   // Single collection for all listings
   static const String _collection = 'listings';
+  static const String _favoritesCollection = 'favorites';
+
+  // Get current user ID
+  String? get currentUserId => _auth.currentUser?.uid;
   
   // Observable listings
   final RxList<ListingModel> businessListings = <ListingModel>[].obs;
@@ -297,6 +303,125 @@ class ListingService extends GetxService {
     }
   }
   
+  // ============= FAVORITES OPERATIONS =============
+
+  /// Toggle favorite for a listing (works for ALL types: room, tour, food, service)
+  Future<bool> toggleFavorite(String listingId) async {
+    try {
+      if (currentUserId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final favoriteDoc = _firestore
+          .collection(_favoritesCollection)
+          .doc('${currentUserId}_$listingId');
+
+      final doc = await favoriteDoc.get();
+
+      if (doc.exists) {
+        // Remove favorite
+        await favoriteDoc.delete();
+        LoggerService.i('Removed favorite listing: $listingId');
+        return false;
+      } else {
+        // Add favorite
+        await favoriteDoc.set({
+          'userId': currentUserId,
+          'listingId': listingId,
+          'type': 'listing',
+          'savedAt': FieldValue.serverTimestamp(),
+        });
+        LoggerService.i('Added favorite listing: $listingId');
+        return true;
+      }
+    } catch (e) {
+      LoggerService.e('Error toggling listing favorite', error: e);
+      throw e;
+    }
+  }
+
+  /// Check if a listing is favorited
+  Future<bool> isFavorited(String listingId) async {
+    try {
+      if (currentUserId == null) return false;
+
+      final doc = await _firestore
+          .collection(_favoritesCollection)
+          .doc('${currentUserId}_$listingId')
+          .get();
+
+      return doc.exists;
+    } catch (e) {
+      LoggerService.e('Error checking listing favorite', error: e);
+      return false;
+    }
+  }
+
+  /// Get user's favorite listings (ALL types)
+  Future<List<ListingModel>> getUserFavorites() async {
+    try {
+      if (currentUserId == null) return [];
+
+      // SIMPLIFIED QUERY: Only userId to avoid composite index requirement
+      // Filter by type and sort locally
+      final favoritesSnapshot = await _firestore
+          .collection(_favoritesCollection)
+          .where('userId', isEqualTo: currentUserId)
+          .get();
+
+      // Filter for listing type only and get IDs
+      final favoriteListingIds = <String>[];
+      final favoriteTimestamps = <String, Timestamp>{};
+
+      for (final doc in favoritesSnapshot.docs) {
+        final data = doc.data();
+        if (data['type'] == 'listing') {
+          final listingId = data['listingId'] as String?;
+          if (listingId != null) {
+            favoriteListingIds.add(listingId);
+            favoriteTimestamps[listingId] = data['savedAt'] as Timestamp? ?? Timestamp.now();
+          }
+        }
+      }
+
+      if (favoriteListingIds.isEmpty) return [];
+
+      // Get the actual listings
+      final listings = <ListingModel>[];
+      for (final listingId in favoriteListingIds) {
+        final listing = await getListingById(listingId);
+        if (listing != null) {
+          listings.add(listing);
+        }
+      }
+
+      // Sort by savedAt timestamp (newest first)
+      listings.sort((a, b) {
+        final timestampA = favoriteTimestamps[a.id] ?? Timestamp.now();
+        final timestampB = favoriteTimestamps[b.id] ?? Timestamp.now();
+        return timestampB.compareTo(timestampA);
+      });
+
+      return listings;
+    } catch (e) {
+      LoggerService.e('Error getting favorite listings', error: e);
+      return [];
+    }
+  }
+
+  /// Get user's favorite listings by type
+  Future<List<ListingModel>> getUserFavoritesByType(ListingType type) async {
+    try {
+      final allFavorites = await getUserFavorites();
+      return allFavorites.where((listing) => listing.type == type).toList();
+    } catch (e) {
+      LoggerService.e('Error getting favorites by type', error: e);
+      return [];
+    }
+  }
+
+  // ============= MIGRATION HELPER =============
+
   /// MIGRATION HELPER: Import old rooms to new listings
   Future<bool> migrateRoomsToListings() async {
     try {

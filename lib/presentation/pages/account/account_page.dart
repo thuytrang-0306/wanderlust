@@ -136,6 +136,12 @@ class AccountPage extends GetView<AccountController> {
                     onTap: () => controller.navigateToBookingHistory(),
                   ),
                   _buildMenuItem(
+                    icon: Icons.favorite_outline,
+                    title: 'Yêu thích',
+                    subtitle: 'Chỗ ở, tour đã lưu',
+                    onTap: () => Get.toNamed('/favorites'),
+                  ),
+                  _buildMenuItem(
                     icon: Icons.bookmark_outline,
                     title: 'Bài viết đã lưu',
                     subtitle: 'Bộ sưu tập của bạn',
