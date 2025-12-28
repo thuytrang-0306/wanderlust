@@ -11,7 +11,25 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
 
   @override
   Widget build(BuildContext context) {
-    Get.lazyPut(() => AccommodationDetailController());
+    final controller = Get.put(AccommodationDetailController());
+
+    // Get Hero tag from arguments immediately (before data loads)
+    final args = Get.arguments;
+    String heroTag = 'accommodation-image-default';
+
+    if (args != null) {
+      if (args is String) {
+        heroTag = 'business-listing-image-$args';
+      } else if (args is Map) {
+        if (args['listingId'] != null) {
+          heroTag = 'business-listing-image-${args['listingId']}';
+        } else if (args['accommodationId'] != null) {
+          heroTag = 'accommodation-image-${args['accommodationId']}';
+        } else if (args['id'] != null) {
+          heroTag = 'accommodation-image-${args['id']}';
+        }
+      }
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -27,30 +45,32 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                     SizedBox(
                       height: 280.h,
                       width: double.infinity,
-                      child: Obx(() {
-                        final imageData = controller.accommodation.value?.images.isNotEmpty == true
-                            ? controller.accommodation.value!.images.first
-                            : null;
+                      child: Hero(
+                        tag: heroTag,
+                        child: Obx(() {
+                          final imageData = controller.accommodation.value?.images.isNotEmpty == true
+                              ? controller.accommodation.value!.images.first
+                              : null;
 
-                        if (imageData == null) {
-                          return Container(
-                            color: AppColors.neutral200,
-                            child: Icon(Icons.image, size: 50.sp, color: AppColors.neutral400),
+                          if (imageData == null) {
+                            return Container(
+                              color: AppColors.neutral200,
+                              child: Icon(Icons.image, size: 50.sp, color: AppColors.neutral400),
+                            );
+                          }
+
+                          return AppImage(
+                            imageData: imageData,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            errorWidget: Container(
+                              color: AppColors.neutral200,
+                              child: Icon(Icons.image, size: 50.sp, color: AppColors.neutral400),
+                            ),
                           );
-                        }
-
-                        // Use AppImage which handles both base64 and URLs
-                        return AppImage(
-                          imageData: imageData,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                          errorWidget: Container(
-                            color: AppColors.neutral200,
-                            child: Icon(Icons.image, size: 50.sp, color: AppColors.neutral400),
-                          ),
-                        );
-                      }),
+                        }),
+                      ),
                     ),
 
                     // Header buttons overlay

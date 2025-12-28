@@ -789,6 +789,21 @@ class DiscoverPage extends GetView<DiscoverController> {
                                       color: AppColors.neutral500,
                                     ),
                                   ),
+
+                                  SizedBox(width: 8.w),
+
+                                  // Save/Bookmark button
+                                  Obx(() {
+                                    final isBookmarked = controller.bookmarkedPostIds.contains(blog.id);
+                                    return GestureDetector(
+                                      onTap: () => controller.toggleBookmark(blog.id),
+                                      child: Icon(
+                                        isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
+                                        size: 18.sp,
+                                        color: isBookmarked ? AppColors.primary : AppColors.neutral500,
+                                      ),
+                                    );
+                                  }),
                                 ],
                               ),
                             ],
@@ -1491,16 +1506,19 @@ class DiscoverPage extends GetView<DiscoverController> {
                           child: Stack(
                             children: [
                               if (listing.images.isNotEmpty)
-                                ClipRRect(
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(12.r),
-                                    topRight: Radius.circular(12.r),
-                                  ),
-                                  child: AppImage(
-                                    imageData: listing.images.first,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: double.infinity,
+                                Hero(
+                                  tag: 'business-listing-image-${listing.id}',
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(12.r),
+                                      topRight: Radius.circular(12.r),
+                                    ),
+                                    child: AppImage(
+                                      imageData: listing.images.first,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                    ),
                                   ),
                                 ),
                               
