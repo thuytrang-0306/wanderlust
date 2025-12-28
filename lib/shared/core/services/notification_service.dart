@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wanderlust/shared/core/utils/logger_service.dart';
 import 'package:wanderlust/shared/data/models/notification_model.dart';
+import 'package:wanderlust/shared/core/services/local_notification_service.dart';
 
 /// Centralized NotificationService for managing all app notifications
 /// This service provides:
@@ -29,6 +30,17 @@ class NotificationService extends GetxService {
 
   // Current user
   String? get _currentUserId => _auth.currentUser?.uid;
+
+  // Local notification service
+  LocalNotificationService? get _localNotificationService {
+    try {
+      return Get.isRegistered<LocalNotificationService>()
+          ? LocalNotificationService.to
+          : null;
+    } catch (e) {
+      return null;
+    }
+  }
 
   @override
   void onInit() {
@@ -89,18 +101,41 @@ class NotificationService extends GetxService {
 
   void _processNotificationSnapshot(QuerySnapshot snapshot) {
     try {
+      final previousIds = notifications.map((n) => n.id).toSet();
+
       final newNotifications = snapshot.docs
           .map((doc) => NotificationModel.fromFirestore(doc))
           .where((notification) => notification != null)
           .cast<NotificationModel>()
           .toList();
 
+      // Detect NEW unread notifications to show push notification
+      for (final notification in newNotifications) {
+        if (!previousIds.contains(notification.id) && notification.isUnread) {
+          // This is a new unread notification - show local push
+          _showLocalPushNotification(notification);
+        }
+      }
+
       notifications.value = newNotifications;
       _updateUnreadCount();
-      
+
       LoggerService.d('Updated notifications: ${notifications.length} total, ${unreadCount.value} unread');
     } catch (e) {
       LoggerService.e('Error processing notification snapshot', error: e);
+    }
+  }
+
+  /// Show local push notification for new notification
+  void _showLocalPushNotification(NotificationModel notification) {
+    try {
+      final localService = _localNotificationService;
+      if (localService != null) {
+        localService.showNotification(notification);
+        LoggerService.d('Triggered local push for: ${notification.title}');
+      }
+    } catch (e) {
+      LoggerService.e('Failed to show local push notification', error: e);
     }
   }
 
