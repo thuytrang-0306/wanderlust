@@ -174,74 +174,34 @@ class DiscoverPage extends GetView<DiscoverController> {
       final tours = controller.featuredTours;
 
       if (tours.isEmpty) {
-        // Single welcome banner
+        // Hero banner with image
         return Container(
           height: 200.h,
           margin: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-          decoration: BoxDecoration(
+          child: ClipRRect(
             borderRadius: BorderRadius.circular(16.r),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
-            ),
-          ),
-          child: Stack(
-            children: [
-              // Pattern decoration
-              Positioned(
-                right: -50.w,
-                top: -50.h,
-                child: Container(
-                  width: 200.w,
-                  height: 200.h,
+            child: Image.asset(
+              AppAssets.heroBanner,
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback to old design if image not found
+                return Container(
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16.r),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
+                    ),
                   ),
-                ),
-              ),
-
-              // Content
-              Padding(
-                padding: EdgeInsets.all(AppSpacing.s5),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Chào mừng đến với\nWanderlust',
-                      style: AppTypography.h3.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: AppSpacing.s3),
-                    Text(
-                      'Khám phá thế giới cùng chúng tôi',
-                      style: AppTypography.bodyM.copyWith(color: Colors.white.withOpacity(0.9)),
-                    ),
-                    SizedBox(height: AppSpacing.s4),
-                    ElevatedButton(
-                      onPressed: controller.onPlanTrip,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColors.primary,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.s5,
-                          vertical: AppSpacing.s3,
-                        ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
-                      ),
-                      child: Text(
-                        'Lên kế hoạch ngay',
-                        style: AppTypography.bodyM.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                  child: Center(
+                    child: Icon(Icons.image, size: 40.sp, color: Colors.white.withOpacity(0.5)),
+                  ),
+                );
+              },
+            ),
           ),
         );
       }

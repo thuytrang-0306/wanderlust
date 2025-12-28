@@ -47,37 +47,10 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
       color: Colors.white,
       child: TabBar(
         controller: controller.tabController,
-        tabs: [
-          Obx(
-            () => Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Sắp tới'),
-                  if (controller.upcomingBookings.isNotEmpty) ...[
-                    SizedBox(width: AppSpacing.s1),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s2, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: Text(
-                        controller.upcomingBookings.length.toString(),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const Tab(text: 'Hoàn thành'),
-          const Tab(text: 'Đã hủy'),
+        tabs: const [
+          Tab(text: 'Sắp tới'),
+          Tab(text: 'Hoàn thành'),
+          Tab(text: 'Đã hủy'),
         ],
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.grey,
@@ -130,255 +103,83 @@ class BookingHistoryPage extends GetView<BookingHistoryController> {
           ),
         ],
       ),
-      child: InkWell(
-        onTap: () => controller.navigateToBookingDetail(booking),
-        borderRadius: BorderRadius.circular(16.r),
-        child: Column(
-          children: [
-            // Header with booking code and status
-            Container(
-              padding: EdgeInsets.all(AppSpacing.s4),
-              decoration: BoxDecoration(
-                color: AppColors.neutral50,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Mã đặt phòng',
-                        style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
-                      ),
-                      SizedBox(height: AppSpacing.s1),
-                      Text(
-                        'BK${booking.id.substring(0, 8).toUpperCase()}',
-                        style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s3,
-                      vertical: AppSpacing.s2,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => controller.navigateToBookingDetail(booking),
+          borderRadius: BorderRadius.circular(16.r),
+          child: Padding(
+            padding: EdgeInsets.all(AppSpacing.s4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Booking code and status
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'BK${booking.id.substring(0, 8).toUpperCase()}',
+                      style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
                     ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: Text(
-                      booking.displayStatus,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: statusColor,
-                        fontWeight: FontWeight.w600,
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s3,
+                        vertical: AppSpacing.s2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Text(
+                        booking.displayStatus,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: statusColor,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+
+                SizedBox(height: AppSpacing.s3),
+
+                // Hotel name
+                Text(
+                  booking.itemName,
+                  style: AppTypography.heading6,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                SizedBox(height: AppSpacing.s2),
+
+                // Dates
+                Text(
+                  '${DateFormat('dd/MM/yyyy').format(booking.checkIn)} - ${booking.checkOut != null ? DateFormat('dd/MM/yyyy').format(booking.checkOut!) : "N/A"}',
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                ),
+
+                SizedBox(height: AppSpacing.s3),
+                const Divider(height: 1),
+                SizedBox(height: AppSpacing.s3),
+
+                // Price
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Tổng tiền',
+                      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                    ),
+                    Text(
+                      booking.displayPrice,
+                      style: AppTypography.heading6.copyWith(color: AppColors.primary),
+                    ),
+                  ],
+                ),
+              ],
             ),
-
-            // Booking details
-            Padding(
-              padding: EdgeInsets.all(AppSpacing.s4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Hotel/Tour name
-                  Row(
-                    children: [
-                      Container(
-                        width: 60.w,
-                        height: 60.w,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8.r),
-                          color: AppColors.neutral200,
-                        ),
-                        child: Icon(
-                          booking.bookingType == 'accommodation' ? Icons.hotel : Icons.tour,
-                          color: AppColors.primary,
-                          size: 28.sp,
-                        ),
-                      ),
-                      SizedBox(width: AppSpacing.s3),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              booking.itemName,
-                              style: AppTypography.heading6,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: AppSpacing.s1),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on_outlined,
-                                  size: 14.sp,
-                                  color: AppColors.grey,
-                                ),
-                                SizedBox(width: 4.w),
-                                Expanded(
-                                  child: Text(
-                                    booking.metadata['city'] ?? booking.metadata['location'] ?? '',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: AppSpacing.s4),
-
-                  // Dates and guests
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildInfoItem(
-                          icon: Icons.calendar_today_outlined,
-                          label: 'Ngày nhận phòng',
-                          value: DateFormat('dd/MM/yyyy').format(booking.checkIn),
-                        ),
-                      ),
-                      SizedBox(width: AppSpacing.s4),
-                      Expanded(
-                        child: _buildInfoItem(
-                          icon: Icons.calendar_today_outlined,
-                          label: 'Ngày trả phòng',
-                          value: booking.checkOut != null ? DateFormat('dd/MM/yyyy').format(booking.checkOut!) : '',
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: AppSpacing.s3),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildInfoItem(
-                          icon: Icons.people_outline,
-                          label: 'Số khách',
-                          value: '${booking.adults + booking.children} người',
-                        ),
-                      ),
-                      SizedBox(width: AppSpacing.s4),
-                      Expanded(
-                        child: _buildInfoItem(
-                          icon: Icons.meeting_room_outlined,
-                          label: 'Số phòng',
-                          value: '${booking.quantity} phòng',
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: AppSpacing.s4),
-                  const Divider(height: 1),
-                  SizedBox(height: AppSpacing.s4),
-
-                  // Total price and action buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Tổng tiền',
-                            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
-                          ),
-                          Text(
-                            booking.displayPrice,
-                            style: AppTypography.heading5.copyWith(color: AppColors.primary),
-                          ),
-                        ],
-                      ),
-
-                      if (booking.status == 'confirmed' || booking.status == 'pending') ...[
-                        Row(
-                          children: [
-                            OutlinedButton(
-                              onPressed: () => controller.cancelBooking(booking),
-                              style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.s4,
-                                  vertical: AppSpacing.s2,
-                                ),
-                                side: const BorderSide(color: AppColors.error),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                              ),
-                              child: Text(
-                                'Hủy',
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: AppColors.error,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: AppSpacing.s2),
-                            ElevatedButton(
-                              onPressed: () => controller.viewTicket(booking),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.s4,
-                                  vertical: AppSpacing.s2,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                              ),
-                              child: Text(
-                                'Xem vé',
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ] else if (booking.status == 'completed') ...[
-                        ElevatedButton(
-                          onPressed: () => controller.rebook(booking),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppSpacing.s4,
-                              vertical: AppSpacing.s2,
-                            ),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                          ),
-                          child: Text(
-                            'Đặt lại',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

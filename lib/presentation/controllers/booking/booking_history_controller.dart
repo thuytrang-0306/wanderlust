@@ -41,7 +41,7 @@ class BookingHistoryController extends BaseController with GetSingleTickerProvid
         upcomingBookings.clear();
         completedBookings.clear();
         cancelledBookings.clear();
-        
+
         // Sort bookings by status
         for (final booking in bookings) {
           if (booking.status == 'cancelled') {
@@ -57,10 +57,12 @@ class BookingHistoryController extends BaseController with GetSingleTickerProvid
             }
           }
         }
-        
+
+        LoggerService.i('Bookings loaded: ${bookings.length} total, ${upcomingBookings.length} upcoming');
         isLoadingBookings.value = false;
       }, onError: (error) {
         LoggerService.e('Error loading bookings', error: error);
+        // Set loading to false even on error to show empty state
         isLoadingBookings.value = false;
       });
     } catch (e) {
