@@ -45,8 +45,7 @@ abstract class Routes {
   // Search
   static const SEARCH_FILTER = '/search-filter';
 
-  // Settings
-  static const SETTINGS = '/settings';
+  // Settings & Account
   static const MY_TRIPS = '/my-trips';
   static const CHANGE_PASSWORD = '/change-password';
   static const HELP_SUPPORT = '/help-support';

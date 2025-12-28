@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,6 +15,10 @@ import 'package:wanderlust/data/models/business_profile_model.dart';
 import 'package:wanderlust/core/services/unified_image_service.dart';
 import 'package:wanderlust/core/services/storage_service.dart';
 import 'package:wanderlust/presentation/controllers/account/user_profile_controller.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AccountController extends GetxController {
   final UserProfileService _profileService = Get.find<UserProfileService>();
@@ -36,7 +41,7 @@ class AccountController extends GetxController {
 
   // Settings
   final RxBool notificationsEnabled = true.obs;
-  final RxBool darkModeEnabled = false.obs;
+  final RxString cacheSize = '0 MB'.obs;
 
   @override
   void onInit() {
@@ -50,8 +55,9 @@ class AccountController extends GetxController {
       Get.lazyPut(() => BusinessService());
       _businessService = Get.find<BusinessService>();
     }
-    
+
     _loadUserData();
+    _calculateCacheSize();
 
     // Stream profile changes for real-time updates
     _profileService.streamCurrentUserProfile().listen((profile) {
@@ -92,15 +98,6 @@ class AccountController extends GetxController {
         // Initialize default value on first use
         notificationsEnabled.value = true;
         StorageService.to.write('notifications_enabled', true);
-      }
-      
-      // Load dark mode preference
-      final savedDarkMode = StorageService.to.read('dark_mode_enabled');
-      if (savedDarkMode != null) {
-        darkModeEnabled.value = savedDarkMode;
-      } else {
-        darkModeEnabled.value = false;
-        StorageService.to.write('dark_mode_enabled', false);
       }
     } catch (e) {
       LoggerService.e('Error loading user data', error: e);
@@ -188,47 +185,21 @@ class AccountController extends GetxController {
     AppSnackbar.showInfo(message: value ? 'Đã bật thông báo' : 'Đã tắt thông báo');
   }
 
-  void toggleDarkMode(bool value) {
-    // TEMPORARILY DISABLED - Need proper dark theme design
-    AppSnackbar.showInfo(
-      message: 'Chế độ tối đang được phát triển. Sẽ sớm ra mắt!',
-    );
-    
-    // Reset to false to keep switch in correct state
-    darkModeEnabled.value = false;
-    return;
-    
-    // Keep code for future implementation
-    /*
-    darkModeEnabled.value = value;
-    StorageService.to.write('dark_mode_enabled', value);
-    Get.changeThemeMode(value ? ThemeMode.dark : ThemeMode.light);
-    AppSnackbar.showInfo(message: value ? 'Đã bật chế độ tối' : 'Đã tắt chế độ tối');
-    */
-  }
-
-  void navigateToProfile() {
-    Get.toNamed('/user-profile');
+  // Navigation methods
+  void navigateToEditProfile() {
+    Get.toNamed('/edit-profile');
   }
 
   void navigateToChangePassword() {
     Get.toNamed('/change-password');
   }
 
+  void navigateToBookingHistory() {
+    Get.toNamed('/booking-history');
+  }
+
   void navigateToSavedPosts() {
     Get.toNamed('/saved-collections');
-  }
-
-  void navigateToTripHistory() {
-    Get.toNamed('/my-trips');
-  }
-
-  void navigateToFavorites() {
-    AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
-  }
-
-  void navigateToLanguage() {
-    AppSnackbar.showInfo(message: 'Tính năng đang phát triển');
   }
 
   void navigateToHelp() {
@@ -243,18 +214,247 @@ class AccountController extends GetxController {
     Get.toNamed('/terms-of-service');
   }
 
-  void navigateToAbout() {
+  Future<void> navigateToAbout() async {
+    String version = '1.0.0';
+    String buildNumber = '2024.1';
+
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      version = packageInfo.version;
+      buildNumber = packageInfo.buildNumber;
+    } catch (e) {
+      LoggerService.e('Error loading package info', error: e);
+    }
+
     AppDialogs.showAlert(
       title: 'Về Wanderlust',
       message: '''Wanderlust - Ứng dụng du lịch hàng đầu Việt Nam
-      
-Phiên bản: 1.0.0
-Build: 2024.1
+
+Phiên bản: $version
+Build: $buildNumber
 
 Được phát triển bởi đội ngũ Wanderlust Team với mục tiêu mang đến trải nghiệm du lịch tốt nhất cho người dùng Việt Nam.
 
 © 2024 Wanderlust. All rights reserved.''',
     );
+  }
+
+  Future<void> sendFeedback() async {
+    String version = '1.0.0';
+    String buildNumber = '2024.1';
+
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      version = packageInfo.version;
+      buildNumber = packageInfo.buildNumber;
+    } catch (e) {
+      LoggerService.e('Error loading package info', error: e);
+    }
+
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'nttt3690@gmail.com',
+      queryParameters: {
+        'subject': 'Feedback từ Wanderlust App',
+        'body': '''Xin chào,
+
+Tôi muốn gửi phản hồi về ứng dụng Wanderlust:
+
+[Nhập nội dung phản hồi của bạn ở đây]
+
+---
+App Version: $version
+Build: $buildNumber
+Platform: ${Platform.operatingSystem}
+''',
+      },
+    );
+
+    try {
+      // Không dùng canLaunchUrl vì nó không đáng tin cậy cho mailto
+      final launched = await launchUrl(
+        emailUri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched) {
+        // Nếu không mở được, show dialog với email info
+        _showEmailFallback();
+      }
+    } catch (e) {
+      LoggerService.e('Error opening email app', error: e);
+      // Show fallback dialog nếu không có email app
+      _showEmailFallback();
+    }
+  }
+
+  void _showEmailFallback() {
+    Get.dialog(
+      AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.email_outlined, color: Color(0xFF9455FD)),
+            SizedBox(width: 8),
+            Text('Gửi phản hồi'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Thiết bị chưa cài ứng dụng email.\nVui lòng gửi phản hồi trực tiếp qua:',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF9455FD).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.email, color: Color(0xFF9455FD), size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SelectableText(
+                      'nttt3690@gmail.com',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF9455FD),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Subject: Feedback từ Wanderlust App',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Đóng'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showLicenses() {
+    Get.to(() => const LicensePage(
+          applicationName: 'Wanderlust',
+          applicationVersion: '1.0.0',
+        ));
+  }
+
+  Future<void> _calculateCacheSize() async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      int totalSize = 0;
+
+      if (await tempDir.exists()) {
+        await for (var entity in tempDir.list(recursive: true, followLinks: false)) {
+          if (entity is File) {
+            totalSize += await entity.length();
+          }
+        }
+      }
+
+      cacheSize.value = _formatBytes(totalSize);
+    } catch (e) {
+      cacheSize.value = '0 MB';
+      LoggerService.e('Error calculating cache size', error: e);
+    }
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  Future<void> clearCache() async {
+    final confirm = await AppDialogs.showConfirm(
+      title: 'Xóa bộ nhớ cache',
+      message: 'Bạn có chắc chắn muốn xóa ${cacheSize.value} bộ nhớ cache?',
+      confirmText: 'Xóa',
+      cancelText: 'Hủy',
+    );
+
+    if (confirm) {
+      try {
+        AppDialogs.showLoading(message: 'Đang xóa cache...');
+
+        // Clear cached network images
+        await DefaultCacheManager().emptyCache();
+
+        // Clear temporary directory
+        final tempDir = await getTemporaryDirectory();
+        if (await tempDir.exists()) {
+          await for (var entity in tempDir.list()) {
+            if (entity is File) {
+              try {
+                await entity.delete();
+              } catch (e) {
+                // Skip files that can't be deleted
+              }
+            } else if (entity is Directory) {
+              try {
+                await entity.delete(recursive: true);
+              } catch (e) {
+                // Skip directories that can't be deleted
+              }
+            }
+          }
+        }
+
+        // Recalculate cache size
+        await _calculateCacheSize();
+
+        AppDialogs.hideLoading();
+        AppSnackbar.showSuccess(message: 'Đã xóa bộ nhớ cache thành công');
+      } catch (e) {
+        AppDialogs.hideLoading();
+        AppSnackbar.showError(message: 'Không thể xóa cache: $e');
+        LoggerService.e('Error clearing cache', error: e);
+      }
+    }
+  }
+
+  Future<void> clearAllData() async {
+    final confirm = await AppDialogs.showConfirm(
+      title: 'Xóa tất cả dữ liệu',
+      message: 'Hành động này sẽ xóa toàn bộ dữ liệu cục bộ và đăng xuất khỏi tài khoản. Bạn có chắc chắn?',
+      confirmText: 'Xóa tất cả',
+      cancelText: 'Hủy',
+    );
+
+    if (confirm) {
+      try {
+        AppDialogs.showLoading(message: 'Đang xóa dữ liệu...');
+
+        // Clear all data and sign out
+        await StorageService.to.clearAll();
+        await FirebaseAuth.instance.signOut();
+        _imageService.clearCache();
+
+        AppDialogs.hideLoading();
+
+        Get.offAllNamed(Routes.LOGIN);
+        AppSnackbar.showInfo(message: 'Đã xóa tất cả dữ liệu');
+      } catch (e) {
+        AppDialogs.hideLoading();
+        AppSnackbar.showError(message: 'Không thể xóa dữ liệu: $e');
+        LoggerService.e('Error clearing all data', error: e);
+      }
+    }
   }
   
   // Business-related methods

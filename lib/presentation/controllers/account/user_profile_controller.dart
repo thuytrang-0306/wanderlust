@@ -334,9 +334,6 @@ class UserProfileController extends BaseController {
     Get.toNamed('/about');
   }
 
-  void navigateToSettings() {
-    Get.toNamed('/settings');
-  }
 
   void logout() async {
     final confirm = await AppDialogs.showConfirm(

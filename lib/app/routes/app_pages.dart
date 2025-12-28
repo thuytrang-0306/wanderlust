@@ -23,12 +23,10 @@ import 'package:wanderlust/presentation/pages/payment/payment_success_page.dart'
 import 'package:wanderlust/presentation/pages/combo/combo_detail_page.dart';
 import 'package:wanderlust/presentation/pages/account/user_profile_page.dart';
 import 'package:wanderlust/presentation/pages/search/search_filter_page.dart';
-import 'package:wanderlust/presentation/pages/settings/settings_page.dart';
 import 'package:wanderlust/presentation/pages/trips/my_trips_page.dart';
 import 'package:wanderlust/presentation/pages/booking/booking_history_page.dart';
 import 'package:wanderlust/presentation/bindings/create_post_binding.dart';
 import 'package:wanderlust/presentation/bindings/search_filter_binding.dart';
-import 'package:wanderlust/presentation/bindings/settings_binding.dart';
 import 'package:wanderlust/presentation/bindings/my_trips_binding.dart';
 import 'package:wanderlust/presentation/bindings/booking_history_binding.dart';
 import 'package:wanderlust/presentation/bindings/add_private_location_binding.dart';
@@ -170,19 +168,13 @@ class AppPages {
       name: Routes.SEARCH_FILTER,
       page: () => const SearchFilterPage(),
       binding: SearchFilterBinding(),
-      
-    ),
-    GetPage(
-      name: Routes.SETTINGS,
-      page: () => const SettingsPage(),
-      binding: SettingsBinding(),
-      
+
     ),
     GetPage(
       name: Routes.MY_TRIPS,
       page: () => const MyTripsPage(),
       binding: MyTripsBinding(),
-      
+
     ),
     GetPage(
       name: Routes.BOOKING_HISTORY,

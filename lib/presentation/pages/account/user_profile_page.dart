@@ -243,12 +243,6 @@ class UserProfilePage extends GetView<UserProfileController> {
         icon: Icon(Icons.arrow_back_ios, color: Colors.white, size: 20.sp),
         onPressed: () => Get.back(),
       ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.settings_outlined, color: Colors.white, size: 24.sp),
-          onPressed: controller.navigateToSettings,
-        ),
-      ],
     );
   }
 
