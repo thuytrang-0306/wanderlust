@@ -286,12 +286,14 @@ class SearchFilterPage extends GetView<SearchFilterController> {
       color: Colors.white,
       child: TabBar(
         controller: controller.tabController,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
         tabs: const [
           Tab(text: 'Tất cả'),
-          Tab(text: 'Khách sạn'),
+          Tab(text: 'Chỗ ở'),
           Tab(text: 'Tour'),
           Tab(text: 'Địa điểm'),
-          Tab(text: 'Nhà hàng'),
+          Tab(text: 'Ẩm thực'),
         ],
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.neutral500,
@@ -299,6 +301,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
         indicatorWeight: 3,
         labelStyle: AppTypography.bodyM.copyWith(fontWeight: FontWeight.w600),
         unselectedLabelStyle: AppTypography.bodyM,
+        padding: EdgeInsets.zero,
       ),
     );
   }
@@ -343,23 +346,65 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                 }).toList(),
           ),
 
-          SizedBox(height: AppSpacing.s8),
+          if (controller.recentSearches.isNotEmpty) ...[
+            SizedBox(height: AppSpacing.s6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Tìm kiếm gần đây', style: AppTypography.h3),
+                TextButton(
+                  onPressed: controller.clearRecentSearches,
+                  child: Text(
+                    'Xóa tất cả',
+                    style: AppTypography.bodyS.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: AppSpacing.s4),
+            ...controller.recentSearches.map((search) {
+              return ListTile(
+                leading: Icon(Icons.history, color: AppColors.grey, size: 20.sp),
+                title: Text(search, style: AppTypography.bodyM),
+                trailing: IconButton(
+                  icon: Icon(Icons.close, size: 18.sp, color: AppColors.neutral500),
+                  onPressed: () => controller.removeRecentSearch(search),
+                ),
+                onTap: () => controller.searchFromSuggestion(search),
+                contentPadding: EdgeInsets.zero,
+              );
+            }),
+          ],
 
-          Text('Tìm kiếm gần đây', style: AppTypography.h3),
+          SizedBox(height: AppSpacing.s6),
+
+          // Featured/Trending items
+          Text('Gợi ý cho bạn', style: AppTypography.h3),
           SizedBox(height: AppSpacing.s4),
-
-          ...controller.recentSearches.map((search) {
-            return ListTile(
-              leading: Icon(Icons.history, color: AppColors.grey, size: 20.sp),
-              title: Text(search, style: AppTypography.bodyM),
-              trailing: IconButton(
-                icon: Icon(Icons.close, size: 18.sp, color: AppColors.neutral500),
-                onPressed: () => controller.removeRecentSearch(search),
-              ),
-              onTap: () => controller.searchFromSuggestion(search),
-              contentPadding: EdgeInsets.zero,
-            );
-          }),
+          Obx(() => controller.featuredItems.isNotEmpty
+              ? Column(
+                  children: controller.featuredItems.take(3).map((item) {
+                    return _buildResultCard(item);
+                  }).toList(),
+                )
+              : Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.s8),
+                    child: Column(
+                      children: [
+                        Icon(Icons.explore_outlined, size: 48.sp, color: AppColors.neutral300),
+                        SizedBox(height: AppSpacing.s3),
+                        Text(
+                          'Nhập từ khóa để tìm kiếm',
+                          style: AppTypography.bodyM.copyWith(color: AppColors.neutral500),
+                        ),
+                      ],
+                    ),
+                  ),
+                )),
         ],
       ),
     );
@@ -547,18 +592,45 @@ class SearchFilterPage extends GetView<SearchFilterController> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.search_off, size: 64.sp, color: AppColors.neutral400),
-          SizedBox(height: AppSpacing.s4),
-          Text('Không tìm thấy kết quả', style: AppTypography.h3),
-          SizedBox(height: AppSpacing.s2),
-          Text(
-            'Thử tìm kiếm với từ khóa khác',
-            style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
-          ),
-        ],
+      child: Padding(
+        padding: EdgeInsets.all(AppSpacing.s6),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 64.sp, color: AppColors.neutral400),
+            SizedBox(height: AppSpacing.s4),
+            Text('Không tìm thấy kết quả', style: AppTypography.h3),
+            SizedBox(height: AppSpacing.s2),
+            Text(
+              'Thử tìm kiếm với từ khóa khác',
+              style: AppTypography.bodyM.copyWith(color: AppColors.textSecondary),
+            ),
+            SizedBox(height: AppSpacing.s6),
+            Text(
+              'Gợi ý cho bạn:',
+              style: AppTypography.bodyL.copyWith(fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: AppSpacing.s3),
+            Wrap(
+              spacing: AppSpacing.s2,
+              runSpacing: AppSpacing.s2,
+              alignment: WrapAlignment.center,
+              children: controller.searchSuggestions.map((suggestion) {
+                return GestureDetector(
+                  onTap: () => controller.searchFromSuggestion(suggestion),
+                  child: Chip(
+                    label: Text(suggestion),
+                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    labelStyle: AppTypography.bodyS.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }

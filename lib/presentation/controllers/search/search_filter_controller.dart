@@ -8,7 +8,7 @@ import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/data/services/listing_service.dart';
 import 'package:wanderlust/data/models/listing_model.dart';
 import 'package:intl/intl.dart';
-// import 'package:wanderlust/core/services/storage_service.dart'; // TODO: Implement later
+import 'package:wanderlust/core/services/storage_service.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
@@ -25,6 +25,10 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
   final RxBool isSearching = false.obs;
   final searchResults = <Map<String, dynamic>>[].obs;
   final recentSearches = <String>[].obs;
+  final featuredItems = <Map<String, dynamic>>[].obs;
+
+  // Track last search to prevent stale results
+  String _lastSearchQuery = '';
 
   // Filters
   final selectedSort = 'default'.obs;
@@ -37,12 +41,30 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
 
   final hasActiveFilters = false.obs;
 
+  // Search suggestions for empty state
+  List<String> get searchSuggestions {
+    // Return suggestions based on current tab
+    switch (selectedTab.value) {
+      case 1: // Chỗ ở
+        return ['Khách sạn Đà Lạt', 'Resort Phú Quốc', 'Homestay Sapa', 'Villa Nha Trang'];
+      case 2: // Tour
+        return ['Tour Hạ Long', 'Tour Phú Quốc', 'Tour Đà Nẵng', 'Tour Sapa'];
+      case 3: // Địa điểm
+        return ['Hội An', 'Đà Lạt', 'Phú Quốc', 'Sapa', 'Nha Trang'];
+      case 4: // Ẩm thực
+        return ['Nhà hàng hải sản', 'Quán ăn địa phương', 'Buffet', 'Ẩm thực Việt'];
+      default: // Tất cả
+        return ['Đà Lạt', 'Phú Quốc', 'Hạ Long', 'Hội An', 'Nha Trang', 'Sapa'];
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
     tabController = TabController(length: 5, vsync: this);
     tabController.addListener(_handleTabSelection);
     loadRecentSearches();
+    loadFeaturedItems();
 
     // Listen to filter changes
     ever(selectedSort, (_) => _updateActiveFilters());
@@ -55,6 +77,40 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
 
     // Handle preset filters from navigation arguments
     _handleNavigationArguments();
+  }
+
+  void loadFeaturedItems() async {
+    try {
+      // Load featured/trending items from ListingService
+      final listingService = Get.find<ListingService>();
+      final listings = await listingService.searchListings(query: '', type: null);
+
+      // Take first 5 listings as featured
+      featuredItems.value = listings.take(5).map((listing) {
+        return {
+          'id': listing.id,
+          'name': listing.title,
+          'type': _getTypeDisplay(listing.type),
+          'location': '${listing.details['city'] ?? ''}, ${listing.details['province'] ?? ''}',
+          'rating': listing.rating,
+          'reviews': listing.reviews,
+          'price': listing.hasDiscount
+              ? '${NumberFormat('#,###').format(listing.discountPrice)}đ'
+              : '${NumberFormat('#,###').format(listing.price)}đ',
+          'originalPrice': listing.hasDiscount ? '${NumberFormat('#,###').format(listing.price)}đ' : null,
+          'isFavorite': false,
+          'category': listing.type.value,
+          'image': listing.images.isNotEmpty ? listing.images.first : '',
+          'businessName': listing.businessName,
+          'listingId': listing.id,
+        };
+      }).toList();
+
+      LoggerService.d('Loaded ${featuredItems.length} featured items');
+    } catch (e) {
+      LoggerService.e('Error loading featured items', error: e);
+      // Keep empty if error
+    }
   }
 
   void _handleNavigationArguments() {
@@ -102,9 +158,14 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
   }
 
   void loadRecentSearches() {
-    // TODO: Load from storage when StorageService is implemented
-    // For now, start with empty recent searches
-    recentSearches.value = [];
+    try {
+      final storageService = Get.find<StorageService>();
+      recentSearches.value = storageService.searchHistory;
+      LoggerService.d('Loaded ${recentSearches.length} recent searches from storage');
+    } catch (e) {
+      LoggerService.e('Error loading recent searches', error: e);
+      recentSearches.value = [];
+    }
   }
 
   void onSearchChanged(String query) {
@@ -123,13 +184,24 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
       return;
     }
 
+    // Track search start time for performance monitoring
+    final searchStartTime = DateTime.now();
+    final currentQuery = searchQuery.value;
+    _lastSearchQuery = currentQuery;
+
     isSearching.value = true;
 
     try {
-      // Save to recent searches
-      if (searchQuery.value.isNotEmpty && !recentSearches.contains(searchQuery.value)) {
-        recentSearches.insert(0, searchQuery.value);
-        if (recentSearches.length > 5) recentSearches.removeLast();
+      // Save to recent searches (persist to storage)
+      if (currentQuery.isNotEmpty) {
+        try {
+          final storageService = Get.find<StorageService>();
+          await storageService.addSearchHistory(currentQuery);
+          // Reload from storage to sync
+          recentSearches.value = storageService.searchHistory;
+        } catch (e) {
+          LoggerService.e('Error saving search history', error: e);
+        }
       }
 
       // Get services
@@ -167,16 +239,9 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
 
       // Convert listings to search results format
       for (final listing in listings) {
-        // Apply additional filters
-        if (selectedRating.value > 0 && listing.rating < selectedRating.value) {
+        // Apply all filters using helper method
+        if (!_passesFilters(listing)) {
           continue;
-        }
-        
-        if (selectedLocation.value.isNotEmpty) {
-          final location = '${listing.details['city'] ?? ''} ${listing.details['province'] ?? ''}'.toLowerCase();
-          if (!location.contains(selectedLocation.value.toLowerCase())) {
-            continue;
-          }
         }
 
         results.add({
@@ -186,7 +251,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
           'location': '${listing.details['city'] ?? ''}, ${listing.details['province'] ?? ''}',
           'rating': listing.rating,
           'reviews': listing.reviews,
-          'price': listing.hasDiscount 
+          'price': listing.hasDiscount
               ? '${NumberFormat('#,###').format(listing.discountPrice)}đ'
               : '${NumberFormat('#,###').format(listing.price)}đ',
           'originalPrice': listing.hasDiscount ? '${NumberFormat('#,###').format(listing.price)}đ' : null,
@@ -200,24 +265,48 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
 
       // Also search trips if on All or Tour tab
       if (selectedTab.value == 0 || selectedTab.value == 2) {
-        final trips = await tripService.getUserTrips();
-        for (final trip in trips) {
-          if (query.isEmpty || 
-              trip.title.toLowerCase().contains(query.toLowerCase()) ||
-              trip.destination.toLowerCase().contains(query.toLowerCase())) {
-            results.add({
-              'id': trip.id,
-              'name': trip.title,
-              'type': 'Chuyến đi',
-              'location': trip.destination,
-              'rating': 4.5,
-              'reviews': 0,
-              'price': '${NumberFormat('#,###').format(trip.budget)}đ',
-              'isFavorite': false,
-              'category': 'trip',
-              'image': trip.coverImage,
-            });
+        // Get both user trips and public trips
+        final userTrips = await tripService.getUserTrips();
+        final publicTrips = await tripService.getAllPublicTrips();
+
+        // Combine and deduplicate trips (user trips + public trips)
+        final allTrips = <String, dynamic>{};
+        for (final trip in [...userTrips, ...publicTrips]) {
+          allTrips[trip.id] = trip; // Use map to auto-deduplicate by ID
+        }
+
+        for (final trip in allTrips.values) {
+          // Apply search query filter
+          if (query.isNotEmpty &&
+              !trip.title.toLowerCase().contains(query.toLowerCase()) &&
+              !trip.destination.toLowerCase().contains(query.toLowerCase())) {
+            continue;
           }
+
+          // Apply location filter
+          if (selectedLocation.value.isNotEmpty &&
+              !trip.destination.toLowerCase().contains(selectedLocation.value.toLowerCase())) {
+            continue;
+          }
+
+          // Apply date filter (if trip dates overlap with selected date)
+          if (selectedDate.value.isNotEmpty) {
+            // Skip date filtering for trips for now as it requires date parsing
+            // TODO: Implement date range checking if needed
+          }
+
+          results.add({
+            'id': trip.id,
+            'name': trip.title,
+            'type': 'Chuyến đi',
+            'location': trip.destination,
+            'rating': 4.5,
+            'reviews': 0,
+            'price': '${NumberFormat('#,###').format(trip.budget)}đ',
+            'isFavorite': false,
+            'category': 'trip',
+            'image': trip.coverImage,
+          });
         }
       }
 
@@ -242,15 +331,79 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
         });
       }
 
-      searchResults.value = results;
-      // Remove snackbar - we have empty state UI
+      // Only update results if this is still the latest search
+      if (_lastSearchQuery == currentQuery) {
+        searchResults.value = results;
+
+        // Log search performance
+        final searchDuration = DateTime.now().difference(searchStartTime);
+        LoggerService.d(
+          'Search completed: query="$currentQuery", results=${results.length}, duration=${searchDuration.inMilliseconds}ms',
+        );
+      } else {
+        LoggerService.d('Search results ignored (newer search in progress)');
+      }
     } catch (e) {
       LoggerService.e('Error searching', error: e);
-      searchResults.value = [];
-      AppSnackbar.showError(message: 'Lỗi khi tìm kiếm');
+      // Only update if this is still the latest search
+      if (_lastSearchQuery == currentQuery) {
+        searchResults.value = [];
+        AppSnackbar.showError(message: 'Lỗi khi tìm kiếm. Vui lòng thử lại.');
+      }
     } finally {
       isSearching.value = false;
     }
+  }
+
+  /// Helper: Apply all filters to a listing
+  bool _passesFilters(ListingModel listing) {
+    // Rating filter
+    if (selectedRating.value > 0 && listing.rating < selectedRating.value) {
+      return false;
+    }
+
+    // Location filter
+    if (selectedLocation.value.isNotEmpty) {
+      final location = '${listing.details['city'] ?? ''} ${listing.details['province'] ?? ''}'.toLowerCase();
+      if (!location.contains(selectedLocation.value.toLowerCase())) {
+        return false;
+      }
+    }
+
+    // Categories filter
+    if (selectedCategories.isNotEmpty) {
+      final listingCategories = listing.details['categories'] as List<dynamic>?;
+      if (listingCategories == null) return false;
+
+      bool hasMatchingCategory = false;
+      for (final category in selectedCategories) {
+        if (listingCategories.contains(category)) {
+          hasMatchingCategory = true;
+          break;
+        }
+      }
+      if (!hasMatchingCategory) return false;
+    }
+
+    // Amenities filter
+    if (selectedAmenities.isNotEmpty) {
+      final listingAmenities = listing.details['amenities'] as List<dynamic>?;
+      if (listingAmenities == null) return false;
+
+      for (final amenity in selectedAmenities) {
+        bool hasAmenity = false;
+        for (final listingAmenity in listingAmenities) {
+          if (listingAmenity.toString().toLowerCase().contains(amenity.toLowerCase()) ||
+              amenity.toLowerCase().contains(listingAmenity.toString().toLowerCase())) {
+            hasAmenity = true;
+            break;
+          }
+        }
+        if (!hasAmenity) return false;
+      }
+    }
+
+    return true;
   }
 
   String _getTypeDisplay(ListingType type) {
@@ -285,8 +438,30 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
   }
 
   void removeRecentSearch(String search) async {
-    recentSearches.remove(search);
-    // TODO: Update storage when StorageService is implemented
+    try {
+      // Remove from memory
+      recentSearches.remove(search);
+
+      // Update storage with new list
+      final storageService = Get.find<StorageService>();
+      await storageService.write(StorageService.keySearchHistory, recentSearches);
+
+      LoggerService.d('Removed search from history: $search');
+    } catch (e) {
+      LoggerService.e('Error removing search history', error: e);
+    }
+  }
+
+  void clearRecentSearches() async {
+    try {
+      final storageService = Get.find<StorageService>();
+      await storageService.clearSearchHistory();
+      recentSearches.clear();
+      LoggerService.i('Cleared all recent searches');
+      AppSnackbar.showInfo(message: 'Đã xóa lịch sử tìm kiếm');
+    } catch (e) {
+      LoggerService.e('Error clearing search history', error: e);
+    }
   }
 
   void applySort() {
