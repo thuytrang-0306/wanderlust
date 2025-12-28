@@ -7,6 +7,7 @@ import 'package:wanderlust/presentation/controllers/planning/planning_controller
 import 'package:wanderlust/data/models/trip_model.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/core/widgets/shimmer_loading.dart';
+import 'package:wanderlust/core/widgets/custom_app_bar.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:intl/intl.dart';
 
@@ -19,11 +20,14 @@ class PlanningPage extends GetView<PlanningController> {
     // Get.lazyPut(() => PlanningController());
 
     return Scaffold(
+      appBar: const CustomAppBar(
+        title: 'Lập kế hoạch',
+      ),
       body: Stack(
         children: [
           Column(
             children: [
-              _buildHeader(),
+              _buildStatsSection(),
               _buildTabBar(),
               Expanded(
                 child: Container(
@@ -72,52 +76,27 @@ class PlanningPage extends GetView<PlanningController> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildStatsSection() {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFE8E0FF), Color(0xFFF5F0FF)],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Kế hoạch du lịch',
-                style: TextStyle(
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
-              ),
-              SizedBox(height: AppSpacing.s2),
-              Obx(
-                () => Row(
-                  children: [
-                    _buildStatCard(Icons.luggage, '${controller.totalTrips}', 'Chuyến đi'),
-                    SizedBox(width: AppSpacing.s3),
-                    _buildStatCard(
-                      Icons.location_on,
-                      '${controller.totalDestinations}',
-                      'Điểm đến',
-                    ),
-                    SizedBox(width: AppSpacing.s3),
-                    _buildStatCard(
-                      Icons.account_balance_wallet,
-                      '${(controller.totalBudget / 1000000).toStringAsFixed(1)}M',
-                      'Ngân sách',
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+      color: AppColors.white,
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s4),
+      child: Obx(
+        () => Row(
+          children: [
+            _buildStatCard(Icons.luggage, '${controller.totalTrips}', 'Chuyến đi'),
+            SizedBox(width: AppSpacing.s3),
+            _buildStatCard(
+              Icons.location_on,
+              '${controller.totalDestinations}',
+              'Điểm đến',
+            ),
+            SizedBox(width: AppSpacing.s3),
+            _buildStatCard(
+              Icons.account_balance_wallet,
+              '${(controller.totalBudget / 1000000).toStringAsFixed(1)}M',
+              'Ngân sách',
+            ),
+          ],
         ),
       ),
     );

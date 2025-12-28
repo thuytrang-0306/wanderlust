@@ -6,6 +6,7 @@ import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/presentation/controllers/community/community_controller.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/core/widgets/shimmer_loading.dart';
+import 'package:wanderlust/core/widgets/custom_app_bar.dart';
 
 class CommunityPage extends GetView<CommunityController> {
   const CommunityPage({super.key});
@@ -15,13 +16,22 @@ class CommunityPage extends GetView<CommunityController> {
     Get.lazyPut(() => CommunityController());
 
     return Scaffold(
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: Container(
-              color: const Color(0xFFF5F7F8),
-              child: Obx(() {
+      appBar: CustomAppBar(
+        title: 'Cộng đồng',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            onPressed: controller.createPost,
+          ),
+          IconButton(
+            icon: const Icon(Icons.bookmark_outline),
+            onPressed: controller.openBookmarks,
+          ),
+        ],
+      ),
+      body: Container(
+        color: const Color(0xFFF5F7F8),
+        child: Obx(() {
                 // Show shimmer while loading
                 if (controller.isLoading.value) {
                   return SingleChildScrollView(
@@ -58,53 +68,6 @@ class CommunityPage extends GetView<CommunityController> {
                   ),
                 );
               }),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFE8E0FF), Color(0xFFF5F0FF)],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Cộng đồng',
-                style: TextStyle(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
-              ),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: controller.createPost,
-                    child: Icon(Icons.add_circle_outline, color: AppColors.primary, size: 28.sp),
-                  ),
-                  SizedBox(width: AppSpacing.s3),
-                  GestureDetector(
-                    onTap: controller.openBookmarks,
-                    child: Icon(Icons.bookmark_outline, color: AppColors.primary, size: 28.sp),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

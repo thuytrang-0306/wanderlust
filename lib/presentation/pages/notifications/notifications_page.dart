@@ -6,6 +6,7 @@ import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/presentation/controllers/notifications/notifications_controller.dart';
 import 'package:wanderlust/shared/data/models/notification_model.dart';
 import 'package:wanderlust/shared/core/widgets/app_image.dart';
+import 'package:wanderlust/core/widgets/custom_app_bar.dart';
 
 class NotificationsPage extends GetView<NotificationsController> {
   const NotificationsPage({super.key});
@@ -15,11 +16,40 @@ class NotificationsPage extends GetView<NotificationsController> {
     Get.lazyPut(() => NotificationsController());
 
     return Scaffold(
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: Container(
+      appBar: CustomAppBar(
+        title: 'Thông báo',
+        actions: [
+          Obx(() {
+            if (controller.unreadCount.value > 0) {
+              return GestureDetector(
+                onTap: () => controller.markAllAsRead(),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  child: Text(
+                    'Đọc tất cả',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF54189A),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return const SizedBox();
+          }),
+          SizedBox(width: 8.w),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => controller.navigateToSettings(),
+          ),
+        ],
+      ),
+      body: Container(
               color: Colors.white,
               child: Obx(() {
                 if (controller.notifications.isEmpty) {
@@ -52,79 +82,6 @@ class NotificationsPage extends GetView<NotificationsController> {
                   ),
                 );
               }),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFE8E0FF), // Light purple gradient
-            Color(0xFFF5F0FF), // Very light purple
-          ],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5, vertical: AppSpacing.s4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Thông báo',
-                style: TextStyle(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
-              ),
-              Row(
-                children: [
-                  Obx(() {
-                    if (controller.unreadCount.value > 0) {
-                      return Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () => controller.markAllAsRead(),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(16.r),
-                              ),
-                              child: Text(
-                                'Đọc tất cả',
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                        ],
-                      );
-                    }
-                    return const SizedBox();
-                  }),
-                  GestureDetector(
-                    onTap: () => controller.navigateToSettings(),
-                    child: Icon(Icons.settings_outlined, color: AppColors.primary, size: 24.sp),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
