@@ -234,54 +234,80 @@ class AccommodationDetailController extends BaseController {
   }
 
   Future<void> selectDates() async {
-    final result = await Get.dialog<Map<String, DateTime>>(
-      _buildDatePickerDialog(),
-      barrierDismissible: false,
+    // Pick check-in date
+    final checkIn = await showDatePicker(
+      context: Get.context!,
+      initialDate: checkInDate.value ?? DateTime.now().add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: const Color(0xFF9455FD),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
-    if (result != null) {
-      checkInDate.value = result['checkIn'];
-      checkOutDate.value = result['checkOut'];
-      _updateSelectedDatesText();
+    if (checkIn == null) return;
+
+    // Pick check-out date (must be after check-in)
+    final checkOut = await showDatePicker(
+      context: Get.context!,
+      initialDate: checkIn.add(const Duration(days: 1)),
+      firstDate: checkIn.add(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: const Color(0xFF9455FD),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (checkOut == null) return;
+
+    // Update dates
+    checkInDate.value = checkIn;
+    checkOutDate.value = checkOut;
+    _updateSelectedDatesText();
+  }
+
+  void incrementRoomCount() {
+    if (roomCount.value < 10) {
+      roomCount.value++;
     }
   }
 
-  Widget _buildDatePickerDialog() {
-    // Simple date picker dialog
-    DateTime tempCheckIn = checkInDate.value ?? DateTime.now().add(const Duration(days: 1));
-    DateTime tempCheckOut = checkOutDate.value ?? DateTime.now().add(const Duration(days: 2));
+  void decrementRoomCount() {
+    if (roomCount.value > 1) {
+      roomCount.value--;
+    }
+  }
 
-    return AlertDialog(
-      title: const Text('Chọn ngày'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            title: const Text('Ngày nhận phòng'),
-            subtitle: Text(DateFormat('dd/MM/yyyy').format(tempCheckIn)),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: () async {
-              // In real app, use date picker
-            },
-          ),
-          ListTile(
-            title: const Text('Ngày trả phòng'),
-            subtitle: Text(DateFormat('dd/MM/yyyy').format(tempCheckOut)),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: () async {
-              // In real app, use date picker
-            },
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(onPressed: () => Get.back(), child: const Text('Hủy')),
-        TextButton(
-          onPressed: () => Get.back(result: {'checkIn': tempCheckIn, 'checkOut': tempCheckOut}),
-          child: const Text('Xác nhận'),
-        ),
-      ],
-    );
+  void incrementGuestCount() {
+    if (guestCount.value < 20) {
+      guestCount.value++;
+    }
+  }
+
+  void decrementGuestCount() {
+    if (guestCount.value > 1) {
+      guestCount.value--;
+    }
   }
 
   void updateRoomCount(int count) {

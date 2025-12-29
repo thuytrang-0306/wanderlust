@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -85,46 +86,58 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               // Back button
-                              Container(
-                                width: 40.w,
-                                height: 40.w,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: Icon(
-                                    Icons.chevron_left,
-                                    color: Colors.black87,
-                                    size: 30.sp,
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16.r),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                                  child: Container(
+                                    width: 32.w,
+                                    height: 32.w,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0x4DFFFFFF), // #FFFFFF4D
+                                      borderRadius: BorderRadius.circular(16.r),
+                                    ),
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      icon: Icon(
+                                        Icons.chevron_left_rounded,
+                                        color: Colors.black87,
+                                        size: 24.sp,
+                                      ),
+                                      onPressed: () => Get.back(),
+                                    ),
                                   ),
-                                  onPressed: () => Get.back(),
                                 ),
                               ),
 
                               // Bookmark button
-                              Container(
-                                width: 40.w,
-                                height: 40.w,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Obx(
-                                  () => IconButton(
-                                    padding: EdgeInsets.zero,
-                                    icon: Icon(
-                                      controller.isBookmarked.value
-                                          ? Icons.bookmark
-                                          : Icons.bookmark_border,
-                                      color:
-                                          controller.isBookmarked.value
-                                              ? const Color(0xFFFBBF24)
-                                              : Colors.black87,
-                                      size: 24.sp,
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16.r),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                                  child: Container(
+                                    width: 32.w,
+                                    height: 32.w,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0x4DFFFFFF), // #FFFFFF4D
+                                      borderRadius: BorderRadius.circular(16.r),
                                     ),
-                                    onPressed: controller.toggleBookmark,
+                                    child: Obx(
+                                      () => IconButton(
+                                        padding: EdgeInsets.zero,
+                                        icon: Icon(
+                                          controller.isBookmarked.value
+                                              ? Icons.bookmark_rounded
+                                              : Icons.bookmark_border_rounded,
+                                          color:
+                                              controller.isBookmarked.value
+                                                  ? const Color(0xFFFBBF24)
+                                                  : Colors.black87,
+                                          size: 20.sp,
+                                        ),
+                                        onPressed: controller.toggleBookmark,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -246,19 +259,31 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                               () => Text(
                                 controller.accommodation.value?.name ?? 'Đang tải...',
                                 style: TextStyle(
-                                  fontSize: 24.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF111827),
+                                  fontSize: 20.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF392856),
+                                  height: 1.2,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
                       ),
 
+                      // Divider
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                        child: Container(
+                          height: 1.h,
+                          color: const Color(0xFFEEE8FF),
+                        ),
+                      ),
+
                       // Description
                       Padding(
-                        padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 0),
+                        padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -620,103 +645,172 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                             ),
                             SizedBox(height: 8.h),
 
-                            // Room and guest selection
-                            Row(
-                              children: [
-                                // Night count
-                                Expanded(
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-                                      borderRadius: BorderRadius.circular(8.r),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Obx(
-                                          () => Text(
-                                            '${controller.totalNights} đêm',
-                                            style: TextStyle(
-                                              fontSize: 14.sp,
-                                              color: const Color(0xFF374151),
-                                            ),
+                            // Room selection with +/- buttons
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.bedroom_parent_outlined,
+                                        size: 20.sp,
+                                        color: const Color(0xFF9CA3AF),
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      Text(
+                                        'Số phòng',
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          color: const Color(0xFF374151),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      InkWell(
+                                        onTap: controller.decrementRoomCount,
+                                        child: Container(
+                                          width: 32.w,
+                                          height: 32.w,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                                            borderRadius: BorderRadius.circular(8.r),
+                                          ),
+                                          child: Icon(
+                                            Icons.remove,
+                                            size: 16.sp,
+                                            color: AppColors.primary,
                                           ),
                                         ),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.bedroom_parent_outlined,
-                                              size: 18.sp,
-                                              color: const Color(0xFF9CA3AF),
+                                      ),
+                                      SizedBox(width: 16.w),
+                                      Obx(
+                                        () => SizedBox(
+                                          width: 24.w,
+                                          child: Text(
+                                            '${controller.roomCount.value}',
+                                            style: TextStyle(
+                                              fontSize: 16.sp,
+                                              fontWeight: FontWeight.w600,
+                                              color: const Color(0xFF374151),
                                             ),
-                                            SizedBox(width: 4.w),
-                                            Obx(
-                                              () => Text(
-                                                '${controller.roomCount.value}',
-                                                style: TextStyle(
-                                                  fontSize: 14.sp,
-                                                  color: const Color(0xFF374151),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
+                                            textAlign: TextAlign.center,
+                                          ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      SizedBox(width: 16.w),
+                                      InkWell(
+                                        onTap: controller.incrementRoomCount,
+                                        child: Container(
+                                          width: 32.w,
+                                          height: 32.w,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                                            borderRadius: BorderRadius.circular(8.r),
+                                          ),
+                                          child: Icon(
+                                            Icons.add,
+                                            size: 16.sp,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
+                                ],
+                              ),
+                            ),
 
-                                SizedBox(width: 12.w),
+                            SizedBox(height: 12.h),
 
-                                // Guest count
-                                Expanded(
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-                                      borderRadius: BorderRadius.circular(8.r),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.person_outline,
-                                          size: 18.sp,
-                                          color: const Color(0xFF9CA3AF),
+                            // Guest count with +/- buttons
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.person_outline,
+                                        size: 20.sp,
+                                        color: const Color(0xFF9CA3AF),
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      Text(
+                                        'Số người',
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          color: const Color(0xFF374151),
                                         ),
-                                        SizedBox(width: 8.w),
-                                        Obx(
-                                          () => Text(
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      InkWell(
+                                        onTap: controller.decrementGuestCount,
+                                        child: Container(
+                                          width: 32.w,
+                                          height: 32.w,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                                            borderRadius: BorderRadius.circular(8.r),
+                                          ),
+                                          child: Icon(
+                                            Icons.remove,
+                                            size: 16.sp,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 16.w),
+                                      Obx(
+                                        () => SizedBox(
+                                          width: 24.w,
+                                          child: Text(
                                             '${controller.guestCount.value}',
                                             style: TextStyle(
-                                              fontSize: 14.sp,
+                                              fontSize: 16.sp,
+                                              fontWeight: FontWeight.w600,
                                               color: const Color(0xFF374151),
                                             ),
+                                            textAlign: TextAlign.center,
                                           ),
                                         ),
-                                        SizedBox(width: 12.w),
-                                        Container(
-                                          width: 4.w,
-                                          height: 4.w,
+                                      ),
+                                      SizedBox(width: 16.w),
+                                      InkWell(
+                                        onTap: controller.incrementGuestCount,
+                                        child: Container(
+                                          width: 32.w,
+                                          height: 32.w,
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF9CA3AF),
-                                            shape: BoxShape.circle,
+                                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                                            borderRadius: BorderRadius.circular(8.r),
+                                          ),
+                                          child: Icon(
+                                            Icons.add,
+                                            size: 16.sp,
+                                            color: AppColors.primary,
                                           ),
                                         ),
-                                        SizedBox(width: 12.w),
-                                        Text(
-                                          '0',
-                                          style: TextStyle(
-                                            fontSize: 14.sp,
-                                            color: const Color(0xFF374151),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ],
                         ),
