@@ -288,7 +288,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Giới thiệu nơi lưu trú',
+                              'Giới thiệu',
                               style: TextStyle(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,

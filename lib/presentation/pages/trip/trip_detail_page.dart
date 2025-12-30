@@ -8,6 +8,7 @@ import 'package:wanderlust/core/constants/app_assets.dart';
 import 'package:wanderlust/core/widgets/shimmer_loading.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/presentation/controllers/trip/trip_detail_controller.dart';
+import 'package:wanderlust/presentation/controllers/search/search_filter_controller.dart';
 
 class TripDetailPage extends StatelessWidget {
   const TripDetailPage({super.key});
@@ -341,13 +342,27 @@ class TripDetailPage extends StatelessWidget {
           _buildActionButton(
             icon: Icons.search,
             text: 'Tìm kiếm địa điểm',
-            onTap: () {
-              Get.toNamed('/search-location')?.then((result) {
-                if (result != null) {
-                  // Add selected location to trip
-                  controller.addLocationFromSearch(result);
-                }
-              });
+            onTap: () async {
+              // FORCE delete controller completely
+              Get.delete<SearchFilterController>(force: true);
+
+              final args = {
+                'mode': 'selection',
+                'tripId': controller.trip.value?.id,
+                'dayNumber': controller.selectedDay.value,
+              };
+
+              // Navigate with parameters in route
+              final result = await Get.toNamed(
+                '/search-filter',
+                arguments: args,
+                preventDuplicates: false,
+                parameters: args.map((key, value) => MapEntry(key, value?.toString() ?? '')),
+              );
+
+              if (result != null) {
+                controller.addLocationFromSearch(result);
+              }
             },
           ),
           SizedBox(height: 12.h),
