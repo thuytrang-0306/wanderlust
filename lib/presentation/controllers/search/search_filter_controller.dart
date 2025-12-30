@@ -18,6 +18,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
   // Controllers
   late TabController tabController;
   final searchController = TextEditingController();
+  final searchFocusNode = FocusNode();
 
   // Observables
   final searchQuery = ''.obs;
@@ -25,10 +26,27 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
   final RxBool isSearching = false.obs;
   final searchResults = <Map<String, dynamic>>[].obs;
   final recentSearches = <String>[].obs;
-  final featuredItems = <Map<String, dynamic>>[].obs;
+  final _allFeaturedItems = <Map<String, dynamic>>[].obs; // Store all items
 
   // Track last search to prevent stale results
   String _lastSearchQuery = '';
+
+  // Computed: Filter featured items based on selected tab
+  List<Map<String, dynamic>> get featuredItems {
+    // Tab indices: 0=Tất cả, 1=Chỗ ở, 2=Tour, 3=Địa điểm, 4=Ẩm thực
+    switch (selectedTab.value) {
+      case 1: // Chỗ ở
+        return _allFeaturedItems.where((item) => item['category'] == 'room').toList();
+      case 2: // Tour
+        return _allFeaturedItems.where((item) => item['category'] == 'tour').toList();
+      case 3: // Địa điểm - No listings, only blogs (will be empty for featured)
+        return [];
+      case 4: // Ẩm thực
+        return _allFeaturedItems.where((item) => item['category'] == 'food').toList();
+      default: // Tất cả
+        return _allFeaturedItems;
+    }
+  }
 
   // Filters
   final selectedSort = 'default'.obs;
@@ -44,13 +62,14 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
   // Search suggestions for empty state
   List<String> get searchSuggestions {
     // Return suggestions based on current tab
+    // Tab indices: 0=Tất cả, 1=Chỗ ở, 2=Tour, 3=Địa điểm, 4=Ẩm thực
     switch (selectedTab.value) {
       case 1: // Chỗ ở
         return ['Khách sạn Đà Lạt', 'Resort Phú Quốc', 'Homestay Sapa', 'Villa Nha Trang'];
       case 2: // Tour
         return ['Tour Hạ Long', 'Tour Phú Quốc', 'Tour Đà Nẵng', 'Tour Sapa'];
       case 3: // Địa điểm
-        return ['Hội An', 'Đà Lạt', 'Phú Quốc', 'Sapa', 'Nha Trang'];
+        return ['Hội An', 'Đà Lạt', 'Phú Quốc', 'Sapa', 'Nha Trang', 'Vịnh Hạ Long'];
       case 4: // Ẩm thực
         return ['Nhà hàng hải sản', 'Quán ăn địa phương', 'Buffet', 'Ẩm thực Việt'];
       default: // Tất cả
@@ -85,8 +104,8 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
       final listingService = Get.find<ListingService>();
       final listings = await listingService.searchListings(query: '', type: null);
 
-      // Take first 5 listings as featured
-      featuredItems.value = listings.take(5).map((listing) {
+      // Store all listings (will be filtered by tab via getter)
+      _allFeaturedItems.value = listings.map((listing) {
         return {
           'id': listing.id,
           'name': listing.title,
@@ -106,7 +125,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
         };
       }).toList();
 
-      LoggerService.d('Loaded ${featuredItems.length} featured items');
+      LoggerService.d('Loaded ${_allFeaturedItems.length} total featured items');
     } catch (e) {
       LoggerService.e('Error loading featured items', error: e);
       // Keep empty if error
@@ -135,9 +154,21 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
   }
 
   @override
+  void onReady() {
+    super.onReady();
+    // Delay focus request to avoid conflict with Hero animation
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (!isClosed) {
+        searchFocusNode.requestFocus();
+      }
+    });
+  }
+
+  @override
   void onClose() {
     tabController.dispose();
     searchController.dispose();
+    searchFocusNode.dispose();
     super.onClose();
   }
 
@@ -213,6 +244,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
       final query = searchQuery.value;
 
       // Determine listing type based on tab
+      // Tab indices: 0=Tất cả, 1=Chỗ ở, 2=Tour, 3=Địa điểm, 4=Ẩm thực
       ListingType? filterType;
       switch (selectedTab.value) {
         case 1: // Chỗ ở
@@ -221,11 +253,14 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
         case 2: // Tour
           filterType = ListingType.tour;
           break;
-        case 3: // Ẩm thực
+        case 3: // Địa điểm - will search blogs below
+          filterType = null;
+          break;
+        case 4: // Ẩm thực
           filterType = ListingType.food;
           break;
-        case 4: // Dịch vụ
-          filterType = ListingType.service;
+        default: // Tất cả
+          filterType = null;
           break;
       }
 
@@ -265,15 +300,24 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
 
       // Also search trips if on All or Tour tab
       if (selectedTab.value == 0 || selectedTab.value == 2) {
-        // Get both user trips and public trips
-        final userTrips = await tripService.getUserTrips();
-        final publicTrips = await tripService.getAllPublicTrips();
+        try {
+          // Get both user trips and public trips
+          final userTrips = await tripService.getUserTrips();
 
-        // Combine and deduplicate trips (user trips + public trips)
-        final allTrips = <String, dynamic>{};
-        for (final trip in [...userTrips, ...publicTrips]) {
-          allTrips[trip.id] = trip; // Use map to auto-deduplicate by ID
-        }
+          // Try to get public trips, but gracefully handle index errors
+          List<dynamic> publicTrips = [];
+          try {
+            publicTrips = await tripService.getAllPublicTrips();
+          } catch (e) {
+            LoggerService.w('Skipping public trips due to index requirement: $e');
+            // Continue without public trips - only show user trips
+          }
+
+          // Combine and deduplicate trips (user trips + public trips)
+          final allTrips = <String, dynamic>{};
+          for (final trip in [...userTrips, ...publicTrips]) {
+            allTrips[trip.id] = trip; // Use map to auto-deduplicate by ID
+          }
 
         for (final trip in allTrips.values) {
           // Apply search query filter
@@ -307,6 +351,43 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
             'category': 'trip',
             'image': trip.coverImage,
           });
+        }
+        } catch (e) {
+          LoggerService.e('Error searching trips', error: e);
+          // Continue without trips
+        }
+      }
+
+      // Search blogs if on All or "Địa điểm" tab
+      if (selectedTab.value == 0 || selectedTab.value == 3) {
+        try {
+          // Use searchPosts with query (empty string returns all recent posts)
+          final blogs = await blogService.searchPosts(query.isNotEmpty ? query : '');
+
+          for (final blog in blogs) {
+            // Apply location filter (check tags or content)
+            if (selectedLocation.value.isNotEmpty &&
+                !blog.title.toLowerCase().contains(selectedLocation.value.toLowerCase()) &&
+                !blog.content.toLowerCase().contains(selectedLocation.value.toLowerCase()) &&
+                !blog.tags.any((tag) => tag.toLowerCase().contains(selectedLocation.value.toLowerCase()))) {
+              continue;
+            }
+
+            results.add({
+              'id': blog.id,
+              'name': blog.title,
+              'type': 'Địa điểm',
+              'location': blog.tags.isNotEmpty ? blog.tags.first : 'Việt Nam',
+              'rating': 4.5,
+              'reviews': 0,
+              'price': null, // Blogs don't have price
+              'isFavorite': false,
+              'category': 'destination',
+              'image': blog.coverImage,
+            });
+          }
+        } catch (e) {
+          LoggerService.e('Error searching blogs', error: e);
         }
       }
 
@@ -751,24 +832,32 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
   }
 
   void navigateToDetail(Map<String, dynamic> item) {
-    // Navigate based on type
-    switch (item['category']) {
-      case 'hotel':
-        Get.toNamed('/accommodation-detail', arguments: item);
-        break;
+    // Navigate based on category
+    final category = item['category'] as String?;
+
+    switch (category) {
+      // Listings: room, tour, food, service
+      case 'room':
       case 'tour':
-        // Navigate to trip detail for now
+      case 'food':
+      case 'service':
+        // Navigate to accommodation detail page with listingId
+        Get.toNamed('/accommodation-detail', arguments: {
+          'listingId': item['listingId'] ?? item['id'],
+        });
+        break;
+
+      // Trips
+      case 'trip':
         Get.toNamed('/trip-detail', arguments: {'tripId': item['id']});
         break;
+
+      // Blogs/Destinations
       case 'destination':
-        // Navigate to blog detail for blogs
-        if (item['type'] == 'Bài viết') {
-          Get.toNamed('/blog-detail', arguments: {'postId': item['id']});
-        } else {
-          AppSnackbar.showInfo(message: 'Chi tiết ${item["type"]} đang phát triển');
-        }
+        Get.toNamed('/blog-detail', arguments: {'postId': item['id']});
         break;
-      case 'restaurant':
+
+      default:
         AppSnackbar.showInfo(message: 'Chi tiết ${item["type"]} đang phát triển');
         break;
     }

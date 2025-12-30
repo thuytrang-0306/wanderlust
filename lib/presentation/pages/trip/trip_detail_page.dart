@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
+import 'package:wanderlust/core/constants/app_assets.dart';
 import 'package:wanderlust/core/widgets/shimmer_loading.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/presentation/controllers/trip/trip_detail_controller.dart';
@@ -238,7 +239,12 @@ class TripDetailPage extends StatelessWidget {
                                 if (controller.dayHasItems(controller.selectedDay.value))
                                   _buildTimelineView(controller)
                                 else
-                                  _buildEmptyState(controller),
+                                  _buildEmptyPlaceholder(),
+
+                                SizedBox(height: 24.h),
+
+                                // Action buttons - Always show
+                                _buildActionButtons(controller),
                               ],
                             );
                           }),
@@ -291,90 +297,28 @@ class TripDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(TripDetailController controller) {
+  Widget _buildEmptyPlaceholder() {
     return Column(
       children: [
-        // Illustration - Car travel scene
+        // Illustration - Trip empty state
         Container(
           width: double.infinity,
-          height: 180.h,
-          margin: EdgeInsets.only(top: 40.h, bottom: 24.h),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Mountain background
-              Positioned(
-                bottom: 0,
-                child: CustomPaint(size: Size(300.w, 120.h), painter: _MountainPainter()),
-              ),
-              // Car illustration
-              Positioned(
-                bottom: 20.h,
-                child: Container(
-                  width: 100.w,
-                  height: 60.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFBBF24), // Yellow car
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Car windows
-                      Positioned(
-                        top: 5.h,
-                        left: 20.w,
-                        child: Container(
-                          width: 60.w,
-                          height: 25.h,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF60A5FA),
-                            borderRadius: BorderRadius.circular(4.r),
-                          ),
-                        ),
-                      ),
-                      // Wheels
-                      Positioned(
-                        bottom: -5.h,
-                        left: 15.w,
-                        child: Container(
-                          width: 20.w,
-                          height: 20.w,
-                          decoration: const BoxDecoration(
-                            color: Colors.black87,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: -5.h,
-                        right: 15.w,
-                        child: Container(
-                          width: 20.w,
-                          height: 20.w,
-                          decoration: const BoxDecoration(
-                            color: Colors.black87,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Trees
-              Positioned(
-                left: 40.w,
-                bottom: 10.h,
-                child: Icon(Icons.park, size: 40.sp, color: const Color(0xFF10B981)),
-              ),
-              Positioned(
-                right: 40.w,
-                bottom: 10.h,
-                child: Icon(Icons.park, size: 50.sp, color: const Color(0xFF059669)),
-              ),
-            ],
+          height: 200.h,
+          child: Image.asset(
+            AppAssets.tripEmptyState,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback if image not found
+              return Icon(
+                Icons.travel_explore,
+                size: 100.sp,
+                color: AppColors.neutral300,
+              );
+            },
           ),
         ),
+
+        SizedBox(height: 12.h),
 
         // Empty state text
         Padding(
@@ -385,43 +329,42 @@ class TripDetailPage extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-
-        SizedBox(height: 32.h),
-
-        // Action buttons
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w),
-          child: Column(
-            children: [
-              _buildActionButton(
-                icon: Icons.search,
-                text: 'Tìm kiếm địa điểm',
-                onTap: () {
-                  Get.toNamed('/search-location')?.then((result) {
-                    if (result != null) {
-                      // Add selected location to trip
-                      controller.addLocationFromSearch(result);
-                    }
-                  });
-                },
-              ),
-              SizedBox(height: 12.h),
-              _buildActionButton(
-                icon: Icons.add,
-                text: 'Thêm địa điểm riêng tư',
-                onTap: () {
-                  Get.toNamed('/add-private-location')?.then((result) {
-                    if (result != null) {
-                      // Handle the returned location data
-                      controller.addPrivateLocation(result);
-                    }
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildActionButtons(TripDetailController controller) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        children: [
+          _buildActionButton(
+            icon: Icons.search,
+            text: 'Tìm kiếm địa điểm',
+            onTap: () {
+              Get.toNamed('/search-location')?.then((result) {
+                if (result != null) {
+                  // Add selected location to trip
+                  controller.addLocationFromSearch(result);
+                }
+              });
+            },
+          ),
+          SizedBox(height: 12.h),
+          _buildActionButton(
+            icon: Icons.add,
+            text: 'Thêm địa điểm riêng tư',
+            onTap: () {
+              Get.toNamed('/add-private-location')?.then((result) {
+                if (result != null) {
+                  // Handle the returned location data
+                  controller.addPrivateLocation(result);
+                }
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -769,49 +712,6 @@ class TripDetailPage extends StatelessWidget {
       ],
     );
   }
-}
-
-// Custom painter for mountain background
-class _MountainPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint();
-
-    // First mountain layer (lighter)
-    paint.color = const Color(0xFF93C5FD);
-    final path1 = Path();
-    path1.moveTo(0, size.height);
-    path1.lineTo(0, size.height * 0.4);
-    path1.quadraticBezierTo(
-      size.width * 0.25,
-      size.height * 0.2,
-      size.width * 0.5,
-      size.height * 0.5,
-    );
-    path1.quadraticBezierTo(size.width * 0.75, size.height * 0.3, size.width, size.height * 0.6);
-    path1.lineTo(size.width, size.height);
-    path1.close();
-    canvas.drawPath(path1, paint);
-
-    // Second mountain layer (darker)
-    paint.color = const Color(0xFF60A5FA);
-    final path2 = Path();
-    path2.moveTo(0, size.height);
-    path2.lineTo(0, size.height * 0.6);
-    path2.quadraticBezierTo(
-      size.width * 0.3,
-      size.height * 0.4,
-      size.width * 0.6,
-      size.height * 0.7,
-    );
-    path2.quadraticBezierTo(size.width * 0.8, size.height * 0.5, size.width, size.height * 0.8);
-    path2.lineTo(size.width, size.height);
-    path2.close();
-    canvas.drawPath(path2, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // Show location menu bottom sheet

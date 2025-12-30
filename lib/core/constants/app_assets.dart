@@ -40,6 +40,7 @@ class AppAssets {
 
   // Planning Section
   static const String planningDecoration = '$_imagesPath/planning_decoration.png';
+  static const String tripEmptyState = '$_imagesPath/trip_empty_state.png';
 
   // ============= ICONS =============
   // Bottom Navigation icons (PNG with multi-resolution)

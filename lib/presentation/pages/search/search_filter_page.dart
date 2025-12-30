@@ -55,8 +55,8 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                       ),
                       child: TextField(
                         controller: controller.searchController,
+                        focusNode: controller.searchFocusNode,
                         onChanged: controller.onSearchChanged,
-                        autofocus: true,
                         decoration: InputDecoration(
                           hintText: 'Tìm kiếm địa điểm, khách sạn, tour...',
                           hintStyle: AppTypography.bodyM.copyWith(color: AppColors.textTertiary),
@@ -384,9 +384,14 @@ class SearchFilterPage extends GetView<SearchFilterController> {
           // Featured/Trending items
           Text('Gợi ý cho bạn', style: AppTypography.h3),
           SizedBox(height: AppSpacing.s4),
-          Obx(() => controller.featuredItems.isNotEmpty
+          Obx(() {
+            // Access selectedTab to trigger rebuild when tab changes
+            final _ = controller.selectedTab.value;
+            final items = controller.featuredItems;
+
+            return items.isNotEmpty
               ? Column(
-                  children: controller.featuredItems.take(3).map((item) {
+                  children: items.map((item) {
                     return _buildResultCard(item);
                   }).toList(),
                 )
@@ -404,7 +409,8 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                       ],
                     ),
                   ),
-                )),
+                );
+          }),
         ],
       ),
     );
