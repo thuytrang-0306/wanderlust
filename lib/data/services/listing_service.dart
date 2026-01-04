@@ -36,46 +36,87 @@ class ListingService extends GetxService {
         businessListings.clear();
       }
     });
-    
-    // Load immediately if business exists
-    if (_businessService.currentBusinessProfile.value != null) {
-      loadBusinessListings();
-    }
+
+    // ✅ REMOVED: Duplicate immediate load - ever() listener will auto-trigger
+    // This eliminates double Firestore queries on app start
   }
   
   /// Load all listings for current business
   Future<void> loadBusinessListings({ListingType? type}) async {
+    isLoading.value = true;
+
     try {
-      isLoading.value = true;
       final businessId = _businessService.currentBusinessProfile.value?.id;
-      
+
       if (businessId == null) {
         LoggerService.w('No business profile');
+        isLoading.value = false;
         return;
       }
-      
+
       Query<Map<String, dynamic>> query = _firestore
           .collection(_collection)
           .where('businessId', isEqualTo: businessId);
-      
+
       // Filter by type if specified
       if (type != null) {
         query = query.where('type', isEqualTo: type.value);
       }
-      
-      final snapshot = await query
+
+      // ✅ ULTRA-FAST: Try cache first for instant loading!
+      try {
+        final cacheSnapshot = await query
+            .orderBy('createdAt', descending: true)
+            .get(const GetOptions(source: Source.cache));
+
+        if (cacheSnapshot.docs.isNotEmpty) {
+          // Got data from cache - instant!
+          businessListings.value = cacheSnapshot.docs
+              .map((doc) => ListingModel.fromJson(doc.data(), doc.id))
+              .toList();
+          LoggerService.i('📱 Loaded ${businessListings.length} listings from CACHE (instant)');
+          isLoading.value = false;
+
+          // Then fetch fresh data in background
+          _fetchFreshListings(query);
+          return;
+        }
+      } catch (cacheError) {
+        LoggerService.d('Cache miss, will fetch from server');
+      }
+
+      // No cache or cache error, fetch from server
+      final serverSnapshot = await query
           .orderBy('createdAt', descending: true)
           .get();
-      
+
+      businessListings.value = serverSnapshot.docs
+          .map((doc) => ListingModel.fromJson(doc.data(), doc.id))
+          .toList();
+
+      LoggerService.i('📱 Loaded ${businessListings.length} listings from SERVER');
+    } catch (e) {
+      LoggerService.e('Error loading listings', error: e);
+      businessListings.value = [];
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Fetch fresh data in background after showing cache
+  Future<void> _fetchFreshListings(Query<Map<String, dynamic>> query) async {
+    try {
+      final snapshot = await query
+          .orderBy('createdAt', descending: true)
+          .get(const GetOptions(source: Source.server));
+
       businessListings.value = snapshot.docs
           .map((doc) => ListingModel.fromJson(doc.data(), doc.id))
           .toList();
-      
-      LoggerService.i('Loaded ${businessListings.length} listings');
+
+      LoggerService.i('📱 Refreshed ${businessListings.length} listings from SERVER (background)');
     } catch (e) {
-      LoggerService.e('Error loading listings', error: e);
-    } finally {
-      isLoading.value = false;
+      LoggerService.e('Error refreshing listings', error: e);
     }
   }
   
@@ -202,7 +243,7 @@ class ListingService extends GetxService {
     }
   }
   
-  /// Search listings
+  /// Search listings with CACHE-FIRST approach
   Future<List<ListingModel>> searchListings({
     String? query,
     ListingType? type,
@@ -214,29 +255,47 @@ class ListingService extends GetxService {
       Query<Map<String, dynamic>> queryRef = _firestore
           .collection(_collection)
           .where('isActive', isEqualTo: true);
-      
+
       if (type != null) {
         queryRef = queryRef.where('type', isEqualTo: type.value);
       }
-      
+
       if (businessId != null) {
         queryRef = queryRef.where('businessId', isEqualTo: businessId);
       }
-      
+
       if (minPrice != null) {
         queryRef = queryRef.where('price', isGreaterThanOrEqualTo: minPrice);
       }
-      
+
       if (maxPrice != null) {
         queryRef = queryRef.where('price', isLessThanOrEqualTo: maxPrice);
       }
-      
-      final snapshot = await queryRef.get();
-      
+
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+
+      // ✅ ULTRA-FAST: Try cache first for instant results!
+      try {
+        final cacheSnapshot = await queryRef.get(const GetOptions(source: Source.cache));
+        if (cacheSnapshot.docs.isNotEmpty) {
+          LoggerService.i('📱 Search listings: ${cacheSnapshot.docs.length} from CACHE (instant)');
+          snapshot = cacheSnapshot;
+        } else {
+          // Cache empty, get from server
+          snapshot = await queryRef.get();
+          LoggerService.i('📱 Search listings: ${snapshot.docs.length} from SERVER');
+        }
+      } catch (cacheError) {
+        // Cache miss, get from server
+        LoggerService.d('Cache miss for search, fetching from server');
+        snapshot = await queryRef.get();
+        LoggerService.i('📱 Search listings: ${snapshot.docs.length} from SERVER');
+      }
+
       var listings = snapshot.docs
           .map((doc) => ListingModel.fromJson(doc.data(), doc.id))
           .toList();
-      
+
       // Filter by query text
       if (query != null && query.isNotEmpty) {
         final lowerQuery = query.toLowerCase();
@@ -246,7 +305,7 @@ class ListingService extends GetxService {
             l.businessName.toLowerCase().contains(lowerQuery)
         ).toList();
       }
-      
+
       return listings;
     } catch (e) {
       LoggerService.e('Error searching listings', error: e);

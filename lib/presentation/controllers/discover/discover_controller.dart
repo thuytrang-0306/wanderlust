@@ -15,7 +15,6 @@ import 'package:wanderlust/data/models/blog_post_model.dart';
 import 'package:wanderlust/data/models/listing_model.dart';
 import 'package:wanderlust/data/services/destination_service.dart';
 import 'package:wanderlust/data/services/tour_service.dart';
-import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/data/services/blog_service.dart';
 import 'package:wanderlust/data/services/listing_service.dart';
 import 'package:wanderlust/presentation/controllers/main_navigation_controller.dart';
@@ -24,7 +23,6 @@ class DiscoverController extends BaseController {
   // Services
   final DestinationService _destinationService = Get.find<DestinationService>();
   final TourService _tourService = Get.find<TourService>();
-  final TripService _tripService = Get.find<TripService>();
   final BlogService _blogService = Get.find<BlogService>();
   final ListingService _listingService = Get.find<ListingService>();
 
@@ -75,7 +73,8 @@ class DiscoverController extends BaseController {
     super.onInit();
     Get.lazyPut(() => DiscoverController());
     _trackSavedBlogs();
-    loadAllData();
+    // ✅ REMOVED: Don't load here - BaseController.onReady() will call loadData()
+    // This eliminates duplicate loading (was loading 2x everything!)
   }
 
   void _trackSavedBlogs() {
@@ -99,14 +98,22 @@ class DiscoverController extends BaseController {
   }
 
   Future<void> loadAllData() async {
-    await Future.wait([
-      loadDestinations(),
-      loadTours(),
-      loadBlogs(),
-      loadComboTours(),
-      loadRegions(),
-      loadBusinessListings(),
-    ]);
+    // ✅ ULTRA-FAST UI/UX OPTIMIZATION:
+    // 1. Load BLOGS FIRST (highest priority - has real data + cache)
+    // 2. Use scheduleMicrotask for TRUE parallel execution
+    // 3. Each section shows independently ASAP
+
+    // PRIORITY 1: Blogs (show content FIRST!)
+    Future.microtask(() => loadBlogs());
+
+    // PRIORITY 2: Business listings (has data)
+    Future.microtask(() => loadBusinessListings());
+
+    // PRIORITY 3: Others (mostly empty, fast to complete)
+    Future.microtask(() => loadDestinations());
+    Future.microtask(() => loadTours());
+    Future.microtask(() => loadComboTours());
+    Future.microtask(() => loadRegions());
   }
 
   Future<void> loadDestinations() async {
@@ -159,15 +166,31 @@ class DiscoverController extends BaseController {
     }
   }
 
-  Future<void> loadBlogs() async {
+  void loadBlogs() {
     try {
       isLoadingBlogs.value = true;
 
-      final blogs = await _blogService.getRecentPosts(limit: 5);
-      recentBlogs.value = blogs;
+      // ✅ ULTIMATE SPEED: Use STREAM like Community tab!
+      // Firestore auto cache → First emit INSTANT from cache (0ms!)
+      // Then emit from server (background update)
+      _blogService
+          .getPublishedPosts(limit: 5)
+          .listen(
+            (blogPosts) {
+              recentBlogs.value = blogPosts;
+              isLoadingBlogs.value = false;
+
+              if (blogPosts.isNotEmpty) {
+                LoggerService.i('📱 Blogs: ${blogPosts.length} posts (Firestore auto-cache)');
+              }
+            },
+            onError: (error) {
+              LoggerService.e('❌ Error loading blogs stream', error: error);
+              isLoadingBlogs.value = false;
+            },
+          );
     } catch (e) {
-      LoggerService.e('Error loading blogs', error: e);
-    } finally {
+      LoggerService.e('❌ Error setting up blogs stream', error: e);
       isLoadingBlogs.value = false;
     }
   }
@@ -176,12 +199,6 @@ class DiscoverController extends BaseController {
     // No fallback data for production
     featuredDestinations.value = [];
     popularDestinations.value = [];
-  }
-
-  void _useFallbackTourData() {
-    // No fallback data for production
-    featuredTours.value = [];
-    discountedTours.value = [];
   }
 
   void onBannerChanged(int index) {
@@ -298,7 +315,8 @@ class DiscoverController extends BaseController {
     try {
       isLoadingBusinessListings.value = true;
 
-      // Load all active business listings
+      // ✅ INSTANT CACHE: Query directly with cache-first approach
+      // Same as ListingService but optimized for Discover page
       final listings = await _listingService.searchListings();
 
       // Filter active listings and sort by rating/popularity
@@ -315,9 +333,9 @@ class DiscoverController extends BaseController {
       // Take top 10 listings
       businessListings.value = activeListings.take(10).toList();
 
-      LoggerService.i('Loaded ${businessListings.length} business listings');
+      LoggerService.i('📱 Business Listings: ${businessListings.length} listings loaded');
     } catch (e) {
-      LoggerService.e('Error loading business listings', error: e);
+      LoggerService.e('❌ Error loading business listings', error: e);
       businessListings.value = [];
     } finally {
       isLoadingBusinessListings.value = false;

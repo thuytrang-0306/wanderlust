@@ -1634,16 +1634,14 @@ class DiscoverPage extends GetView<DiscoverController> {
                                             color: AppColors.warning,
                                           ),
                                           SizedBox(width: 4.w),
-                                          Text(
-                                            listing.rating.toStringAsFixed(1),
-                                            style: AppTypography.bodyS.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          Text(
-                                            ' (${listing.reviews})',
-                                            style: AppTypography.bodyS.copyWith(
-                                              color: AppColors.neutral600,
+                                          Flexible(
+                                            child: Text(
+                                              '${listing.rating.toStringAsFixed(1)} (${listing.reviews})',
+                                              style: AppTypography.bodyS.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                         ],
@@ -1657,22 +1655,30 @@ class DiscoverPage extends GetView<DiscoverController> {
                               Row(
                                 children: [
                                   if (listing.hasDiscount)
-                                    Text(
-                                      listing.formattedPrice,
-                                      style: AppTypography.bodyS.copyWith(
-                                        color: AppColors.neutral500,
-                                        decoration: TextDecoration.lineThrough,
+                                    Flexible(
+                                      child: Text(
+                                        listing.formattedPrice,
+                                        style: AppTypography.bodyS.copyWith(
+                                          color: AppColors.neutral500,
+                                          decoration: TextDecoration.lineThrough,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   if (listing.hasDiscount)
                                     SizedBox(width: 6.w),
-                                  Text(
-                                    listing.hasDiscount
-                                        ? listing.formattedDiscountPrice
-                                        : listing.formattedPrice,
-                                    style: AppTypography.bodyM.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.bold,
+                                  Flexible(
+                                    child: Text(
+                                      listing.hasDiscount
+                                          ? listing.formattedDiscountPrice
+                                          : listing.formattedPrice,
+                                      style: AppTypography.bodyM.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
