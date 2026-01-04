@@ -11,6 +11,7 @@ import 'package:wanderlust/presentation/pages/planning/planning_page.dart';
 import 'package:wanderlust/presentation/pages/notifications/notifications_page.dart';
 import 'package:wanderlust/presentation/pages/account/account_page.dart';
 import 'package:wanderlust/core/constants/app_assets.dart';
+import 'package:wanderlust/shared/core/services/notification_service.dart';
 
 class MainNavigationPage extends StatelessWidget {
   const MainNavigationPage({super.key});
@@ -18,6 +19,7 @@ class MainNavigationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(MainNavigationController());
+    final notificationService = Get.find<NotificationService>();
 
     // List of pages
     final List<Widget> pages = [
@@ -81,6 +83,7 @@ class MainNavigationPage extends StatelessWidget {
                 label: 'Thông báo',
                 index: 3,
                 currentIndex: controller.currentIndex.value,
+                badgeCount: notificationService.unreadCount.value,
               ),
               _buildNavItem(
                 icon: AppAssets.iconTabAccount,
@@ -100,46 +103,93 @@ class MainNavigationPage extends StatelessWidget {
     required String label,
     required int index,
     required int currentIndex,
+    int? badgeCount,
   }) {
     final isSelected = index == currentIndex;
+    final showBadge = badgeCount != null && badgeCount > 0;
+
+    Widget iconWidget = Image.asset(
+      icon,
+      width: 24.w,
+      height: 24.w,
+      color: isSelected ? AppColors.primary : AppColors.textTertiary,
+      errorBuilder: (context, error, stackTrace) {
+        // Fallback icon if image not found
+        IconData fallbackIcon;
+        switch (index) {
+          case 0:
+            fallbackIcon = Icons.explore;
+            break;
+          case 1:
+            fallbackIcon = Icons.people;
+            break;
+          case 2:
+            fallbackIcon = Icons.calendar_today;
+            break;
+          case 3:
+            fallbackIcon = Icons.notifications;
+            break;
+          case 4:
+            fallbackIcon = Icons.person;
+            break;
+          default:
+            fallbackIcon = Icons.home;
+        }
+        return Icon(
+          fallbackIcon,
+          size: 24.w,
+          color: isSelected ? AppColors.primary : AppColors.textTertiary,
+        );
+      },
+    );
+
+    // Wrap with badge if needed
+    if (showBadge) {
+      iconWidget = Stack(
+        clipBehavior: Clip.none,
+        children: [
+          iconWidget,
+          Positioned(
+            right: -6.w,
+            top: -4.h,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: badgeCount! > 9 ? 5.w : 6.w,
+                vertical: 2.h,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(
+                  color: AppColors.white,
+                  width: 1.5,
+                ),
+              ),
+              constraints: BoxConstraints(
+                minWidth: 18.w,
+                minHeight: 18.h,
+              ),
+              child: Center(
+                child: Text(
+                  badgeCount > 99 ? '99+' : badgeCount.toString(),
+                  style: AppTypography.bodyXS.copyWith(
+                    color: AppColors.white,
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.bold,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     return BottomNavigationBarItem(
       icon: Padding(
         padding: EdgeInsets.only(bottom: 4.h),
-        child: Image.asset(
-          icon,
-          width: 24.w,
-          height: 24.w,
-          color: isSelected ? AppColors.primary : AppColors.textTertiary,
-          errorBuilder: (context, error, stackTrace) {
-            // Fallback icon if image not found
-            IconData fallbackIcon;
-            switch (index) {
-              case 0:
-                fallbackIcon = Icons.explore;
-                break;
-              case 1:
-                fallbackIcon = Icons.people;
-                break;
-              case 2:
-                fallbackIcon = Icons.calendar_today;
-                break;
-              case 3:
-                fallbackIcon = Icons.notifications;
-                break;
-              case 4:
-                fallbackIcon = Icons.person;
-                break;
-              default:
-                fallbackIcon = Icons.home;
-            }
-            return Icon(
-              fallbackIcon,
-              size: 24.w,
-              color: isSelected ? AppColors.primary : AppColors.textTertiary,
-            );
-          },
-        ),
+        child: iconWidget,
       ),
       label: label,
     );
