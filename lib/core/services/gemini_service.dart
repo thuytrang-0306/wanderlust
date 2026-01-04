@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
@@ -10,8 +11,8 @@ import 'package:wanderlust/data/models/ai_conversation.dart';
 class GeminiService extends GetxService {
   static GeminiService get to => Get.find();
 
-  // Gemini API configuration
-  static const String _apiKey = 'AIzaSyBLoDJXNEB-RBOapeBAijsOjEMG1dUh4pc';
+  // Gemini API configuration - Load from .env for security
+  static String get _apiKey => dotenv.env['GEMINI_API_KEY'] ?? '';
   static const String _modelName = 'gemini-2.5-flash';
 
   // Gemini model instance
@@ -32,6 +33,13 @@ class GeminiService extends GetxService {
   // Initialize Gemini model
   void _initializeGemini() {
     try {
+      // Validate API key
+      if (_apiKey.isEmpty) {
+        throw Exception(
+          'Gemini API key not found. Please add GEMINI_API_KEY to .env file',
+        );
+      }
+
       _model = GenerativeModel(
         model: _modelName,
         apiKey: _apiKey,

@@ -63,5 +63,10 @@ macos/Flutter/ephemeral/
 # Coverage
 coverage/
 
+# Environment variables - SECURITY
+.env
+.env.*
+!.env.example
+
 # Exceptions to above rules.
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
