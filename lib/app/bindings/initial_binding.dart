@@ -8,6 +8,7 @@ import 'package:wanderlust/data/services/user_profile_service.dart';
 import 'package:wanderlust/data/services/business_service.dart';
 import 'package:wanderlust/data/services/listing_service.dart';
 import 'package:wanderlust/data/services/booking_service.dart';
+import 'package:wanderlust/data/services/payos_service.dart';
 import 'package:wanderlust/presentation/controllers/auth_controller.dart';
 import 'package:wanderlust/presentation/controllers/app_controller.dart';
 import 'package:wanderlust/shared/core/services/local_notification_service.dart';
@@ -33,6 +34,7 @@ class InitialBinding extends Bindings {
     Get.lazyPut(() => BusinessService(), fenix: true);
     Get.lazyPut(() => ListingService(), fenix: true);
     Get.lazyPut(() => BookingService(), fenix: true);
+    Get.lazyPut(() => PayOSService(), fenix: true);
     Get.lazyPut(() => SavedBlogsService(), fenix: true);
     
     // AI Services - lazy load

@@ -1,13 +1,14 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/data/services/booking_service.dart';
+import 'package:wanderlust/data/services/payos_service.dart';
 import 'package:wanderlust/data/models/booking_model.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 
 class BookingInfoController extends BaseController {
   final BookingService _bookingService = Get.find<BookingService>();
+  final PayOSService _payosService = Get.find<PayOSService>();
   
   // Observable values
   final RxMap<String, dynamic> bookingData = <String, dynamic>{}.obs;
@@ -113,29 +114,6 @@ class BookingInfoController extends BaseController {
 
     isProcessing.value = true;
 
-    // Show processing dialog
-    Get.dialog(
-      WillPopScope(
-        onWillPop: () async => false,
-        child: const Center(
-          child: Card(
-            child: Padding(
-              padding: EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Đang xử lý thanh toán...'),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-      barrierDismissible: false,
-    );
-
     try {
       // Create customer info
       final customerInfo = CustomerInfo(
@@ -152,11 +130,11 @@ class BookingInfoController extends BaseController {
         nationality: 'Vietnam',
       );
 
-      // Create booking in Firestore
+      // Create booking in Firestore with PENDING status
       String? bookingId;
-      
+
       if (checkInDate != null && checkOutDate != null) {
-        // Create accommodation booking
+        // Create accommodation booking (status will be 'pending' by default)
         bookingId = await _bookingService.createAccommodationBooking(
           accommodationId: accommodationId ?? listingId ?? '',
           accommodationName: bookingData['accommodationName'] ?? '',
@@ -169,42 +147,34 @@ class BookingInfoController extends BaseController {
           unitPrice: (bookingData['price'] as num).toDouble(),
           totalPrice: (bookingData['total'] as num).toDouble(),
           customerInfo: customerInfo,
-          paymentMethod: bookingData['paymentMethod'] ?? 'cash',
+          paymentMethod: 'payos', // PayOS payment method
           specialRequests: '',
         );
       }
 
       if (bookingId != null) {
-        LoggerService.i('Booking created successfully: $bookingId');
-        
-        // Update booking status to confirmed
-        await _bookingService.confirmBooking(bookingId);
-        
-        // Update payment status
-        await _bookingService.processPayment(bookingId, 'payment_${DateTime.now().millisecondsSinceEpoch}');
-        
-        // Navigate to success page with booking data
-        Get.offNamed(
-          '/payment-success',
+        LoggerService.i('Booking created successfully (pending payment): $bookingId');
+
+        // Generate unique order code for PayOS
+        final orderCode = _payosService.generateOrderCode();
+
+        // Navigate to PayOS QR payment page
+        Get.toNamed(
+          '/payment-qr',
           arguments: {
             'bookingId': bookingId,
-            'hotelName': bookingData['accommodationName'],
-            'roomType': bookingData['roomType'],
-            'guestName': bookingData['guestName'],
-            'checkIn': bookingData['checkIn'],
-            'checkOut': bookingData['checkOut'],
-            'nights': bookingData['nights'],
-            'totalAmount': bookingData['total'].toString(),
+            'orderCode': orderCode,
+            'totalAmount': (bookingData['total'] as num).toInt(),
+            'bookingData': bookingData,
           },
         );
       } else {
         throw Exception('Không thể tạo đặt phòng');
       }
     } catch (e) {
-      LoggerService.e('Error processing payment', error: e);
-      Get.back(); // Close dialog
+      LoggerService.e('Error creating booking', error: e);
       AppSnackbar.showError(
-        message: 'Có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại.',
+        message: 'Có lỗi xảy ra khi tạo đặt phòng. Vui lòng thử lại.',
       );
     } finally {
       isProcessing.value = false;
