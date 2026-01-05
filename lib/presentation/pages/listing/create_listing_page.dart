@@ -61,9 +61,6 @@ class CreateListingPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Type selector (only for create mode)
-                if (!isEdit) _buildTypeSelector(controller),
-                
                 // Images section
                 _buildImageSection(controller),
                 
@@ -264,11 +261,69 @@ class CreateListingPage extends StatelessWidget {
         Container(
           color: Colors.white,
           padding: EdgeInsets.all(AppSpacing.s5),
-          child: AppTextField(
-            controller: controller.titleController,
-            label: 'Tên ${controller.selectedType.value.displayName.toLowerCase()} *',
-            hintText: _getTitleHint(controller.selectedType.value),
-            validator: controller.validateTitle,
+          child: Column(
+            children: [
+              // Listing type dropdown (small, not the big selector)
+              if (!controller.isEditMode)
+                Padding(
+                  padding: EdgeInsets.only(bottom: AppSpacing.s4),
+                  child: Obx(() => DropdownButtonFormField<ListingType>(
+                    value: controller.selectedType.value,
+                    decoration: InputDecoration(
+                      labelText: 'Loại sản phẩm/dịch vụ *',
+                      labelStyle: AppTypography.bodyS.copyWith(
+                        color: AppColors.neutral600,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                        borderSide: BorderSide(color: AppColors.neutral300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                        borderSide: BorderSide(color: AppColors.neutral300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                        borderSide: BorderSide(color: AppColors.primary, width: 2),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s4,
+                        vertical: AppSpacing.s3,
+                      ),
+                    ),
+                    items: ListingType.values.map((type) {
+                      return DropdownMenuItem(
+                        value: type,
+                        child: Row(
+                          children: [
+                            Text(type.icon, style: TextStyle(fontSize: 18.sp)),
+                            SizedBox(width: AppSpacing.s2),
+                            Text(
+                              type.displayName,
+                              style: AppTypography.bodyM.copyWith(
+                                color: AppColors.neutral800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (type) {
+                      if (type != null) {
+                        controller.changeType(type);
+                      }
+                    },
+                  )),
+                ),
+
+              // Title field
+              AppTextField(
+                controller: controller.titleController,
+                label: 'Tên ${controller.selectedType.value.displayName.toLowerCase()} *',
+                hintText: _getTitleHint(controller.selectedType.value),
+                validator: controller.validateTitle,
+              ),
+            ],
           ),
         ),
       ],

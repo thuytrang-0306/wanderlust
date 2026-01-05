@@ -33,7 +33,7 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     // Non-blocking async load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
@@ -75,11 +75,14 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.settings_outlined, color: AppColors.neutral700),
-            onPressed: () {
-              // TODO: Implement business settings page
-              AppSnackbar.showInfo(message: 'Cài đặt doanh nghiệp sẽ sớm được cập nhật');
+            icon: Icon(Icons.edit_outlined, color: AppColors.neutral700),
+            onPressed: () async {
+              final result = await Get.toNamed('/business-edit');
+              if (result == true) {
+                _loadData();
+              }
             },
+            tooltip: 'Chỉnh sửa thông tin',
           ),
         ],
       ),
@@ -107,8 +110,6 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                 tabs: [
                   Tab(text: 'Tổng quan'),
                   Tab(text: 'Listings'),
-                  Tab(text: 'Đánh giá'),
-                  Tab(text: 'Thống kê'),
                 ],
               ),
             ),
@@ -120,8 +121,6 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                 children: [
                   _buildOverviewTab(businessProfile),
                   _buildListingsTab(businessProfile),
-                  _buildReviewsTab(businessProfile),
-                  _buildAnalyticsTab(businessProfile),
                 ],
               ),
             ),
@@ -295,18 +294,11 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                   SizedBox(width: AppSpacing.s2),
                   Expanded(
                     child: Text(
-                      'Hồ sơ đang chờ xác thực. Tải lên giấy tờ để được xác thực.',
+                      'Hồ sơ đang chờ xác thực. Tải lên giấy tờ trong phần "Chỉnh sửa thông tin" để được xác thực.',
                       style: AppTypography.bodyS.copyWith(
                         color: Colors.orange[800],
                       ),
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      // TODO: Implement business verification page
-                      AppSnackbar.showInfo(message: 'Tính năng xác thực sẽ sớm được cập nhật');
-                    },
-                    child: Text('Xác thực'),
                   ),
                 ],
               ),
@@ -389,19 +381,11 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                   icon: Icons.edit,
                   title: 'Chỉnh sửa thông tin',
                   subtitle: 'Cập nhật thông tin doanh nghiệp',
-                  onTap: () {
-                    // TODO: Implement business edit page
-                    AppSnackbar.showInfo(message: 'Tính năng chỉnh sửa sẽ sớm được cập nhật');
-                  },
-                ),
-                Divider(height: 24.h),
-                _buildActionItem(
-                  icon: Icons.campaign,
-                  title: 'Tạo khuyến mãi',
-                  subtitle: 'Thu hút khách hàng mới',
-                  onTap: () {
-                    // TODO: Implement promotion page
-                    AppSnackbar.showInfo(message: 'Tính năng khuyến mãi sẽ sớm được cập nhật');
+                  onTap: () async {
+                    final result = await Get.toNamed('/business-edit');
+                    if (result == true) {
+                      _loadData();
+                    }
                   },
                 ),
                 // Migration helper (temporary - remove after migration)
@@ -794,7 +778,10 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
                         IconButton(
                           icon: Icon(Icons.edit_outlined, color: AppColors.neutral700),
                           onPressed: () async {
-                            final result = await Get.toNamed('/create-listing', arguments: listing.id);
+                            final result = await Get.toNamed('/create-listing', arguments: {
+                              'isEdit': true,
+                              'listingId': listing.id,
+                            });
                             if (result == true) {
                               _listingService.loadBusinessListings();
                             }
@@ -922,74 +909,7 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
       ),
     );
   }
-  
-  Widget _buildReviewsTab(BusinessProfileModel business) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.rate_review_outlined,
-            size: 80.sp,
-            color: AppColors.neutral400,
-          ),
-          SizedBox(height: AppSpacing.s4),
-          Text(
-            'Chưa có đánh giá',
-            style: AppTypography.bodyL.copyWith(
-              color: AppColors.neutral700,
-            ),
-          ),
-          SizedBox(height: AppSpacing.s2),
-          Text(
-            'Đánh giá sẽ xuất hiện ở đây',
-            style: AppTypography.bodyM.copyWith(
-              color: AppColors.neutral600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildAnalyticsTab(BusinessProfileModel business) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(AppSpacing.s5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Thống kê tháng này',
-            style: AppTypography.bodyL.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.neutral900,
-            ),
-          ),
-          SizedBox(height: AppSpacing.s4),
-          
-          Container(
-            padding: EdgeInsets.all(AppSpacing.s4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Column(
-              children: [
-                _buildAnalyticRow('Lượt xem', '0', Icons.visibility),
-                Divider(height: 24.h),
-                _buildAnalyticRow('Lượt thích', '0', Icons.favorite),
-                Divider(height: 24.h),
-                _buildAnalyticRow('Booking', '0', Icons.calendar_today),
-                Divider(height: 24.h),
-                _buildAnalyticRow('Doanh thu', '0 VNĐ', Icons.attach_money),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
+
   Widget _buildStatCard({
     required IconData icon,
     required String label,
@@ -1071,31 +991,7 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
       ),
     );
   }
-  
-  Widget _buildAnalyticRow(String label, String value, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, color: AppColors.neutral600, size: 20.sp),
-        SizedBox(width: AppSpacing.s3),
-        Expanded(
-          child: Text(
-            label,
-            style: AppTypography.bodyM.copyWith(
-              color: AppColors.neutral700,
-            ),
-          ),
-        ),
-        Text(
-          value,
-          style: AppTypography.bodyM.copyWith(
-            color: AppColors.neutral900,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-  
+
   String _getListingTypeText(BusinessType type) {
     switch (type) {
       case BusinessType.hotel:
@@ -1122,21 +1018,33 @@ class _BusinessDashboardPageState extends State<BusinessDashboardPage>
     }
   }
   
-  void _navigateToCreateListing(BusinessType type) {
-    // Navigate to listing pages based on business type
+  void _navigateToCreateListing(BusinessType type) async {
+    // Map business type to default listing type
+    ListingType defaultListingType;
     switch (type) {
       case BusinessType.hotel:
-        Get.toNamed('/create-listing');
+        defaultListingType = ListingType.room;
         break;
       case BusinessType.tour:
-        AppSnackbar.showInfo(message: 'Tính năng thêm tour sẽ sớm được cập nhật');
+        defaultListingType = ListingType.tour;
         break;
       case BusinessType.restaurant:
-        AppSnackbar.showInfo(message: 'Tính năng thêm menu sẽ sớm được cập nhật');
+        defaultListingType = ListingType.food;
         break;
       case BusinessType.service:
-        AppSnackbar.showInfo(message: 'Tính năng thêm dịch vụ sẽ sớm được cập nhật');
+        defaultListingType = ListingType.service;
         break;
+    }
+
+    // Navigate to unified create listing page with default type
+    final result = await Get.toNamed('/create-listing', arguments: {
+      'type': defaultListingType,
+      'isEdit': false,
+    });
+
+    // Reload listings if created successfully
+    if (result == true) {
+      _listingService.loadBusinessListings();
     }
   }
   

@@ -324,10 +324,11 @@ class DiscoverController extends BaseController {
           .where((l) => l.isActive)
           .toList()
         ..sort((a, b) {
-          // Sort by rating first, then by reviews count
+          // Sort by rating first, then by newest (createdAt)
           final ratingCompare = b.rating.compareTo(a.rating);
           if (ratingCompare != 0) return ratingCompare;
-          return b.reviews.compareTo(a.reviews);
+          // If same rating, show newest listings first
+          return b.createdAt.compareTo(a.createdAt);
         });
 
       // Take top 10 listings

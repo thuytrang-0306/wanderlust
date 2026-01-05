@@ -42,6 +42,7 @@ import 'package:wanderlust/app/bindings/collection_detail_binding.dart';
 import 'package:wanderlust/presentation/pages/business/business_type_selection_page.dart';
 import 'package:wanderlust/presentation/pages/business/business_info_form_page.dart';
 import 'package:wanderlust/presentation/pages/business/business_dashboard_page.dart';
+import 'package:wanderlust/presentation/pages/business/edit_business_page.dart';
 import 'package:wanderlust/presentation/pages/listing/create_listing_page.dart';
 import 'package:wanderlust/presentation/pages/settings/change_password_page.dart';
 import 'package:wanderlust/presentation/pages/settings/help_support_page.dart';
@@ -217,7 +218,12 @@ class AppPages {
     GetPage(
       name: Routes.BUSINESS_DASHBOARD,
       page: () => const BusinessDashboardPage(),
-      
+
+    ),
+    GetPage(
+      name: Routes.BUSINESS_EDIT,
+      page: () => const EditBusinessPage(),
+
     ),
     // Unified Listing routes
     GetPage(

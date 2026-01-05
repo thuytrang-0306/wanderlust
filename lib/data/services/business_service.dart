@@ -561,4 +561,47 @@ class BusinessService extends GetxService {
       LoggerService.w('Failed to send business suspension notification', error: e);
     }
   }
+
+  /// Delete business profile
+  /// WARNING: This will delete the business and all associated data
+  Future<bool> deleteBusinessProfile(String profileId) async {
+    try {
+      // Get business profile first to check ownership
+      final business = await getBusinessProfile(profileId);
+      if (business == null) {
+        throw Exception('Business profile not found');
+      }
+
+      // Check if current user owns this business
+      if (business.userId != _userId) {
+        throw Exception('You do not have permission to delete this business');
+      }
+
+      // Delete business profile document
+      await _firestore
+          .collection(_businessProfilesCollection)
+          .doc(profileId)
+          .delete();
+
+      // Update user document - revert to regular user
+      await _firestore
+          .collection(_usersCollection)
+          .doc(_userId)
+          .update({
+        'userType': UserType.regular.value,
+        'businessProfileId': FieldValue.delete(),
+        'businessSince': FieldValue.delete(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Clear current business profile
+      currentBusinessProfile.value = null;
+
+      LoggerService.i('Business profile deleted: $profileId');
+      return true;
+    } catch (e) {
+      LoggerService.e('Error deleting business profile', error: e);
+      return false;
+    }
+  }
 }

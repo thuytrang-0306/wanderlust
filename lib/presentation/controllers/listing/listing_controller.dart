@@ -7,6 +7,7 @@ import 'package:wanderlust/core/widgets/app_dialogs.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/data/models/listing_model.dart';
 import 'package:wanderlust/data/services/listing_service.dart';
+import 'package:wanderlust/presentation/controllers/discover/discover_controller.dart';
 
 /// One Controller for ALL listing operations
 /// Simple but powerful
@@ -264,7 +265,7 @@ class ListingController extends GetxController {
       });
       
       bool success = false;
-      
+
       if (isEditMode) {
         // Update
         final updates = {
@@ -293,21 +294,50 @@ class ListingController extends GetxController {
         );
         success = created != null;
       }
-      
-      AppDialogs.hideLoading();
-      
+
+      // Close loading dialog
+      Get.back();
+
+      // Wait for dialog close animation
+      await Future.delayed(Duration(milliseconds: 300));
+
       if (success) {
+        // Show success snackbar
         AppSnackbar.showSuccess(
           message: isEditMode ? 'Cập nhật thành công!' : 'Tạo thành công!'
         );
-        Get.back(result: true);
+
+        // Reload Discovery listings in background
+        try {
+          final discoverController = Get.find<DiscoverController>();
+          discoverController.loadBusinessListings();
+        } catch (e) {
+          LoggerService.w('Discovery controller not found, skipping reload');
+        }
+
+        // Wait for snackbar to render
+        await Future.delayed(Duration(milliseconds: 500));
+
+        // Force navigation back (Get.back() doesn't work, need Get.until)
+        try {
+          Get.back(result: true);
+          await Future.delayed(Duration(milliseconds: 100));
+
+          // If still on create-listing page, force back with Get.until
+          if (Get.currentRoute == '/create-listing') {
+            Get.until((route) => route.settings.name != '/create-listing');
+          }
+        } catch (e) {
+          LoggerService.e('Error during navigation back', error: e);
+        }
       } else {
         AppSnackbar.showError(message: 'Có lỗi xảy ra');
       }
       
     } catch (e) {
       LoggerService.e('Error submitting', error: e);
-      AppDialogs.hideLoading();
+      Get.back(); // Close loading dialog
+      await Future.delayed(Duration(milliseconds: 300));
       AppSnackbar.showError(message: 'Có lỗi xảy ra');
     } finally {
       isSaving.value = false;
