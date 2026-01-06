@@ -55,7 +55,7 @@ class BusinessListingCard extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: 10.w,
-                  vertical: 10.h,
+                  vertical: 8.h,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -63,7 +63,7 @@ class BusinessListingCard extends StatelessWidget {
                   children: [
                     // Business Name - Fixed height for alignment
                     SizedBox(
-                      height: 16.h,
+                      height: 14.h,
                       child: Text(
                         listing.businessName,
                         style: AppTypography.bodyXS.copyWith(
@@ -74,36 +74,36 @@ class BusinessListingCard extends StatelessWidget {
                       ),
                     ),
 
-                    SizedBox(height: 2.h),
+                    SizedBox(height: 3.h),
 
-                    // Title - Fixed height for alignment
+                    // Title - Fixed height for alignment (1 line only)
                     SizedBox(
-                      height: 40.h,
+                      height: 18.h,
                       child: Text(
                         listing.title,
                         style: AppTypography.bodyM.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppColors.neutral900,
                         ),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
 
-                    SizedBox(height: 3.h),
+                    SizedBox(height: 4.h),
 
                     // Rating - Fixed height for alignment
                     SizedBox(
-                      height: 10.h,
+                      height: 14.h,
                       child: listing.rating > 0
                           ? Row(
                               children: [
                                 Icon(
                                   Icons.star,
-                                  size: 14.sp,
+                                  size: 13.sp,
                                   color: AppColors.warning,
                                 ),
-                                SizedBox(width: 4.w),
+                                SizedBox(width: 3.w),
                                 Flexible(
                                   child: Text(
                                     '${listing.rating.toStringAsFixed(1)} (${listing.reviews})',
@@ -119,38 +119,39 @@ class BusinessListingCard extends StatelessWidget {
                           : const SizedBox.shrink(),
                     ),
 
-                    SizedBox(height: 3.h),
+                    SizedBox(height: 5.h),
 
-                    // Price - Always at same position
-                    Row(
-                      children: [
-                        if (listing.hasDiscount)
-                          Flexible(
-                            child: Text(
-                              listing.formattedPrice,
-                              style: AppTypography.bodyS.copyWith(
-                                color: AppColors.neutral500,
-                                decoration: TextDecoration.lineThrough,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                    // Old Price (if discount) - Separate line
+                    if (listing.hasDiscount)
+                      SizedBox(
+                        height: 14.h,
+                        child: Text(
+                          listing.formattedPrice,
+                          style: AppTypography.bodyS.copyWith(
+                            color: AppColors.neutral500,
+                            decoration: TextDecoration.lineThrough,
                           ),
-                        if (listing.hasDiscount) SizedBox(width: 6.w),
-                        Flexible(
-                          child: Text(
-                            listing.hasDiscount
-                                ? listing.formattedDiscountPrice
-                                : listing.formattedPrice,
-                            style: AppTypography.bodyM.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
+                      ),
+
+                    if (listing.hasDiscount) SizedBox(height: 2.h),
+
+                    // Current Price - Separate line
+                    SizedBox(
+                      height: 18.h,
+                      child: Text(
+                        listing.hasDiscount
+                            ? listing.formattedDiscountPrice
+                            : listing.formattedPrice,
+                        style: AppTypography.bodyM.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),

@@ -1459,7 +1459,7 @@ class DiscoverPage extends GetView<DiscoverController> {
 
           // Business Listings Horizontal List
           SizedBox(
-            height: 260.h, // Optimized height with reduced spacing
+            height: 265.h, // Synced with blog detail page
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),

@@ -365,7 +365,7 @@ class BlogDetailPage extends StatelessWidget {
           ),
           SizedBox(height: 16.h),
           SizedBox(
-            height: 290.h,
+            height: 265.h,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: 16.w),
