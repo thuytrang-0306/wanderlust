@@ -20,6 +20,7 @@ class AccommodationDetailController extends BaseController {
   final RxString selectedDates = ''.obs;
   final RxInt roomCount = 1.obs;
   final RxInt guestCount = 2.obs;
+  final RxInt quantity = 1.obs; // For Food/Service
 
   // Dates for booking
   final Rx<DateTime?> checkInDate = Rx<DateTime?>(null);
@@ -134,15 +135,27 @@ class AccommodationDetailController extends BaseController {
   
   // Helper method to convert ListingModel to AccommodationModel-like structure
   void _convertListingToAccommodation(ListingModel listingData) {
+    // Build location smartly - only join non-empty parts
+    final address = listingData.details['address']?.toString() ?? '';
+    final city = listingData.details['city']?.toString() ?? '';
+    final province = listingData.details['province']?.toString() ?? '';
+
+    final List<String> locationParts = [];
+    if (address.isNotEmpty) locationParts.add(address);
+    if (city.isNotEmpty) locationParts.add(city);
+    if (province.isNotEmpty) locationParts.add(province);
+
+    final fullAddressText = locationParts.isNotEmpty ? locationParts.join(', ') : '';
+
     // Create a temporary accommodation model for UI compatibility
     accommodation.value = AccommodationModel(
       id: listingData.id,
       name: listingData.title,
       type: listingData.type == ListingType.room ? 'hotel' : 'other',
       description: listingData.description,
-      address: listingData.details['address'] ?? '',
-      city: listingData.details['city'] ?? '',
-      province: listingData.details['province'] ?? '',
+      address: fullAddressText,
+      city: city,
+      province: province,
       country: 'Vietnam',
       location: const GeoPoint(0, 0),
       rating: listingData.rating,
@@ -322,6 +335,24 @@ class AccommodationDetailController extends BaseController {
     }
   }
 
+  void incrementQuantity() {
+    if (quantity.value < 99) {
+      quantity.value++;
+    }
+  }
+
+  void decrementQuantity() {
+    if (quantity.value > 1) {
+      quantity.value--;
+    }
+  }
+
+  void updateQuantity(int count) {
+    if (count > 0 && count <= 99) {
+      quantity.value = count;
+    }
+  }
+
   int get totalNights {
     if (checkInDate.value != null && checkOutDate.value != null) {
       return checkOutDate.value!.difference(checkInDate.value!).inDays;
@@ -329,11 +360,88 @@ class AccommodationDetailController extends BaseController {
     return 1;
   }
 
-  double get totalPrice {
-    if (accommodation.value != null) {
-      return accommodation.value!.pricePerNight * roomCount.value * totalNights;
+  // Dynamic computed properties based on listing type
+  ListingType? get listingType => listing.value?.type;
+
+  bool get isRoomType => listingType == ListingType.room;
+  bool get isTourType => listingType == ListingType.tour;
+  bool get isFoodType => listingType == ListingType.food;
+  bool get isServiceType => listingType == ListingType.service;
+
+  // UI Text based on type
+  String get bookingButtonText {
+    switch (listingType) {
+      case ListingType.room: return 'Đặt phòng';
+      case ListingType.tour: return 'Đặt tour';
+      case ListingType.food: return 'Đặt món';
+      case ListingType.service: return 'Đặt dịch vụ';
+      default: return 'Đặt ngay';
     }
-    return 0;
+  }
+
+  String get priceUnit {
+    if (isListingSource && listing.value != null) {
+      return listing.value!.priceUnit;
+    }
+    return '/đêm';
+  }
+
+  // Correct total price calculation based on listing type
+  double get totalPrice {
+    if (accommodation.value == null) return 0;
+
+    final basePrice = accommodation.value!.pricePerNight;
+
+    if (!isListingSource) {
+      // Old accommodation model - always room type
+      return basePrice * roomCount.value * totalNights;
+    }
+
+    // New listing model - calculate based on type
+    switch (listingType) {
+      case ListingType.room:
+        return basePrice * roomCount.value * totalNights;
+      case ListingType.tour:
+        return basePrice * guestCount.value;
+      case ListingType.food:
+        return basePrice * quantity.value;
+      case ListingType.service:
+        return basePrice * quantity.value;
+      default:
+        return basePrice;
+    }
+  }
+
+  // Price breakdown for display
+  String get priceBreakdown {
+    if (accommodation.value == null) return '';
+
+    final basePrice = accommodation.value!.pricePerNight;
+    final formatter = NumberFormat('#,###', 'vi_VN');
+
+    if (!isListingSource) {
+      // Old accommodation - room type
+      return '${formatter.format(basePrice)} VNĐ x ${roomCount.value} phòng x ${totalNights} đêm';
+    }
+
+    // New listing - dynamic breakdown
+    switch (listingType) {
+      case ListingType.room:
+        return '${formatter.format(basePrice)} VNĐ x ${roomCount.value} phòng x ${totalNights} đêm';
+      case ListingType.tour:
+        return '${formatter.format(basePrice)} VNĐ x ${guestCount.value} người';
+      case ListingType.food:
+        return '${formatter.format(basePrice)} VNĐ x ${quantity.value} phần';
+      case ListingType.service:
+        return '${formatter.format(basePrice)} VNĐ x ${quantity.value} lần';
+      default:
+        return '${formatter.format(basePrice)} VNĐ';
+    }
+  }
+
+  String get totalPriceFormatted {
+    final formatter = NumberFormat('#,###', 'vi_VN');
+    return '${formatter.format(totalPrice)} VNĐ';
   }
 
   void bookRoom() {
@@ -341,51 +449,93 @@ class AccommodationDetailController extends BaseController {
 
     // Navigate to booking info page with data from either source
     if (isListingSource && listing.value != null) {
-      // Use listing data
-      Get.toNamed(
-        '/booking-info',
-        arguments: {
-          'listingId': listing.value!.id,
-          'listingType': listing.value!.type.value,
-          'accommodationId': listing.value!.id,
-          'accommodationName': listing.value!.title,
-          'accommodationType': 'listing',
-          'accommodationImage':
-              listing.value!.images.isNotEmpty ? listing.value!.images.first : '',
-          'location': '${listing.value!.details['address'] ?? ''}, ${listing.value!.details['city'] ?? ''}',
-          'price': listing.value!.hasDiscount ? listing.value!.discountPrice! : listing.value!.price,
-          'dates': selectedDates.value,
-          'checkIn': checkInDate.value,
-          'checkOut': checkOutDate.value,
-          'rooms': roomCount.value,
-          'guests': guestCount.value,
-          'nights': totalNights,
-          'totalPrice': totalPrice,
-          'businessId': listing.value!.businessId,
-          'businessName': listing.value!.businessName,
-        },
-      );
+      // Use listing data - dynamic arguments based on type
+      final baseArgs = {
+        'listingId': listing.value!.id,
+        'listingType': listing.value!.type.value,
+        'accommodationId': listing.value!.id,
+        'accommodationName': listing.value!.title,
+        'accommodationType': 'listing',
+        'accommodationImage':
+            listing.value!.images.isNotEmpty ? listing.value!.images.first : '',
+        'location': '${listing.value!.details['address'] ?? ''}, ${listing.value!.details['city'] ?? ''}',
+        'price': listing.value!.hasDiscount ? listing.value!.discountPrice! : listing.value!.price,
+        'priceUnit': listing.value!.priceUnit,
+        'totalPrice': totalPrice,
+        'priceBreakdown': priceBreakdown,
+        'businessId': listing.value!.businessId,
+        'businessName': listing.value!.businessName,
+      };
+
+      // Add type-specific fields
+      switch (listingType) {
+        case ListingType.room:
+          if (checkInDate.value != null && checkOutDate.value != null) {
+            baseArgs.addAll({
+              'dates': selectedDates.value,
+              'checkIn': checkInDate.value!,
+              'checkOut': checkOutDate.value!,
+              'rooms': roomCount.value,
+              'guests': guestCount.value,
+              'nights': totalNights,
+            });
+          }
+          break;
+        case ListingType.tour:
+          if (checkInDate.value != null) {
+            baseArgs.addAll({
+              'dates': selectedDates.value,
+              'departureDate': checkInDate.value!,
+              'guests': guestCount.value,
+            });
+          }
+          break;
+        case ListingType.food:
+          if (checkInDate.value != null) {
+            baseArgs.addAll({
+              'quantity': quantity.value,
+              'deliveryTime': checkInDate.value!,
+            });
+          }
+          break;
+        case ListingType.service:
+          if (checkInDate.value != null) {
+            baseArgs.addAll({
+              'quantity': quantity.value,
+              'appointmentDate': checkInDate.value!,
+            });
+          }
+          break;
+        default:
+          break;
+      }
+
+      Get.toNamed('/booking-info', arguments: baseArgs);
     } else {
-      // Use accommodation data
-      Get.toNamed(
-        '/booking-info',
-        arguments: {
-          'accommodationId': accommodation.value!.id,
-          'accommodationName': accommodation.value!.name,
-          'accommodationType': accommodation.value!.type,
-          'accommodationImage':
-              accommodation.value!.images.isNotEmpty ? accommodation.value!.images.first : '',
-          'location': accommodation.value!.fullAddress,
-          'price': accommodation.value!.pricePerNight,
-          'dates': selectedDates.value,
-          'checkIn': checkInDate.value,
-          'checkOut': checkOutDate.value,
-          'rooms': roomCount.value,
-          'guests': guestCount.value,
-          'nights': totalNights,
-          'totalPrice': totalPrice,
-        },
-      );
+      // Use accommodation data (old model - always room type)
+      if (checkInDate.value != null && checkOutDate.value != null) {
+        Get.toNamed(
+          '/booking-info',
+          arguments: {
+            'accommodationId': accommodation.value!.id,
+            'accommodationName': accommodation.value!.name,
+            'accommodationType': accommodation.value!.type,
+            'accommodationImage':
+                accommodation.value!.images.isNotEmpty ? accommodation.value!.images.first : '',
+            'location': accommodation.value!.fullAddress,
+            'price': accommodation.value!.pricePerNight,
+            'priceUnit': '/đêm',
+            'dates': selectedDates.value,
+            'checkIn': checkInDate.value!,
+            'checkOut': checkOutDate.value!,
+            'rooms': roomCount.value,
+            'guests': guestCount.value,
+            'nights': totalNights,
+            'totalPrice': totalPrice,
+            'priceBreakdown': priceBreakdown,
+          },
+        );
+      }
     }
   }
 }

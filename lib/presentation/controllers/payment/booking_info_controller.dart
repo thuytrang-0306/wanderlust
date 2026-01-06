@@ -13,13 +13,27 @@ class BookingInfoController extends BaseController {
   // Observable values
   final RxMap<String, dynamic> bookingData = <String, dynamic>{}.obs;
   final RxBool isProcessing = false.obs;
-  
+
   // Store listing/accommodation data from arguments
   String? listingId;
+  String? listingType;
   String? accommodationId;
   String? businessId;
   DateTime? checkInDate;
   DateTime? checkOutDate;
+
+  // Dynamic properties based on listing type
+  bool get isRoom => listingType == 'room' || listingType == null;
+  bool get isTour => listingType == 'tour';
+  bool get isFood => listingType == 'food';
+  bool get isService => listingType == 'service';
+
+  String get pageTitle {
+    if (isTour) return 'Thông tin đặt tour';
+    if (isFood) return 'Thông tin đặt món';
+    if (isService) return 'Thông tin đặt dịch vụ';
+    return 'Thông tin đặt phòng';
+  }
 
   @override
   void onInit() {
@@ -31,8 +45,9 @@ class BookingInfoController extends BaseController {
     // Get data from arguments or load from service
     final args = Get.arguments;
     if (args != null) {
-      // Store IDs and dates for creating booking
+      // Store IDs, type and dates for creating booking
       listingId = args['listingId'];
+      listingType = args['listingType'];
       accommodationId = args['accommodationId'];
       businessId = args['businessId'];
       checkInDate = args['checkIn'] as DateTime?;
@@ -63,6 +78,7 @@ class BookingInfoController extends BaseController {
         'roomSize': '25.0m2',
         'nights': args['nights'] ?? 1,
         'guests': args['guests'] ?? 1,
+        'quantity': args['quantity'] ?? 1,
         'bedType': '1 giường đơn',
         'checkIn': checkInDisplay,
         'checkOut': checkOutDisplay,
@@ -72,6 +88,8 @@ class BookingInfoController extends BaseController {
         'email': _bookingService.currentUser?.email ?? 'user@example.com',
         'paymentMethod': 'cash',
         'price': args['price'] ?? 480000,
+        'priceUnit': args['priceUnit'] ?? '/đêm',
+        'priceBreakdown': args['priceBreakdown'] ?? '',
         'tax': 0,
         'total': args['totalPrice'] ?? args['price'] ?? 480000,
       };

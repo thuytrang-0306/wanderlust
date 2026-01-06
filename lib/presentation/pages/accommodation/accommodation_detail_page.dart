@@ -85,24 +85,24 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              // Back button
+                              // Back button - 1.3x larger, white color
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(16.r),
+                                borderRadius: BorderRadius.circular(21.r),
                                 child: BackdropFilter(
                                   filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                                   child: Container(
-                                    width: 32.w,
-                                    height: 32.w,
+                                    width: 42.w,
+                                    height: 42.w,
                                     decoration: BoxDecoration(
                                       color: const Color(0x4DFFFFFF), // #FFFFFF4D
-                                      borderRadius: BorderRadius.circular(16.r),
+                                      borderRadius: BorderRadius.circular(21.r),
                                     ),
                                     child: IconButton(
                                       padding: EdgeInsets.zero,
                                       icon: Icon(
                                         Icons.chevron_left_rounded,
-                                        color: Colors.black87,
-                                        size: 24.sp,
+                                        color: Colors.white,
+                                        size: 31.sp,
                                       ),
                                       onPressed: () => Get.back(),
                                     ),
@@ -110,17 +110,17 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                 ),
                               ),
 
-                              // Bookmark button
+                              // Bookmark button - 1.3x larger, white color
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(16.r),
+                                borderRadius: BorderRadius.circular(21.r),
                                 child: BackdropFilter(
                                   filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                                   child: Container(
-                                    width: 32.w,
-                                    height: 32.w,
+                                    width: 42.w,
+                                    height: 42.w,
                                     decoration: BoxDecoration(
                                       color: const Color(0x4DFFFFFF), // #FFFFFF4D
-                                      borderRadius: BorderRadius.circular(16.r),
+                                      borderRadius: BorderRadius.circular(21.r),
                                     ),
                                     child: Obx(
                                       () => IconButton(
@@ -132,8 +132,8 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                           color:
                                               controller.isBookmarked.value
                                                   ? const Color(0xFFFBBF24)
-                                                  : Colors.black87,
-                                          size: 20.sp,
+                                                  : Colors.white,
+                                          size: 26.sp,
                                         ),
                                         onPressed: controller.toggleBookmark,
                                       ),
@@ -201,29 +201,10 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Location and rating
+                            // Rating only - clean and simple
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                Icon(
-                                  Icons.location_on_outlined,
-                                  size: 16.sp,
-                                  color: const Color(0xFF9CA3AF),
-                                ),
-                                SizedBox(width: 4.w),
-                                Expanded(
-                                  child: Obx(
-                                    () => Text(
-                                      controller.accommodation.value?.fullAddress ?? 'Đang tải...',
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: const Color(0xFF9CA3AF),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 12.w),
                                 Icon(Icons.star, size: 16.sp, color: const Color(0xFFFBBF24)),
                                 SizedBox(width: 4.w),
                                 Obx(
@@ -597,221 +578,515 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                         ),
                       ),
 
-                      // Room selection
+                      // Dynamic selection section based on listing type
                       Padding(
                         padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Nhận và Trả phòng',
-                              style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
-                            ),
-                            SizedBox(height: 8.h),
-
-                            // Date selection
-                            GestureDetector(
-                              onTap: controller.selectDates,
-                              child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF3F0FF),
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                child: Row(
+                            // Date/Time selection - conditional
+                            Obx(() {
+                              if (controller.isFoodType) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Obx(
-                                      () => Text(
-                                        controller.selectedDates.value.isNotEmpty
-                                            ? controller.selectedDates.value
-                                            : 'Chọn ngày',
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w600,
+                                    Text(
+                                      'Thời gian đặt món',
+                                      style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    GestureDetector(
+                                      onTap: controller.selectDates,
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF3F0FF),
+                                          borderRadius: BorderRadius.circular(8.r),
+                                        ),
+                                        child: Text(
+                                          controller.selectedDates.value.isNotEmpty
+                                              ? controller.selectedDates.value
+                                              : 'Chọn thời gian',
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                       ),
                                     ),
+                                    SizedBox(height: 16.h),
                                   ],
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(height: 16.h),
-
-                            Text(
-                              'Phòng và khách',
-                              style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
-                            ),
-                            SizedBox(height: 8.h),
-
-                            // Room selection with +/- buttons
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.bedroom_parent_outlined,
-                                        size: 20.sp,
-                                        color: const Color(0xFF9CA3AF),
-                                      ),
-                                      SizedBox(width: 8.w),
-                                      Text(
-                                        'Số phòng',
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          color: const Color(0xFF374151),
+                                );
+                              } else if (controller.isServiceType) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Ngày hẹn',
+                                      style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    GestureDetector(
+                                      onTap: controller.selectDates,
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF3F0FF),
+                                          borderRadius: BorderRadius.circular(8.r),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      InkWell(
-                                        onTap: controller.decrementRoomCount,
-                                        child: Container(
-                                          width: 32.w,
-                                          height: 32.w,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                                            borderRadius: BorderRadius.circular(8.r),
-                                          ),
-                                          child: Icon(
-                                            Icons.remove,
-                                            size: 16.sp,
+                                        child: Text(
+                                          controller.selectedDates.value.isNotEmpty
+                                              ? controller.selectedDates.value
+                                              : 'Chọn ngày',
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
                                             color: AppColors.primary,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ),
-                                      SizedBox(width: 16.w),
-                                      Obx(
-                                        () => SizedBox(
-                                          width: 24.w,
-                                          child: Text(
-                                            '${controller.roomCount.value}',
-                                            style: TextStyle(
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.w600,
-                                              color: const Color(0xFF374151),
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
+                                    ),
+                                    SizedBox(height: 16.h),
+                                  ],
+                                );
+                              } else if (controller.isTourType) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Ngày khởi hành',
+                                      style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    GestureDetector(
+                                      onTap: controller.selectDates,
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF3F0FF),
+                                          borderRadius: BorderRadius.circular(8.r),
                                         ),
-                                      ),
-                                      SizedBox(width: 16.w),
-                                      InkWell(
-                                        onTap: controller.incrementRoomCount,
-                                        child: Container(
-                                          width: 32.w,
-                                          height: 32.w,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                                            borderRadius: BorderRadius.circular(8.r),
-                                          ),
-                                          child: Icon(
-                                            Icons.add,
-                                            size: 16.sp,
+                                        child: Text(
+                                          controller.selectedDates.value.isNotEmpty
+                                              ? controller.selectedDates.value
+                                              : 'Chọn ngày',
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
                                             color: AppColors.primary,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
+                                    ),
+                                    SizedBox(height: 16.h),
+                                  ],
+                                );
+                              } else {
+                                // Room type - show check-in/check-out
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Nhận và Trả phòng',
+                                      style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    GestureDetector(
+                                      onTap: controller.selectDates,
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF3F0FF),
+                                          borderRadius: BorderRadius.circular(8.r),
+                                        ),
+                                        child: Text(
+                                          controller.selectedDates.value.isNotEmpty
+                                              ? controller.selectedDates.value
+                                              : 'Chọn ngày',
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 16.h),
+                                  ],
+                                );
+                              }
+                            }),
 
-                            SizedBox(height: 12.h),
+                            // Dynamic fields based on listing type
+                            Obx(() {
+                              if (controller.isFoodType || controller.isServiceType) {
+                                // Food/Service: Only show Quantity
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      controller.isFoodType ? 'Số lượng món' : 'Số lượng dịch vụ',
+                                      style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                                        borderRadius: BorderRadius.circular(8.r),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                controller.isFoodType ? Icons.restaurant_menu : Icons.build_outlined,
+                                                size: 20.sp,
+                                                color: const Color(0xFF9CA3AF),
+                                              ),
+                                              SizedBox(width: 8.w),
+                                              Text(
+                                                'Số lượng',
+                                                style: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  color: const Color(0xFF374151),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              InkWell(
+                                                onTap: controller.decrementQuantity,
+                                                child: Container(
+                                                  width: 32.w,
+                                                  height: 32.w,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                                                    borderRadius: BorderRadius.circular(8.r),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.remove,
+                                                    size: 16.sp,
+                                                    color: AppColors.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 16.w),
+                                              SizedBox(
+                                                width: 24.w,
+                                                child: Obx(
+                                                  () => Text(
+                                                    '${controller.quantity.value}',
+                                                    style: TextStyle(
+                                                      fontSize: 16.sp,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: const Color(0xFF374151),
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 16.w),
+                                              InkWell(
+                                                onTap: controller.incrementQuantity,
+                                                child: Container(
+                                                  width: 32.w,
+                                                  height: 32.w,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                                                    borderRadius: BorderRadius.circular(8.r),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.add,
+                                                    size: 16.sp,
+                                                    color: AppColors.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              } else if (controller.isTourType) {
+                                // Tour: Only show Guest count
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Số người tham gia',
+                                      style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                                        borderRadius: BorderRadius.circular(8.r),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.person_outline,
+                                                size: 20.sp,
+                                                color: const Color(0xFF9CA3AF),
+                                              ),
+                                              SizedBox(width: 8.w),
+                                              Text(
+                                                'Số người',
+                                                style: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  color: const Color(0xFF374151),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              InkWell(
+                                                onTap: controller.decrementGuestCount,
+                                                child: Container(
+                                                  width: 32.w,
+                                                  height: 32.w,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                                                    borderRadius: BorderRadius.circular(8.r),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.remove,
+                                                    size: 16.sp,
+                                                    color: AppColors.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 16.w),
+                                              SizedBox(
+                                                width: 24.w,
+                                                child: Obx(
+                                                  () => Text(
+                                                    '${controller.guestCount.value}',
+                                                    style: TextStyle(
+                                                      fontSize: 16.sp,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: const Color(0xFF374151),
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 16.w),
+                                              InkWell(
+                                                onTap: controller.incrementGuestCount,
+                                                child: Container(
+                                                  width: 32.w,
+                                                  height: 32.w,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                                                    borderRadius: BorderRadius.circular(8.r),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.add,
+                                                    size: 16.sp,
+                                                    color: AppColors.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              } else {
+                                // Room: Show both Room count and Guest count
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Phòng và khách',
+                                      style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    // Room selection
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                                        borderRadius: BorderRadius.circular(8.r),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.bedroom_parent_outlined,
+                                                size: 20.sp,
+                                                color: const Color(0xFF9CA3AF),
+                                              ),
+                                              SizedBox(width: 8.w),
+                                              Text(
+                                                'Số phòng',
+                                                style: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  color: const Color(0xFF374151),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              InkWell(
+                                                onTap: controller.decrementRoomCount,
+                                                child: Container(
+                                                  width: 32.w,
+                                                  height: 32.w,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                                                    borderRadius: BorderRadius.circular(8.r),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.remove,
+                                                    size: 16.sp,
+                                                    color: AppColors.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 16.w),
+                                              SizedBox(
+                                                width: 24.w,
+                                                child: Obx(
+                                                  () => Text(
+                                                    '${controller.roomCount.value}',
+                                                    style: TextStyle(
+                                                      fontSize: 16.sp,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: const Color(0xFF374151),
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 16.w),
+                                              InkWell(
+                                                onTap: controller.incrementRoomCount,
+                                                child: Container(
+                                                  width: 32.w,
+                                                  height: 32.w,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                                                    borderRadius: BorderRadius.circular(8.r),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.add,
+                                                    size: 16.sp,
+                                                    color: AppColors.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
 
-                            // Guest count with +/- buttons
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.person_outline,
-                                        size: 20.sp,
-                                        color: const Color(0xFF9CA3AF),
+                                    SizedBox(height: 12.h),
+
+                                    // Guest count
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                                        borderRadius: BorderRadius.circular(8.r),
                                       ),
-                                      SizedBox(width: 8.w),
-                                      Text(
-                                        'Số người',
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          color: const Color(0xFF374151),
-                                        ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.person_outline,
+                                                size: 20.sp,
+                                                color: const Color(0xFF9CA3AF),
+                                              ),
+                                              SizedBox(width: 8.w),
+                                              Text(
+                                                'Số người',
+                                                style: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  color: const Color(0xFF374151),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            children: [
+                                              InkWell(
+                                                onTap: controller.decrementGuestCount,
+                                                child: Container(
+                                                  width: 32.w,
+                                                  height: 32.w,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                                                    borderRadius: BorderRadius.circular(8.r),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.remove,
+                                                    size: 16.sp,
+                                                    color: AppColors.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 16.w),
+                                              SizedBox(
+                                                width: 24.w,
+                                                child: Obx(
+                                                  () => Text(
+                                                    '${controller.guestCount.value}',
+                                                    style: TextStyle(
+                                                      fontSize: 16.sp,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: const Color(0xFF374151),
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 16.w),
+                                              InkWell(
+                                                onTap: controller.incrementGuestCount,
+                                                child: Container(
+                                                  width: 32.w,
+                                                  height: 32.w,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                                                    borderRadius: BorderRadius.circular(8.r),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.add,
+                                                    size: 16.sp,
+                                                    color: AppColors.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      InkWell(
-                                        onTap: controller.decrementGuestCount,
-                                        child: Container(
-                                          width: 32.w,
-                                          height: 32.w,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                                            borderRadius: BorderRadius.circular(8.r),
-                                          ),
-                                          child: Icon(
-                                            Icons.remove,
-                                            size: 16.sp,
-                                            color: AppColors.primary,
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(width: 16.w),
-                                      Obx(
-                                        () => SizedBox(
-                                          width: 24.w,
-                                          child: Text(
-                                            '${controller.guestCount.value}',
-                                            style: TextStyle(
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.w600,
-                                              color: const Color(0xFF374151),
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(width: 16.w),
-                                      InkWell(
-                                        onTap: controller.incrementGuestCount,
-                                        child: Container(
-                                          width: 32.w,
-                                          height: 32.w,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                                            borderRadius: BorderRadius.circular(8.r),
-                                          ),
-                                          child: Icon(
-                                            Icons.add,
-                                            size: 16.sp,
-                                            color: AppColors.primary,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
+                                    ),
+                                  ],
+                                );
+                              }
+                            }),
                           ],
                         ),
                       ),
@@ -857,56 +1132,76 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Price info
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Giá ước tính:',
-                            style: TextStyle(fontSize: 12.sp, color: Colors.white.withOpacity(0.9)),
-                          ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Obx(
-                                () => Text(
-                                  controller.accommodation.value?.displayPrice ?? '0 VND',
+                      // Price info with breakdown
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Price breakdown
+                            Obx(
+                              () => Text(
+                                controller.priceBreakdown,
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: Colors.white.withOpacity(0.85),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            // Total price
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Text(
+                                  'Tổng: ',
                                   style: TextStyle(
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
+                                    fontSize: 12.sp,
+                                    color: Colors.white.withOpacity(0.9),
                                   ),
                                 ),
-                              ),
-                              Text(
-                                '/đêm',
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: Colors.white.withOpacity(0.9),
+                                Flexible(
+                                  child: Obx(
+                                    () => Text(
+                                      controller.totalPriceFormatted,
+                                      style: TextStyle(
+                                        fontSize: 18.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
 
-                      // Book button
+                      SizedBox(width: 12.w),
+
+                      // Book button with dynamic text
                       GestureDetector(
                         onTap: controller.bookRoom,
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
+                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20.r),
                           ),
-                          child: Text(
-                            'Đặt phòng',
-                            style: TextStyle(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                          child: Obx(
+                            () => Text(
+                              controller.bookingButtonText,
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
                             ),
                           ),
                         ),

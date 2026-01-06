@@ -22,14 +22,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
           onPressed: () => Get.back(),
         ),
         centerTitle: true,
-        title: Text(
-          'Thông tin đặt phòng',
+        title: Obx(() => Text(
+          controller.pageTitle,
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
           ),
-        ),
+        )),
       ),
       body: Stack(
         children: [
@@ -39,8 +39,8 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                 // Room info card with gradient
                 _buildRoomInfoCard(),
 
-                // Room details grid
-                _buildRoomDetailsGrid(),
+                // Room details grid - only for Room type
+                if (controller.isRoom) _buildRoomDetailsGrid(),
 
                 // Check-in/out times
                 _buildCheckInOutSection(),
@@ -562,26 +562,61 @@ class BookingInfoPage extends GetView<BookingInfoController> {
           ),
           SizedBox(height: 12.h),
 
-          // Price item
-          Text(
-            'Đang cập nhật thông tin chi tiết về điều kiện đặt phòng và chính sách hủy',
-            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280)),
-          ),
-          SizedBox(height: 8.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SizedBox(),
-              Obx(() => Text(
-                '${NumberFormat('#,###').format(controller.bookingData['price'] ?? 0)} VND',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF374151),
-                ),
-              )),
-            ],
-          ),
+          // Price breakdown
+          Obx(() {
+            final breakdown = controller.bookingData['priceBreakdown'] ?? '';
+            if (breakdown.isNotEmpty) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    breakdown,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: const Color(0xFF374151),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${NumberFormat('#,###').format(controller.bookingData['price'] ?? 0)} VND',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF374151),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            } else {
+              return Column(
+                children: [
+                  Text(
+                    'Đang cập nhật thông tin chi tiết về điều kiện đặt phòng và chính sách hủy',
+                    style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280)),
+                  ),
+                  SizedBox(height: 8.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(),
+                      Text(
+                        '${NumberFormat('#,###').format(controller.bookingData['price'] ?? 0)} VND',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF374151),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            }
+          }),
 
           SizedBox(height: 12.h),
 
