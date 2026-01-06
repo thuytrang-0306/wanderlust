@@ -42,24 +42,46 @@ class TripDetailController extends BaseController {
 
     // Get trip data from arguments
     if (Get.arguments != null) {
-      if (Get.arguments['trip'] != null) {
-        // Load full trip model
+      if (Get.arguments is Map && Get.arguments['trip'] != null) {
+        // Load full trip model (from PlanningPage)
         final TripModel passedTrip = Get.arguments['trip'] as TripModel;
-        loadTrip(passedTrip); // Fire and forget - loading state will be managed
-      } else if (Get.arguments['tripId'] != null) {
-        // Load trip by ID
-        loadTripById(Get.arguments['tripId'] as String); // Fire and forget
+        loadTrip(passedTrip);
+      } else if (Get.arguments is Map && Get.arguments['tripId'] != null) {
+        // Load trip by ID (deep link or external navigation)
+        loadTripById(Get.arguments['tripId'] as String);
+      } else {
+        // Handle error - invalid arguments
+        LoggerService.e('Invalid arguments passed to TripDetailController');
+        isInitialLoading.value = false;
+        Get.back();
+        AppSnackbar.showError(title: 'Lỗi', message: 'Không thể tải thông tin chuyến đi');
       }
     }
   }
 
-  // Load trip from passed model
+  // Load trip from passed model (OPTIMIZED with optimistic loading)
   Future<void> loadTrip(TripModel tripModel) async {
-    isInitialLoading.value = true;
-
+    // ✅ OPTIMISTIC LOADING - Show data immediately
     trip.value = tripModel;
+    updateUIFromTrip(tripModel);
+    isInitialLoading.value = false; // ✅ Hide shimmer ASAP
 
-    // Update UI bindings
+    // ✅ PARALLEL LOADING - Load all data concurrently
+    try {
+      await Future.wait([
+        generateTripDays(tripModel),
+        loadItineraries(tripModel.id),
+      ]);
+
+      LoggerService.i('Trip data loaded successfully (parallel)');
+    } catch (e) {
+      LoggerService.e('Error loading trip data', error: e);
+      AppSnackbar.showError(title: 'Lỗi', message: 'Không thể tải một số thông tin chuyến đi');
+    }
+  }
+
+  // Extract UI update logic for reusability
+  void updateUIFromTrip(TripModel tripModel) {
     tripName.value = tripModel.title;
     tripImage.value = tripModel.coverImage;
     peopleCount.value = tripModel.travelers.length;
@@ -70,35 +92,28 @@ class TripDetailController extends BaseController {
     final startStr = formatter.format(tripModel.startDate);
     final endStr = formatter.format(tripModel.endDate);
     tripDateRange.value = '$startStr - $endStr';
-
-    // Generate trip days structure and wait for data to load
-    await generateTripDays(tripModel);
-
-    // Load itineraries
-    await loadItineraries(tripModel.id);
-
-    // All data loaded
-    isInitialLoading.value = false;
   }
 
-  // Load trip by ID from backend
+  // Load trip by ID from backend (OPTIMIZED with direct query)
   Future<void> loadTripById(String tripId) async {
     try {
       isInitialLoading.value = true;
-      final trips = await _tripService.getUserTrips();
-      final tripModel = trips.firstWhereOrNull((t) => t.id == tripId);
+
+      // ✅ DIRECT QUERY - Much faster than loading all trips
+      final tripModel = await _tripService.getTripById(tripId);
+
       if (tripModel != null) {
         await loadTrip(tripModel);
       } else {
         isInitialLoading.value = false;
         Get.back();
-        Get.snackbar('Lỗi', 'Không tìm thấy chuyến đi');
+        AppSnackbar.showError(title: 'Lỗi', message: 'Không tìm thấy chuyến đi');
       }
     } catch (e) {
-      LoggerService.e('Error loading trip', error: e);
+      LoggerService.e('Error loading trip by ID', error: e);
       isInitialLoading.value = false;
       Get.back();
-      Get.snackbar('Lỗi', 'Không thể tải thông tin chuyến đi');
+      AppSnackbar.showError(title: 'Lỗi', message: 'Không thể tải thông tin chuyến đi');
     }
   }
 
@@ -248,8 +263,13 @@ class TripDetailController extends BaseController {
       if (result != null && result is Map<String, dynamic> && result['success'] == true) {
         final tripId = result['tripId'] as String?;
         if (tripId != null) {
-          await loadTripById(tripId);
-          LoggerService.i('Trip updated, reloaded trip detail');
+          // ✅ OPTIMIZED - Direct query instead of loading all trips
+          final updatedTrip = await _tripService.getTripById(tripId);
+          if (updatedTrip != null) {
+            await loadTrip(updatedTrip);
+            LoggerService.i('Trip updated, reloaded trip detail');
+            AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã cập nhật chuyến đi');
+          }
         }
       }
     }
@@ -407,12 +427,25 @@ class TripDetailController extends BaseController {
       // Save to database in background
       if (trip.value != null) {
         try {
-          // Save private location to trip's custom data
+          // ✅ LOAD existing private locations from Firestore
+          final doc = await FirebaseFirestore.instance.collection('trips').doc(trip.value!.id).get();
+          final data = doc.data();
+
+          // Get existing private locations
+          final existingLocations = (data?['privateLocations'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ?? [];
+
+          // ✅ APPEND new location to existing list
+          existingLocations.add(newLocation);
+
+          // Save updated list back to database
           await _tripService.updateTrip(trip.value!.id, {
-            'privateLocations': [...(trip.value!.notes.isNotEmpty ? [] : []), newLocation],
+            'privateLocations': existingLocations,
             'updatedAt': DateTime.now(),
           });
-          LoggerService.i('Private location saved to database');
+
+          LoggerService.i('Private location saved to database (${existingLocations.length} total)');
 
           // Show success snackbar
           AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã thêm địa điểm riêng tư');

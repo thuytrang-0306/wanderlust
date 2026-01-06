@@ -65,6 +65,35 @@ class TripService extends GetxService {
     }
   }
 
+  // Get single trip by ID (optimized for trip detail page)
+  Future<TripModel?> getTripById(String tripId) async {
+    try {
+      if (_userId == null) {
+        LoggerService.e('User not authenticated');
+        return null;
+      }
+
+      final doc = await _firestore.collection(_tripsCollection).doc(tripId).get();
+
+      if (!doc.exists) {
+        LoggerService.w('Trip not found: $tripId');
+        return null;
+      }
+
+      // Verify ownership
+      final data = doc.data();
+      if (data != null && data['userId'] == _userId) {
+        return TripModel.fromJson(data, doc.id);
+      } else {
+        LoggerService.e('Unauthorized access to trip: $tripId');
+        return null;
+      }
+    } catch (e) {
+      LoggerService.e('Error getting trip by ID', error: e);
+      return null;
+    }
+  }
+
   // Get all public trips (for discover page)
   Future<List<TripModel>> getAllPublicTrips() async {
     try {
