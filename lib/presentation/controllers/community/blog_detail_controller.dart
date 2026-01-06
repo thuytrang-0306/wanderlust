@@ -11,6 +11,8 @@ import 'package:wanderlust/data/models/blog_post_model.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/core/services/saved_blogs_service.dart';
+import 'package:wanderlust/data/models/listing_model.dart';
+import 'package:wanderlust/presentation/controllers/discover/discover_controller.dart';
 
 class BlogDetailController extends BaseController {
   // Services
@@ -38,6 +40,9 @@ class BlogDetailController extends BaseController {
   final Rx<BlogPostModel?> blogPost = Rx<BlogPostModel?>(null);
   final RxList<BlogComment> comments = <BlogComment>[].obs;
   final RxList<Map<String, dynamic>> suggestions = <Map<String, dynamic>>[].obs;
+
+  // Business listings
+  final RxList<ListingModel> businessListings = <ListingModel>[].obs;
 
   // Post ID and Hero tag from route arguments
   String? postId;
@@ -84,6 +89,7 @@ class BlogDetailController extends BaseController {
     }
 
     loadSuggestions();
+    loadBusinessListings();
   }
 
   Future<void> loadBlogData() async {
@@ -142,6 +148,29 @@ class BlogDetailController extends BaseController {
   void loadSuggestions() {
     // Load suggestions from services if needed in future
     suggestions.value = [];
+  }
+
+  /// Load random business listings from DiscoverController
+  /// Shuffles listings for fresh feeling each time
+  void loadBusinessListings() {
+    try {
+      // Try to get DiscoverController if already loaded
+      if (Get.isRegistered<DiscoverController>()) {
+        final discoverController = Get.find<DiscoverController>();
+        final allListings = discoverController.businessListings;
+
+        if (allListings.isNotEmpty) {
+          // Shuffle and take 6 random listings
+          final shuffled = List<ListingModel>.from(allListings)..shuffle();
+          businessListings.value = shuffled.take(6).toList();
+          LoggerService.d('Loaded ${businessListings.length} random business listings');
+        }
+      } else {
+        LoggerService.d('DiscoverController not registered, skipping business listings');
+      }
+    } catch (e) {
+      LoggerService.e('Error loading business listings', error: e);
+    }
   }
 
   Future<void> toggleBookmark() async {

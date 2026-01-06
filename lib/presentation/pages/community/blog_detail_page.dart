@@ -5,6 +5,7 @@ import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/services/saved_blogs_service.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
+import 'package:wanderlust/core/widgets/business_listing_card.dart';
 import 'package:wanderlust/presentation/controllers/community/blog_detail_controller.dart';
 import 'package:wanderlust/data/models/blog_post_model.dart';
 
@@ -97,8 +98,8 @@ class BlogDetailPage extends StatelessWidget {
                     // Article content
                     _buildArticleContent(post),
 
-                    // Suggestions section
-                    _buildSuggestionsSection(controller),
+                    // Business listings section
+                    _buildBusinessListingsSection(controller),
 
                     // Comments section
                     _buildCommentsSection(controller),
@@ -342,10 +343,10 @@ class BlogDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSuggestionsSection(BlogDetailController controller) {
+  Widget _buildBusinessListingsSection(BlogDetailController controller) {
     return Obx(() {
-      if (controller.suggestions.isEmpty) {
-        return const SizedBox();
+      if (controller.businessListings.isEmpty) {
+        return const SizedBox.shrink();
       }
 
       return Column(
@@ -354,7 +355,7 @@ class BlogDetailPage extends StatelessWidget {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Text(
-              'Gợi ý cho bạn',
+              'Có thể bạn quan tâm',
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,
@@ -364,21 +365,14 @@ class BlogDetailPage extends StatelessWidget {
           ),
           SizedBox(height: 16.h),
           SizedBox(
-            height: 200.h,
+            height: 290.h,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: 16.w),
-              itemCount: controller.suggestions.length,
+              itemCount: controller.businessListings.length,
               itemBuilder: (context, index) {
-                final suggestion = controller.suggestions[index];
-                return _buildSuggestionCard(
-                  title: suggestion['title'] ?? '',
-                  location: suggestion['location'] ?? '',
-                  price: suggestion['price'] ?? '',
-                  rating: suggestion['rating'] ?? 0.0,
-                  duration: suggestion['duration'] ?? '',
-                  imageUrl: suggestion['image'] ?? '',
-                );
+                final listing = controller.businessListings[index];
+                return BusinessListingCard(listing: listing);
               },
             ),
           ),
@@ -386,130 +380,6 @@ class BlogDetailPage extends StatelessWidget {
         ],
       );
     });
-  }
-
-  Widget _buildSuggestionCard({
-    required String title,
-    required String location,
-    required String price,
-    required double rating,
-    required String duration,
-    required String imageUrl,
-  }) {
-    return GestureDetector(
-      onTap:
-          () => Get.toNamed(
-            '/accommodation-detail',
-            arguments: {'accommodationName': title, 'location': location},
-          ),
-      child: Container(
-        width: 180.w,
-        margin: EdgeInsets.only(right: 12.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image with badge
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
-                  child: AppImage(
-                    imageData: imageUrl,
-                    height: 120.h,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                if (duration.isNotEmpty)
-                  Positioned(
-                    top: 8.h,
-                    left: 8.w,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF812C),
-                        borderRadius: BorderRadius.circular(4.r),
-                      ),
-                      child: Text(
-                        duration,
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-
-            // Content
-            Flexible(
-              child: Padding(
-                padding: EdgeInsets.all(8.w),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 2.h),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            location,
-                            style: TextStyle(fontSize: 12.sp, color: AppColors.textTertiary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        SizedBox(width: 4.w),
-                        Icon(Icons.star, size: 12.sp, color: const Color(0xFFFBBF24)),
-                        SizedBox(width: 2.w),
-                        Text(
-                          rating.toString(),
-                          style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      '$price VND',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildCommentsSection(BlogDetailController controller) {
