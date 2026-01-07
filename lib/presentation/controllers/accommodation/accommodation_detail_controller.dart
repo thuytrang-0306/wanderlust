@@ -7,12 +7,15 @@ import 'package:wanderlust/data/models/accommodation_model.dart';
 import 'package:wanderlust/data/models/listing_model.dart';
 import 'package:wanderlust/data/services/accommodation_service.dart';
 import 'package:wanderlust/data/services/listing_service.dart';
+import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
+import 'package:wanderlust/core/widgets/add_to_trip_bottom_sheet.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 
 class AccommodationDetailController extends BaseController {
   final AccommodationService _accommodationService = Get.find<AccommodationService>();
   final ListingService _listingService = Get.find<ListingService>();
+  final TripService _tripService = Get.find<TripService>();
 
   // Observable values
   final RxBool isBookmarked = false.obs;
@@ -228,6 +231,59 @@ class AccommodationDetailController extends BaseController {
       }
     } catch (e) {
       LoggerService.e('Error toggling favorite', error: e);
+      AppSnackbar.showError(message: 'Có lỗi xảy ra');
+    }
+  }
+
+  // Add listing to trip plan
+  Future<void> addToTrip() async {
+    try {
+      // Check if listing data is available
+      if (listing.value == null) {
+        AppSnackbar.showError(message: 'Không có dữ liệu dịch vụ');
+        return;
+      }
+
+      // Show bottom sheet to select trip and day
+      final result = await AddToTripBottomSheet.show(
+        context: Get.context!,
+        listing: listing.value!,
+      );
+
+      if (result != null) {
+        // Convert listing model to map for TripService
+        final listingData = {
+          'id': listing.value!.id,
+          'title': listing.value!.title,
+          'location': listing.value!.businessName, // Use business name as location
+          'images': listing.value!.images,
+          'businessName': listing.value!.businessName,
+          'price': listing.value!.price,
+          'type': listing.value!.type.toString().split('.').last,
+        };
+
+        // Add listing to selected trip day
+        final success = await _tripService.addListingToTripDay(
+          tripId: result['tripId'],
+          dayIndex: result['dayIndex'],
+          listingData: listingData,
+        );
+
+        if (success) {
+          AppSnackbar.showSuccess(
+            title: 'Thành công',
+            message: 'Đã thêm vào ${result['tripName']} - Ngày ${result['dayIndex'] + 1}',
+          );
+          LoggerService.i('Listing added to trip: ${result['tripId']} day ${result['dayIndex']}');
+        } else {
+          AppSnackbar.showError(
+            title: 'Lỗi',
+            message: 'Không thể thêm vào kế hoạch',
+          );
+        }
+      }
+    } catch (e) {
+      LoggerService.e('Error adding to trip', error: e);
       AppSnackbar.showError(message: 'Có lỗi xảy ra');
     }
   }

@@ -359,6 +359,138 @@ class BookingService extends GetxService {
     }
   }
 
+  // Create food booking
+  Future<String?> createFoodBooking({
+    required String foodId,
+    required String foodName,
+    required String foodImage,
+    required int quantity,
+    required double unitPrice,
+    required double totalPrice,
+    required CustomerInfo customerInfo,
+    required String paymentMethod,
+    String? specialRequests,
+    DateTime? orderDate,
+  }) async {
+    try {
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Get business ID from arguments if available
+      final businessId = Get.arguments?['businessId'] as String?;
+
+      final booking = BookingModel(
+        id: '',
+        userId: currentUserId!,
+        userName: currentUser!.displayName ?? customerInfo.fullName,
+        userEmail: currentUser!.email ?? customerInfo.email,
+        userPhone: customerInfo.phone,
+        bookingType: 'food',
+        itemId: foodId,
+        itemName: foodName,
+        itemImage: foodImage,
+        checkIn: orderDate ?? DateTime.now(),
+        checkOut: null, // Food orders don't have checkout
+        quantity: quantity,
+        adults: 1,
+        children: 0,
+        unitPrice: unitPrice,
+        totalPrice: totalPrice,
+        discount: 0,
+        discountCode: '',
+        currency: 'VND',
+        status: 'pending',
+        paymentStatus: 'pending',
+        paymentMethod: paymentMethod,
+        paymentId: null,
+        customerInfo: customerInfo,
+        metadata: {
+          'foodId': foodId,
+          'quantity': quantity,
+          'businessId': businessId ?? '',
+        },
+        specialRequests: specialRequests,
+        cancellationReason: null,
+        cancellationDate: null,
+        refundAmount: 0,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      return await createBooking(booking);
+    } catch (e) {
+      LoggerService.e('Error creating food booking', error: e);
+      return null;
+    }
+  }
+
+  // Create service booking
+  Future<String?> createServiceBooking({
+    required String serviceId,
+    required String serviceName,
+    required String serviceImage,
+    required int quantity,
+    required double unitPrice,
+    required double totalPrice,
+    required CustomerInfo customerInfo,
+    required String paymentMethod,
+    String? specialRequests,
+    DateTime? serviceDate,
+  }) async {
+    try {
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Get business ID from arguments if available
+      final businessId = Get.arguments?['businessId'] as String?;
+
+      final booking = BookingModel(
+        id: '',
+        userId: currentUserId!,
+        userName: currentUser!.displayName ?? customerInfo.fullName,
+        userEmail: currentUser!.email ?? customerInfo.email,
+        userPhone: customerInfo.phone,
+        bookingType: 'service',
+        itemId: serviceId,
+        itemName: serviceName,
+        itemImage: serviceImage,
+        checkIn: serviceDate ?? DateTime.now(),
+        checkOut: null, // Services don't have checkout
+        quantity: quantity,
+        adults: 1,
+        children: 0,
+        unitPrice: unitPrice,
+        totalPrice: totalPrice,
+        discount: 0,
+        discountCode: '',
+        currency: 'VND',
+        status: 'pending',
+        paymentStatus: 'pending',
+        paymentMethod: paymentMethod,
+        paymentId: null,
+        customerInfo: customerInfo,
+        metadata: {
+          'serviceId': serviceId,
+          'quantity': quantity,
+          'businessId': businessId ?? '',
+        },
+        specialRequests: specialRequests,
+        cancellationReason: null,
+        cancellationDate: null,
+        refundAmount: 0,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      return await createBooking(booking);
+    } catch (e) {
+      LoggerService.e('Error creating service booking', error: e);
+      return null;
+    }
+  }
+
   // Get bookings for business owner
   Stream<List<BookingModel>> getBusinessBookings(String businessId) {
     return _firestore

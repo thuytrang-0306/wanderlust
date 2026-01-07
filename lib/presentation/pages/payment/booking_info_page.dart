@@ -22,14 +22,14 @@ class BookingInfoPage extends GetView<BookingInfoController> {
           onPressed: () => Get.back(),
         ),
         centerTitle: true,
-        title: Obx(() => Text(
+        title: Text(
           controller.pageTitle,
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
           ),
-        )),
+        ),
       ),
       body: Stack(
         children: [

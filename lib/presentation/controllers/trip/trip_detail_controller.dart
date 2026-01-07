@@ -185,21 +185,40 @@ class TripDetailController extends BaseController {
       final itineraries = await _tripService.getTripItineraries(tripId);
       tripItineraries.value = itineraries;
 
-      // Map itineraries to trip days
+      // Map itineraries to trip days (MERGE with existing locations)
       for (var itinerary in itineraries) {
         if (itinerary.dayNumber > 0 && itinerary.dayNumber <= tripDays.length) {
-          tripDays[itinerary.dayNumber - 1]['locations'] =
-              itinerary.activities
-                  .map(
-                    (activity) => {
-                      'time': activity.time,
-                      'title': activity.title,
-                      'address': activity.location,
-                      'description': activity.notes,
-                      'image': '', // No image in current model
-                    },
-                  )
-                  .toList();
+          // Get existing locations (privateLocations already added)
+          final existingLocations = List<Map<String, dynamic>>.from(
+            tripDays[itinerary.dayNumber - 1]['locations'] ?? []
+          );
+
+          // Add itinerary activities to existing locations
+          final itineraryActivities = itinerary.activities
+              .map(
+                (activity) => {
+                  'time': activity.time,
+                  'title': activity.title,
+                  'address': activity.location,
+                  'description': activity.notes,
+                  'image': '', // No image in current model
+                  'type': 'itinerary', // Mark as itinerary type
+                },
+              )
+              .toList();
+
+          // MERGE: Keep private locations + add itinerary activities
+          existingLocations.addAll(itineraryActivities);
+
+          // Sort by time (ascending order)
+          existingLocations.sort((a, b) {
+            final timeA = a['time'] as String? ?? '00:00';
+            final timeB = b['time'] as String? ?? '00:00';
+            return timeA.compareTo(timeB);
+          });
+
+          // Update trip day with merged and sorted locations
+          tripDays[itinerary.dayNumber - 1]['locations'] = existingLocations;
         }
       }
     } catch (e) {
@@ -361,8 +380,9 @@ class TripDetailController extends BaseController {
         tripDays[selectedDay.value]['locations'] = locations;
         tripDays.refresh();
 
-        // If it's a private location, also remove from database
-        if (deletedLocation['type'] == 'private' && trip.value != null) {
+        // If it's a private location or listing, also remove from database
+        final locationType = deletedLocation['type'] as String?;
+        if ((locationType == 'private' || locationType == 'listing') && trip.value != null) {
           try {
             // Get current private locations from trip
             final doc = await FirebaseFirestore.instance.collection('trips').doc(trip.value!.id).get();

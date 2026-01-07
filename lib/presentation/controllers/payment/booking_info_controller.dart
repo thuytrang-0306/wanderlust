@@ -151,23 +151,97 @@ class BookingInfoController extends BaseController {
       // Create booking in Firestore with PENDING status
       String? bookingId;
 
-      if (checkInDate != null && checkOutDate != null) {
-        // Create accommodation booking (status will be 'pending' by default)
-        bookingId = await _bookingService.createAccommodationBooking(
-          accommodationId: accommodationId ?? listingId ?? '',
-          accommodationName: bookingData['accommodationName'] ?? '',
-          accommodationImage: bookingData['accommodationImage'] ?? '',
-          checkIn: checkInDate!,
-          checkOut: checkOutDate!,
-          rooms: bookingData['roomCount'] ?? 1,
-          adults: bookingData['guests'] ?? 1,
-          children: 0,
-          unitPrice: (bookingData['price'] as num).toDouble(),
-          totalPrice: (bookingData['total'] as num).toDouble(),
-          customerInfo: customerInfo,
-          paymentMethod: 'payos', // PayOS payment method
-          specialRequests: '',
-        );
+      // Create booking based on listing type
+      switch (listingType) {
+        case 'room':
+          // Room/Accommodation booking - requires checkIn/checkOut
+          if (checkInDate != null && checkOutDate != null) {
+            bookingId = await _bookingService.createAccommodationBooking(
+              accommodationId: accommodationId ?? listingId ?? '',
+              accommodationName: bookingData['accommodationName'] ?? '',
+              accommodationImage: bookingData['accommodationImage'] ?? '',
+              checkIn: checkInDate!,
+              checkOut: checkOutDate!,
+              rooms: bookingData['roomCount'] ?? 1,
+              adults: bookingData['guests'] ?? 1,
+              children: 0,
+              unitPrice: (bookingData['price'] as num).toDouble(),
+              totalPrice: (bookingData['total'] as num).toDouble(),
+              customerInfo: customerInfo,
+              paymentMethod: 'payos',
+              specialRequests: '',
+            );
+          }
+          break;
+
+        case 'tour':
+          // Tour booking - requires departure date
+          bookingId = await _bookingService.createTourBooking(
+            tourId: listingId ?? '',
+            tourName: bookingData['accommodationName'] ?? '',
+            tourImage: bookingData['accommodationImage'] ?? '',
+            departureDate: checkInDate ?? DateTime.now(),
+            adults: bookingData['guests'] ?? 1,
+            children: 0,
+            unitPrice: (bookingData['price'] as num).toDouble(),
+            totalPrice: (bookingData['total'] as num).toDouble(),
+            customerInfo: customerInfo,
+            paymentMethod: 'payos',
+            specialRequests: '',
+          );
+          break;
+
+        case 'food':
+          // Food booking - quantity based
+          bookingId = await _bookingService.createFoodBooking(
+            foodId: listingId ?? '',
+            foodName: bookingData['accommodationName'] ?? '',
+            foodImage: bookingData['accommodationImage'] ?? '',
+            quantity: bookingData['quantity'] ?? 1,
+            unitPrice: (bookingData['price'] as num).toDouble(),
+            totalPrice: (bookingData['total'] as num).toDouble(),
+            customerInfo: customerInfo,
+            paymentMethod: 'payos',
+            specialRequests: '',
+            orderDate: checkInDate,
+          );
+          break;
+
+        case 'service':
+          // Service booking - quantity based
+          bookingId = await _bookingService.createServiceBooking(
+            serviceId: listingId ?? '',
+            serviceName: bookingData['accommodationName'] ?? '',
+            serviceImage: bookingData['accommodationImage'] ?? '',
+            quantity: bookingData['quantity'] ?? 1,
+            unitPrice: (bookingData['price'] as num).toDouble(),
+            totalPrice: (bookingData['total'] as num).toDouble(),
+            customerInfo: customerInfo,
+            paymentMethod: 'payos',
+            specialRequests: '',
+            serviceDate: checkInDate,
+          );
+          break;
+
+        default:
+          // Fallback to accommodation if type is unknown
+          if (checkInDate != null && checkOutDate != null) {
+            bookingId = await _bookingService.createAccommodationBooking(
+              accommodationId: accommodationId ?? listingId ?? '',
+              accommodationName: bookingData['accommodationName'] ?? '',
+              accommodationImage: bookingData['accommodationImage'] ?? '',
+              checkIn: checkInDate!,
+              checkOut: checkOutDate!,
+              rooms: bookingData['roomCount'] ?? 1,
+              adults: bookingData['guests'] ?? 1,
+              children: 0,
+              unitPrice: (bookingData['price'] as num).toDouble(),
+              totalPrice: (bookingData['total'] as num).toDouble(),
+              customerInfo: customerInfo,
+              paymentMethod: 'payos',
+              specialRequests: '',
+            );
+          }
       }
 
       if (bookingId != null) {
@@ -187,13 +261,26 @@ class BookingInfoController extends BaseController {
           },
         );
       } else {
-        throw Exception('Không thể tạo đặt phòng');
+        // Dynamic error message based on listing type
+        String errorMsg = 'Không thể tạo đặt chỗ';
+        if (isTour) errorMsg = 'Không thể tạo đặt tour';
+        else if (isFood) errorMsg = 'Không thể tạo đặt món';
+        else if (isService) errorMsg = 'Không thể tạo đặt dịch vụ';
+        else errorMsg = 'Không thể tạo đặt phòng';
+
+        throw Exception(errorMsg);
       }
     } catch (e) {
       LoggerService.e('Error creating booking', error: e);
-      AppSnackbar.showError(
-        message: 'Có lỗi xảy ra khi tạo đặt phòng. Vui lòng thử lại.',
-      );
+
+      // Dynamic error message based on listing type
+      String errorMsg = 'Có lỗi xảy ra khi tạo đặt chỗ. Vui lòng thử lại.';
+      if (isTour) errorMsg = 'Có lỗi xảy ra khi tạo đặt tour. Vui lòng thử lại.';
+      else if (isFood) errorMsg = 'Có lỗi xảy ra khi tạo đặt món. Vui lòng thử lại.';
+      else if (isService) errorMsg = 'Có lỗi xảy ra khi tạo đặt dịch vụ. Vui lòng thử lại.';
+      else errorMsg = 'Có lỗi xảy ra khi tạo đặt phòng. Vui lòng thử lại.';
+
+      AppSnackbar.showError(message: errorMsg);
     } finally {
       isProcessing.value = false;
     }

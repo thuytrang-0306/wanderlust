@@ -110,36 +110,68 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
                                 ),
                               ),
 
-                              // Bookmark button - 1.3x larger, white color
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(21.r),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                                  child: Container(
-                                    width: 42.w,
-                                    height: 42.w,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0x4DFFFFFF), // #FFFFFF4D
-                                      borderRadius: BorderRadius.circular(21.r),
-                                    ),
-                                    child: Obx(
-                                      () => IconButton(
-                                        padding: EdgeInsets.zero,
-                                        icon: Icon(
-                                          controller.isBookmarked.value
-                                              ? Icons.bookmark_rounded
-                                              : Icons.bookmark_border_rounded,
-                                          color:
-                                              controller.isBookmarked.value
-                                                  ? const Color(0xFFFBBF24)
-                                                  : Colors.white,
-                                          size: 26.sp,
+                              // Action buttons (Bookmark + Add to Trip)
+                              Row(
+                                children: [
+                                  // Bookmark button
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(21.r),
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                                      child: Container(
+                                        width: 42.w,
+                                        height: 42.w,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0x4DFFFFFF),
+                                          borderRadius: BorderRadius.circular(21.r),
                                         ),
-                                        onPressed: controller.toggleBookmark,
+                                        child: Obx(
+                                          () => IconButton(
+                                            padding: EdgeInsets.zero,
+                                            icon: Icon(
+                                              controller.isBookmarked.value
+                                                  ? Icons.bookmark_rounded
+                                                  : Icons.bookmark_border_rounded,
+                                              color:
+                                                  controller.isBookmarked.value
+                                                      ? const Color(0xFFFBBF24)
+                                                      : Colors.white,
+                                              size: 26.sp,
+                                            ),
+                                            onPressed: controller.toggleBookmark,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
+
+                                  SizedBox(width: 8.w),
+
+                                  // Add to Trip button
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(21.r),
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                                      child: Container(
+                                        width: 42.w,
+                                        height: 42.w,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0x4DFFFFFF),
+                                          borderRadius: BorderRadius.circular(21.r),
+                                        ),
+                                        child: IconButton(
+                                          padding: EdgeInsets.zero,
+                                          icon: Icon(
+                                            Icons.add_circle_outline,
+                                            color: Colors.white,
+                                            size: 26.sp,
+                                          ),
+                                          onPressed: controller.addToTrip,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),

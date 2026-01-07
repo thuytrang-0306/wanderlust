@@ -255,6 +255,62 @@ class TripService extends GetxService {
     }
   }
 
+  // Add listing to trip day
+  Future<bool> addListingToTripDay({
+    required String tripId,
+    required int dayIndex,
+    required Map<String, dynamic> listingData,
+  }) async {
+    try {
+      // Load existing trip data
+      final doc = await _firestore.collection(_tripsCollection).doc(tripId).get();
+      if (!doc.exists) {
+        LoggerService.e('Trip not found: $tripId');
+        return false;
+      }
+
+      final data = doc.data();
+      if (data == null) {
+        LoggerService.e('Trip data is null');
+        return false;
+      }
+
+      // Get existing private locations
+      final existingLocations = (data['privateLocations'] as List<dynamic>?)
+          ?.map((e) => e as Map<String, dynamic>)
+          .toList() ?? [];
+
+      // Create new location from listing
+      final newLocation = {
+        'dayIndex': dayIndex,
+        'time': '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}',
+        'title': listingData['title'] ?? listingData['name'] ?? '',
+        'address': listingData['address'] ?? listingData['location'] ?? '',
+        'description': 'Từ dịch vụ nổi bật',
+        'image': (listingData['images'] as List?)?.isNotEmpty == true ? listingData['images'][0] : null,
+        'type': 'listing',
+        'listingId': listingData['id'],
+        'businessName': listingData['businessName'],
+        'price': listingData['price'],
+        'addedAt': DateTime.now().toIso8601String(),
+      };
+
+      // Append new location
+      existingLocations.add(newLocation);
+
+      // Save back to database
+      await updateTrip(tripId, {
+        'privateLocations': existingLocations,
+      });
+
+      LoggerService.i('Listing added to trip day $dayIndex (${existingLocations.length} total)');
+      return true;
+    } catch (e) {
+      LoggerService.e('Error adding listing to trip day', error: e);
+      return false;
+    }
+  }
+
   // Stream trips for real-time updates
   Stream<List<TripModel>> streamUserTrips() {
     if (_userId == null) return Stream.value([]);
