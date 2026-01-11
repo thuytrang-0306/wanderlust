@@ -315,26 +315,36 @@ class DiscoverController extends BaseController {
     try {
       isLoadingBusinessListings.value = true;
 
-      // ✅ INSTANT CACHE: Query directly with cache-first approach
-      // Same as ListingService but optimized for Discover page
-      final listings = await _listingService.searchListings();
+      // ✅ INSTANT CACHE + BACKGROUND REFRESH
+      final listings = await _listingService.searchListings(
+        onRefresh: (freshListings) {
+          // Update with fresh data from server in background
+          final activeListings = freshListings
+              .where((l) => l.isActive)
+              .toList()
+            ..sort((a, b) {
+              final ratingCompare = b.rating.compareTo(a.rating);
+              if (ratingCompare != 0) return ratingCompare;
+              return b.createdAt.compareTo(a.createdAt);
+            });
 
-      // Filter active listings and sort by rating/popularity
+          businessListings.value = activeListings.take(10).toList();
+          LoggerService.i('📱 Business Listings: Refreshed with ${businessListings.length} listings from server');
+        },
+      );
+
+      // Show cached data instantly
       final activeListings = listings
           .where((l) => l.isActive)
           .toList()
         ..sort((a, b) {
-          // Sort by rating first, then by newest (createdAt)
           final ratingCompare = b.rating.compareTo(a.rating);
           if (ratingCompare != 0) return ratingCompare;
-          // If same rating, show newest listings first
           return b.createdAt.compareTo(a.createdAt);
         });
 
-      // Take top 10 listings
       businessListings.value = activeListings.take(10).toList();
-
-      LoggerService.i('📱 Business Listings: ${businessListings.length} listings loaded');
+      LoggerService.i('📱 Business Listings: ${businessListings.length} listings loaded (cache)');
     } catch (e) {
       LoggerService.e('❌ Error loading business listings', error: e);
       businessListings.value = [];

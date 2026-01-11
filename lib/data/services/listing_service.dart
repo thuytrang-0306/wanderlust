@@ -243,13 +243,14 @@ class ListingService extends GetxService {
     }
   }
   
-  /// Search listings with CACHE-FIRST approach
+  /// Search listings with CACHE-FIRST + BACKGROUND REFRESH approach
   Future<List<ListingModel>> searchListings({
     String? query,
     ListingType? type,
     double? minPrice,
     double? maxPrice,
     String? businessId,
+    Function(List<ListingModel>)? onRefresh, // Callback for background refresh
   }) async {
     try {
       Query<Map<String, dynamic>> queryRef = _firestore
@@ -272,26 +273,37 @@ class ListingService extends GetxService {
         queryRef = queryRef.where('price', isLessThanOrEqualTo: maxPrice);
       }
 
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-
       // ✅ ULTRA-FAST: Try cache first for instant results!
       try {
         final cacheSnapshot = await queryRef.get(const GetOptions(source: Source.cache));
         if (cacheSnapshot.docs.isNotEmpty) {
-          LoggerService.i('📱 Search listings: ${cacheSnapshot.docs.length} from CACHE (instant)');
-          snapshot = cacheSnapshot;
-        } else {
-          // Cache empty, get from server
-          snapshot = await queryRef.get();
-          LoggerService.i('📱 Search listings: ${snapshot.docs.length} from SERVER');
+          var cachedListings = cacheSnapshot.docs
+              .map((doc) => ListingModel.fromJson(doc.data(), doc.id))
+              .toList();
+
+          // Filter by query text
+          if (query != null && query.isNotEmpty) {
+            final lowerQuery = query.toLowerCase();
+            cachedListings = cachedListings.where((l) =>
+                l.title.toLowerCase().contains(lowerQuery) ||
+                l.description.toLowerCase().contains(lowerQuery) ||
+                l.businessName.toLowerCase().contains(lowerQuery)
+            ).toList();
+          }
+
+          LoggerService.i('📱 Search listings: ${cachedListings.length} from CACHE (instant)');
+
+          // ✅ Refresh in background to get latest data
+          _refreshSearchResults(queryRef, query, onRefresh);
+
+          return cachedListings;
         }
       } catch (cacheError) {
-        // Cache miss, get from server
         LoggerService.d('Cache miss for search, fetching from server');
-        snapshot = await queryRef.get();
-        LoggerService.i('📱 Search listings: ${snapshot.docs.length} from SERVER');
       }
 
+      // No cache, get from server
+      final snapshot = await queryRef.get();
       var listings = snapshot.docs
           .map((doc) => ListingModel.fromJson(doc.data(), doc.id))
           .toList();
@@ -306,10 +318,42 @@ class ListingService extends GetxService {
         ).toList();
       }
 
+      LoggerService.i('📱 Search listings: ${listings.length} from SERVER');
       return listings;
     } catch (e) {
       LoggerService.e('Error searching listings', error: e);
       return [];
+    }
+  }
+
+  /// Refresh search results in background after showing cache
+  Future<void> _refreshSearchResults(
+    Query<Map<String, dynamic>> queryRef,
+    String? textQuery,
+    Function(List<ListingModel>)? onRefresh,
+  ) async {
+    try {
+      final snapshot = await queryRef.get(const GetOptions(source: Source.server));
+      var listings = snapshot.docs
+          .map((doc) => ListingModel.fromJson(doc.data(), doc.id))
+          .toList();
+
+      // Filter by query text
+      if (textQuery != null && textQuery.isNotEmpty) {
+        final lowerQuery = textQuery.toLowerCase();
+        listings = listings.where((l) =>
+            l.title.toLowerCase().contains(lowerQuery) ||
+            l.description.toLowerCase().contains(lowerQuery) ||
+            l.businessName.toLowerCase().contains(lowerQuery)
+        ).toList();
+      }
+
+      LoggerService.i('📱 Refreshed search: ${listings.length} from SERVER (background)');
+
+      // Notify caller with fresh data
+      onRefresh?.call(listings);
+    } catch (e) {
+      LoggerService.e('Error refreshing search results', error: e);
     }
   }
   
@@ -395,7 +439,7 @@ class ListingService extends GetxService {
       }
     } catch (e) {
       LoggerService.e('Error toggling listing favorite', error: e);
-      throw e;
+      rethrow;
     }
   }
 
