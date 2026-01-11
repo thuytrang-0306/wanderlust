@@ -36,13 +36,23 @@ class AdminSettingsController extends GetxController {
   final RxBool isEnabling2FA = false.obs;
   final RxString qrCodeData = ''.obs;
   
+  bool _isInitialized = false;
+
   @override
   void onInit() {
     super.onInit();
-    loadInitialData();
-    LoggerService.i('AdminSettingsController initialized');
+    // Don't load data on init - only when settings tab is opened
+    // This improves login performance
+    LoggerService.i('AdminSettingsController initialized (lazy loading enabled)');
   }
-  
+
+  // Initialize data when first needed (called when settings tab is opened)
+  Future<void> ensureInitialized() async {
+    if (_isInitialized) return;
+    _isInitialized = true;
+    await loadInitialData();
+  }
+
   Future<void> loadInitialData() async {
     try {
       isLoading.value = true;
@@ -52,6 +62,7 @@ class AdminSettingsController extends GetxController {
         loadSystemSettings(),
         check2FAStatus(),
       ]);
+      LoggerService.i('Settings data loaded successfully');
     } catch (e) {
       LoggerService.e('Error loading initial settings data', error: e);
     } finally {

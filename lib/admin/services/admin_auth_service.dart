@@ -6,16 +6,21 @@ import '../../shared/core/models/admin_model.dart';
 
 class AdminAuthService extends GetxService {
   static AdminAuthService get to => Get.find();
-  
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   final Rx<User?> _currentUser = Rx<User?>(null);
   final Rx<AdminModel?> _currentAdmin = Rx<AdminModel?>(null);
   final RxBool _isAdmin = false.obs;
   final RxString _adminRole = ''.obs;
   final RxBool _isLoading = false.obs;
-  
+
+  // Cache for permission check
+  String? _lastCheckedUserId;
+  DateTime? _lastCheckTime;
+  bool _isCheckingPermissions = false;
+
   User? get currentUser => _currentUser.value;
   AdminModel? get currentAdmin => _currentAdmin.value;
   bool get isAdmin => _isAdmin.value;
@@ -39,30 +44,61 @@ class AdminAuthService extends GetxService {
     }
   }
   
-  Future<void> _checkAdminPermissions(String userId) async {
+  Future<void> _checkAdminPermissions(String userId, {bool force = false}) async {
+    // Skip if we already checked this user recently (unless forced)
+    if (!force && _lastCheckedUserId == userId && _currentAdmin.value != null) {
+      // Check if last check was within 3 seconds to avoid duplicate checks
+      if (_lastCheckTime != null &&
+          DateTime.now().difference(_lastCheckTime!) < const Duration(seconds: 3)) {
+        LoggerService.d('Permission checked recently (${DateTime.now().difference(_lastCheckTime!).inMilliseconds}ms ago), skipping...');
+        return;
+      }
+    }
+
+    // Wait for any ongoing check to complete (unless forced)
+    if (!force && _isCheckingPermissions) {
+      LoggerService.d('Already checking permissions, waiting...');
+      // Wait briefly for the ongoing check to complete
+      int attempts = 0;
+      while (_isCheckingPermissions && attempts < 50) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        attempts++;
+      }
+      return;
+    }
+
     try {
+      _isCheckingPermissions = true;
       _isLoading.value = true;
       LoggerService.d('Checking admin permissions for user: $userId');
-      
+
       final adminDoc = await _firestore
           .collection('admins')
           .doc(userId)
           .get();
-          
+
       if (adminDoc.exists && adminDoc.data()?['isActive'] == true) {
         final admin = AdminModel.fromFirestore(adminDoc);
         _currentAdmin.value = admin;
         _isAdmin.value = true;
         _adminRole.value = admin.role;
-        
-        // Update last login timestamp
-        await _updateLastLogin(userId);
-        
+
+        // Update last login timestamp (only on first check)
+        final isFirstCheck = _lastCheckedUserId != userId;
+        _lastCheckedUserId = userId;
+        _lastCheckTime = DateTime.now(); // Track check time to prevent duplicates
+
+        if (isFirstCheck) {
+          await _updateLastLogin(userId);
+        }
+
         LoggerService.i('Admin authenticated: ${admin.name} (${admin.role})');
       } else {
         _currentAdmin.value = null;
         _isAdmin.value = false;
         _adminRole.value = '';
+        _lastCheckedUserId = null;
+        _lastCheckTime = null;
         LoggerService.w('User is not an admin or is inactive');
       }
     } catch (e, stackTrace) {
@@ -70,8 +106,11 @@ class AdminAuthService extends GetxService {
       _currentAdmin.value = null;
       _isAdmin.value = false;
       _adminRole.value = '';
+      _lastCheckedUserId = null;
+      _lastCheckTime = null;
     } finally {
       _isLoading.value = false;
+      _isCheckingPermissions = false;
     }
   }
 
@@ -94,10 +133,11 @@ class AdminAuthService extends GetxService {
         email: email,
         password: password,
       );
-      
+
       if (credential.user != null) {
-        await _checkAdminPermissions(credential.user!.uid);
-        
+        // Force permission check to avoid race condition with authStateChanges listener
+        await _checkAdminPermissions(credential.user!.uid, force: true);
+
         if (_isAdmin.value) {
           LoggerService.i('Admin login successful: ${_currentAdmin.value?.name}');
           await _logAdminActivity('login', {'email': email});
@@ -122,12 +162,14 @@ class AdminAuthService extends GetxService {
     try {
       LoggerService.i('Admin logout: ${_currentAdmin.value?.name}');
       await _logAdminActivity('logout', {});
-      
+
       await _auth.signOut();
       _currentAdmin.value = null;
       _isAdmin.value = false;
       _adminRole.value = '';
-      
+      _lastCheckedUserId = null;
+      _lastCheckTime = null;
+
       LoggerService.i('Admin logout successful');
     } catch (e, stackTrace) {
       LoggerService.e('Admin logout failed', error: e, stackTrace: stackTrace);

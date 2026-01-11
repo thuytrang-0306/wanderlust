@@ -11,18 +11,18 @@ import 'package:wanderlust/admin/routes/admin_routes.dart';
 class AdminMainBinding extends Bindings {
   @override
   void dependencies() {
-    // Services
-    Get.put(AdminBusinessService());
-    
-    // Main controller
+    // Services - Use lazy loading to improve login performance
+    Get.lazyPut<AdminBusinessService>(() => AdminBusinessService(), fenix: true);
+
+    // Main controller - Required immediately
     Get.put(AdminMainController());
-    
-    // Always put dashboard controller
+
+    // Dashboard controller - Required immediately for initial view
     Get.put(AdminDashboardController());
-    
-    // Always put settings controller
-    Get.put(AdminSettingsController());
-    
+
+    // Settings controller - Use lazy loading (only needed when settings tab opened)
+    Get.lazyPut<AdminSettingsController>(() => AdminSettingsController(), fenix: true);
+
     // Check current route and set appropriate tab
     final currentRoute = Get.currentRoute;
     switch (currentRoute) {

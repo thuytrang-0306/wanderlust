@@ -4,6 +4,7 @@ import 'package:wanderlust/admin/controllers/admin_analytics_controller.dart';
 import 'package:wanderlust/admin/controllers/admin_user_management_controller.dart';
 import 'package:wanderlust/admin/controllers/admin_business_controller.dart';
 import 'package:wanderlust/admin/controllers/admin_content_controller.dart';
+import 'package:wanderlust/admin/controllers/admin_settings_controller.dart';
 import 'package:wanderlust/shared/core/utils/logger_service.dart';
 
 enum AdminTab {
@@ -70,6 +71,13 @@ class AdminMainController extends GetxController {
         case AdminTab.content:
           if (!Get.isRegistered<AdminContentController>()) {
             Get.put(AdminContentController());
+          }
+          break;
+        case AdminTab.settings:
+          // Settings controller uses lazy loading - ensure it's initialized
+          if (Get.isRegistered<AdminSettingsController>()) {
+            final settingsController = Get.find<AdminSettingsController>();
+            settingsController.ensureInitialized();
           }
           break;
         default:

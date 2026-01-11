@@ -209,72 +209,76 @@ class AdminContentTab extends GetView<AdminContentController> {
           // Filter dropdowns
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: IntrinsicWidth(
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 200.w,
-                    child: Obx(() => DropdownButtonFormField<String>(
-                      value: controller.selectedStatus.value,
-                      decoration: InputDecoration(
-                        labelText: 'Status',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 180.w,
+                  child: Obx(() => DropdownButtonFormField<String>(
+                    value: controller.selectedStatus.value,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: 'Status',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.r),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('All Status')),
-                        DropdownMenuItem(value: 'pending', child: Text('Pending Review')),
-                        DropdownMenuItem(value: 'approved', child: Text('Approved')),
-                        DropdownMenuItem(value: 'rejected', child: Text('Rejected')),
-                        DropdownMenuItem(value: 'flagged', child: Text('Flagged')),
-                        DropdownMenuItem(value: 'suspended', child: Text('Suspended')),
-                      ],
-                      onChanged: (value) => controller.onStatusFilterChanged(value!),
-                    )),
-                  ),
-                  SizedBox(width: 16.w),
-                  SizedBox(
-                    width: 200.w,
-                    child: Obx(() => DropdownButtonFormField<String>(
-                      value: controller.selectedType.value,
-                      decoration: InputDecoration(
-                        labelText: 'Content Type',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'all', child: Text('All', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'pending', child: Text('Pending', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'approved', child: Text('Approved', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'rejected', child: Text('Rejected', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'flagged', child: Text('Flagged', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'suspended', child: Text('Suspended', overflow: TextOverflow.ellipsis)),
+                    ],
+                    onChanged: (value) => controller.onStatusFilterChanged(value!),
+                  )),
+                ),
+                SizedBox(width: 12.w),
+                SizedBox(
+                  width: 180.w,
+                  child: Obx(() => DropdownButtonFormField<String>(
+                    value: controller.selectedType.value,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: 'Type',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.r),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('All Types')),
-                        DropdownMenuItem(value: 'blog', child: Text('Blog Posts')),
-                        DropdownMenuItem(value: 'listing', child: Text('Listings')),
-                      ],
-                      onChanged: (value) => controller.onTypeFilterChanged(value!),
-                    )),
-                  ),
-                  SizedBox(width: 16.w),
-                  SizedBox(
-                    width: 200.w,
-                    child: Obx(() => DropdownButtonFormField<String>(
-                      value: controller.selectedDateRange.value,
-                      decoration: InputDecoration(
-                        labelText: 'Date Range',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'all', child: Text('All', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'blog', child: Text('Blog', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'listing', child: Text('Listing', overflow: TextOverflow.ellipsis)),
+                    ],
+                    onChanged: (value) => controller.onTypeFilterChanged(value!),
+                  )),
+                ),
+                SizedBox(width: 12.w),
+                SizedBox(
+                  width: 180.w,
+                  child: Obx(() => DropdownButtonFormField<String>(
+                    value: controller.selectedDateRange.value,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: 'Period',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.r),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('All Time')),
-                        DropdownMenuItem(value: 'today', child: Text('Today')),
-                        DropdownMenuItem(value: 'week', child: Text('This Week')),
-                        DropdownMenuItem(value: 'month', child: Text('This Month')),
-                        DropdownMenuItem(value: 'year', child: Text('This Year')),
-                      ],
-                      onChanged: (value) => controller.onDateRangeFilterChanged(value!),
-                    )),
-                  ),
-                ],
-              ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'all', child: Text('All Time', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'today', child: Text('Today', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'week', child: Text('This Week', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'month', child: Text('This Month', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'year', child: Text('This Year', overflow: TextOverflow.ellipsis)),
+                    ],
+                    onChanged: (value) => controller.onDateRangeFilterChanged(value!),
+                  )),
+                ),
+              ],
             ),
           ),
         ],

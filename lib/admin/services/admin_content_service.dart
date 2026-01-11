@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/shared/core/utils/logger_service.dart';
@@ -147,15 +148,15 @@ class ContentModerationItem {
 
 class AdminContentService extends GetxService {
   static AdminContentService get to => Get.find();
-  
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final AdminAuthService _adminAuthService = Get.find<AdminAuthService>();
-  
+
   // Collections
   final String _blogsCollection = 'blog_posts';
   final String _listingsCollection = 'listings';
   final String _moderationCollection = 'content_moderation';
-  
+
   // Reactive lists
   final RxList<ContentModerationItem> allContent = <ContentModerationItem>[].obs;
   final RxList<ContentModerationItem> filteredContent = <ContentModerationItem>[].obs;
@@ -163,7 +164,7 @@ class AdminContentService extends GetxService {
   final RxString searchQuery = ''.obs;
   final RxString selectedStatus = 'all'.obs;
   final RxString selectedType = 'all'.obs;
-  
+
   // Statistics
   final RxInt totalContent = 0.obs;
   final RxInt pendingContent = 0.obs;
@@ -171,21 +172,40 @@ class AdminContentService extends GetxService {
   final RxInt rejectedContent = 0.obs;
   final RxInt flaggedContent = 0.obs;
 
+  // Cache management
+  DateTime? _lastLoadTime;
+  bool _isInitialized = false;
+  static const Duration _cacheValidDuration = Duration(minutes: 5);
+  Timer? _debounceTimer;
+
   @override
   Future<void> onInit() async {
     super.onInit();
     await loadAllContent();
     _setupRealtimeListener();
     _setupSearchListener();
+    _isInitialized = true;
     LoggerService.i('AdminContentService initialized');
   }
   
   // Load all content from both blogs and listings
-  Future<void> loadAllContent() async {
+  Future<void> loadAllContent({bool forceRefresh = false}) async {
+    // Prevent concurrent loads
+    if (isLoading.value) {
+      LoggerService.d('Content already loading, skipping...');
+      return;
+    }
+
+    // Use cache if valid and not forcing refresh
+    if (!forceRefresh && _isCacheValid()) {
+      LoggerService.d('Using cached content data (${allContent.length} items)');
+      return;
+    }
+
     try {
       isLoading.value = true;
       LoggerService.i('Loading all content for moderation');
-      
+
       final List<ContentModerationItem> content = [];
       
       // Load blogs
@@ -219,9 +239,10 @@ class AdminContentService extends GetxService {
       }
       
       allContent.value = content;
+      _lastLoadTime = DateTime.now();
       _applyFilters();
       _updateStatistics();
-      
+
       LoggerService.i('Loaded ${content.length} content items successfully');
     } catch (e, stackTrace) {
       LoggerService.e('Error loading content', error: e, stackTrace: stackTrace);
@@ -229,6 +250,13 @@ class AdminContentService extends GetxService {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  // Check if cache is still valid
+  bool _isCacheValid() {
+    if (_lastLoadTime == null || allContent.isEmpty) return false;
+    final cacheAge = DateTime.now().difference(_lastLoadTime!);
+    return cacheAge < _cacheValidDuration;
   }
 
   // Setup real-time listener for content changes
@@ -501,11 +529,19 @@ class AdminContentService extends GetxService {
     }
   }
 
-  // Refresh content data
+  // Refresh content data with proper debouncing
   void _refreshContent() {
-    // Debounce rapid updates
-    Future.delayed(const Duration(milliseconds: 500), () {
-      loadAllContent();
+    // Cancel previous timer if exists
+    _debounceTimer?.cancel();
+
+    // Debounce rapid updates - wait 2 seconds before reloading
+    _debounceTimer = Timer(const Duration(seconds: 2), () {
+      // Only reload if initialized and cache is old
+      if (_isInitialized && !_isCacheValid()) {
+        loadAllContent(forceRefresh: true);
+      } else {
+        LoggerService.d('Skipping content refresh - cache still valid');
+      }
     });
   }
 
@@ -587,9 +623,15 @@ class AdminContentService extends GetxService {
     }
   }
 
-  // Refresh data
+  // Refresh data - force reload
   Future<void> refreshData() async {
-    LoggerService.i('Refreshing content data');
-    await loadAllContent();
+    LoggerService.i('Refreshing content data (force)');
+    await loadAllContent(forceRefresh: true);
+  }
+
+  @override
+  void onClose() {
+    _debounceTimer?.cancel();
+    super.onClose();
   }
 }

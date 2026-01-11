@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:wanderlust/admin/controllers/admin_dashboard_controller.dart';
 import 'package:wanderlust/admin/widgets/stats_card.dart';
 import 'package:wanderlust/admin/widgets/recent_activities_card.dart';
@@ -14,13 +15,33 @@ class AdminDashboardTab extends GetView<AdminDashboardController> {
 
   @override
   Widget build(BuildContext context) {
+    // Trigger lazy chart loading after initial load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!controller.isLoadingCharts.value && controller.chartData.isEmpty) {
+        controller.loadChartData();
+      }
+    });
+
     return Obx(() {
       if (controller.isLoading.value) {
-        return const Center(
-          child: CircularProgressIndicator(),
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              SizedBox(height: 16.h),
+              Text(
+                'Loading dashboard...',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
         );
       }
-      
+
       return SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,18 +211,22 @@ class AdminDashboardTab extends GetView<AdminDashboardController> {
             ],
           ),
           SizedBox(height: 24.h),
-          
-          // Chart area
+
+          // Chart area with skeleton loading
           SizedBox(
             height: 250.h,
             child: Obx(() {
+              if (controller.isLoadingCharts.value) {
+                return _buildChartSkeleton();
+              }
+
               final chartData = controller.chartData;
               if (chartData.isEmpty) {
                 return const Center(
                   child: Text('No data available'),
                 );
               }
-              
+
               return InteractiveLineChart(
                 data: chartData,
                 title: 'User Growth Over Time',
@@ -244,37 +269,43 @@ class AdminDashboardTab extends GetView<AdminDashboardController> {
             ),
           ),
           SizedBox(height: 24.h),
-          
+
           SizedBox(
             height: 250.h,
-            child: InteractiveBarChart(
-              data: [
-                BarChartData(
-                  label: 'Daily',
-                  value: 85.0,
-                  color: const Color(0xFF10B981),
-                ),
-                BarChartData(
-                  label: 'Weekly',
-                  value: 72.0,
-                  color: const Color(0xFF3B82F6),
-                ),
-                BarChartData(
-                  label: 'Monthly',
-                  value: 68.0,
-                  color: const Color(0xFF8B5CF6),
-                ),
-                BarChartData(
-                  label: 'Retention',
-                  value: 45.0,
-                  color: const Color(0xFFF59E0B),
-                ),
-              ],
-              title: 'Activity Rates',
-              showValues: true,
-              showTooltip: true,
-              horizontal: false,
-            ),
+            child: Obx(() {
+              if (controller.isLoadingCharts.value) {
+                return _buildChartSkeleton();
+              }
+
+              return InteractiveBarChart(
+                data: [
+                  BarChartData(
+                    label: 'Daily',
+                    value: 85.0,
+                    color: const Color(0xFF10B981),
+                  ),
+                  BarChartData(
+                    label: 'Weekly',
+                    value: 72.0,
+                    color: const Color(0xFF3B82F6),
+                  ),
+                  BarChartData(
+                    label: 'Monthly',
+                    value: 68.0,
+                    color: const Color(0xFF8B5CF6),
+                  ),
+                  BarChartData(
+                    label: 'Retention',
+                    value: 45.0,
+                    color: const Color(0xFFF59E0B),
+                  ),
+                ],
+                title: 'Activity Rates',
+                showValues: true,
+                showTooltip: true,
+                horizontal: false,
+              );
+            }),
           ),
         ],
       ),
@@ -307,32 +338,95 @@ class AdminDashboardTab extends GetView<AdminDashboardController> {
             ),
           ),
           SizedBox(height: 24.h),
-          
+
           SizedBox(
             height: 300.h,
-            child: InteractivePieChart(
-              data: [
-                PieChartData(
-                  label: 'Mobile App',
-                  value: 850,
-                  percentage: 85.0,
-                  color: const Color(0xFF10B981),
-                ),
-                PieChartData(
-                  label: 'Web Platform',
-                  value: 150,
-                  percentage: 15.0,
-                  color: const Color(0xFF3B82F6),
-                ),
-              ],
-              title: 'Platform Distribution',
-              showLabels: true,
-              showLegend: true,
-              showPercentage: true,
-            ),
+            child: Obx(() {
+              if (controller.isLoadingCharts.value) {
+                return _buildChartSkeleton(circular: true);
+              }
+
+              return InteractivePieChart(
+                data: [
+                  PieChartData(
+                    label: 'Mobile App',
+                    value: 850,
+                    percentage: 85.0,
+                    color: const Color(0xFF10B981),
+                  ),
+                  PieChartData(
+                    label: 'Web Platform',
+                    value: 150,
+                    percentage: 15.0,
+                    color: const Color(0xFF3B82F6),
+                  ),
+                ],
+                title: 'Platform Distribution',
+                showLabels: true,
+                showLegend: true,
+                showPercentage: true,
+              );
+            }),
           ),
         ],
       ),
+    );
+  }
+
+  // Skeleton loading for charts
+  Widget _buildChartSkeleton({bool circular = false}) {
+    return Shimmer.fromColors(
+      baseColor: const Color(0xFFE2E8F0),
+      highlightColor: const Color(0xFFF8FAFC),
+      child: circular
+          ? Center(
+              child: Container(
+                width: 200.w,
+                height: 200.h,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            )
+          : Column(
+              children: [
+                // Simulated chart bars/lines
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: List.generate(
+                      7,
+                      (index) => Container(
+                        width: 30.w,
+                        height: (100 + (index * 20)).h,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                // Simulated x-axis labels
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(
+                    7,
+                    (index) => Container(
+                      width: 40.w,
+                      height: 12.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 

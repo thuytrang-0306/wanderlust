@@ -26,13 +26,24 @@ class AdminBusinessService extends GetxService {
   final RxInt rejectedBusinesses = 0.obs;
   final RxInt newBusinessesToday = 0.obs;
 
+  bool _isInitialized = false;
+
   @override
   Future<void> onInit() async {
     super.onInit();
+    // Don't load data on init - only when requested
+    // This improves login performance
+    _setupSearchListener();
+    LoggerService.i('AdminBusinessService initialized (lazy loading enabled)');
+  }
+
+  // Initialize data when first needed
+  Future<void> ensureInitialized() async {
+    if (_isInitialized) return;
+    _isInitialized = true;
     await loadAllBusinesses();
     _setupRealtimeListener();
-    _setupSearchListener();
-    LoggerService.i('AdminBusinessService initialized');
+    LoggerService.i('AdminBusinessService data loaded');
   }
   
   // Load all businesses from Firestore

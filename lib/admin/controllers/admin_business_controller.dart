@@ -82,14 +82,14 @@ class AdminBusinessController extends GetxController {
   Future<void> loadBusinesses() async {
     try {
       isLoading.value = true;
-      
-      // Load businesses via service
-      await _businessService.loadAllBusinesses();
+
+      // Ensure service is initialized (lazy loading)
+      await _businessService.ensureInitialized();
       allBusinesses.value = _businessService.allBusinesses;
-      
+
       _updateStats();
       _applyFilters();
-      
+
       LoggerService.i('Loaded ${allBusinesses.length} businesses successfully');
     } catch (e) {
       LoggerService.e('Error loading businesses', error: e);

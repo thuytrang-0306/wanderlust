@@ -23,6 +23,7 @@ class AdminDashboardController extends GetxController {
   // State
   final RxBool isLoading = false.obs;
   final RxBool isRefreshing = false.obs;
+  final RxBool isLoadingCharts = false.obs;
   final RxString selectedTimeRange = '30days'.obs; // 7days, 30days, 90days, 1year
   
   // Dashboard Stats
@@ -41,42 +42,75 @@ class AdminDashboardController extends GetxController {
   final RxInt totalRevenue = 0.obs;
   final RxDouble growthRate = 0.0.obs;
   
+  // Cache management
+  DateTime? _lastDashboardLoad;
+  DateTime? _lastChartLoad;
+  Timer? _debounceTimer;
+  static const Duration _dashboardCacheDuration = Duration(minutes: 5);
+  static const Duration _chartCacheDuration = Duration(minutes: 10);
+
   @override
   void onInit() {
     super.onInit();
-    loadDashboard();
+    // Load only essential stats on init, defer chart loading
+    _loadEssentialStats();
     _setupRealtimeUpdates();
     LoggerService.i('AdminDashboardController initialized');
   }
 
   void _setupRealtimeUpdates() {
-    // Update dashboard every 30 seconds
-    ever(selectedTimeRange, (_) => loadDashboard());
-    
+    // Debounce time range changes to prevent rapid reloads
+    ever(selectedTimeRange, (_) {
+      _debounceTimer?.cancel();
+      _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+        loadDashboard();
+      });
+    });
+
     // Listen to UserService statistics updates
     ever(_userService.totalUsers, (int value) => totalUsers.value = value);
     ever(_userService.activeUsers, (int value) => activeUsers.value = value);
     ever(_userService.newUsersToday, (int value) => newUsersToday.value = value);
   }
+
+  // Load only essential stats quickly
+  Future<void> _loadEssentialStats() async {
+    try {
+      await Future.wait([
+        _loadUserStatistics(),
+        _loadBusinessStatistics(),
+        _loadContentStatistics(),
+      ]);
+      _lastDashboardLoad = DateTime.now();
+    } catch (e) {
+      LoggerService.e('Error loading essential stats', error: e);
+    }
+  }
   
-  Future<void> loadDashboard() async {
+  Future<void> loadDashboard({bool forceRefresh = false}) async {
     if (isLoading.value) return; // Prevent multiple concurrent loads
-    
+
+    // Use cache if valid
+    if (!forceRefresh && _isDashboardCacheValid()) {
+      LoggerService.d('Using cached dashboard data');
+      return;
+    }
+
     isLoading.value = true;
-    
+
     try {
       LoggerService.i('Loading dashboard data for timeRange: ${selectedTimeRange.value}');
-      
-      // Load all statistics in parallel for better performance
+
+      // Load statistics only (defer charts for lazy loading)
       await Future.wait([
         _loadUserStatistics(),
         _loadBusinessStatistics(),
         _loadContentStatistics(),
         _loadRevenueStatistics(),
         _loadRecentActivities(),
-        _loadChartData(),
       ]);
-      
+
+      _lastDashboardLoad = DateTime.now();
       LoggerService.i('Dashboard loaded successfully');
     } catch (e, stackTrace) {
       LoggerService.e('Error loading dashboard', error: e, stackTrace: stackTrace);
@@ -86,6 +120,41 @@ class AdminDashboardController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  // Load chart data separately (lazy loading)
+  Future<void> loadChartData({bool forceRefresh = false}) async {
+    if (isLoadingCharts.value) return; // Prevent duplicate loading
+
+    // Use cache if valid
+    if (!forceRefresh && _isChartCacheValid()) {
+      LoggerService.d('Using cached chart data');
+      return;
+    }
+
+    isLoadingCharts.value = true;
+    try {
+      LoggerService.i('Loading chart data...');
+      await _loadChartData();
+      _lastChartLoad = DateTime.now();
+      LoggerService.i('Chart data loaded successfully');
+    } catch (e) {
+      LoggerService.e('Error loading chart data', error: e);
+    } finally {
+      isLoadingCharts.value = false;
+    }
+  }
+
+  bool _isDashboardCacheValid() {
+    if (_lastDashboardLoad == null) return false;
+    final cacheAge = DateTime.now().difference(_lastDashboardLoad!);
+    return cacheAge < _dashboardCacheDuration;
+  }
+
+  bool _isChartCacheValid() {
+    if (_lastChartLoad == null || chartData.isEmpty) return false;
+    final cacheAge = DateTime.now().difference(_lastChartLoad!);
+    return cacheAge < _chartCacheDuration;
   }
 
   Future<void> _loadUserStatistics() async {
