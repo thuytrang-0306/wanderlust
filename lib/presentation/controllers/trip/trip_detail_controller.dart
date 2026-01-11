@@ -343,27 +343,25 @@ class TripDetailController extends BaseController {
     }
   }
 
-  // Add location from search
-  void addLocationFromSearch(Map<String, dynamic> locationData) {
-    // Add the location to current day's locations
-    if (selectedDay.value < tripDays.length) {
-      final currentDayData = tripDays[selectedDay.value];
-      final locations = List<Map<String, dynamic>>.from(currentDayData['locations'] ?? []);
+  // Add location from search (reload from DB to ensure sync)
+  Future<void> addLocationFromSearch(Map<String, dynamic> locationData) async {
+    if (trip.value == null) return;
 
-      // Add new location with time
-      locations.add({
-        'time':
-            '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}',
-        'title': locationData['title'] ?? locationData['name'],
-        'address': locationData['location'] ?? locationData['address'],
-        'description': 'Từ tìm kiếm',
-        'image': locationData['image'] ?? locationData['imageUrl'],
-        'price': locationData['price'],
-      });
+    try {
+      // Reload trip data from database to get fresh data
+      await loadDayNotesAndLocations(trip.value!.id);
 
-      // Update the day's locations
-      tripDays[selectedDay.value]['locations'] = locations;
-      tripDays.refresh();
+      LoggerService.i('Trip data reloaded after adding business location');
+      AppSnackbar.showSuccess(
+        title: 'Thành công',
+        message: 'Đã thêm ${locationData['title'] ?? locationData['name']} vào kế hoạch',
+      );
+    } catch (e) {
+      LoggerService.e('Error reloading trip data', error: e);
+      AppSnackbar.showError(
+        title: 'Lỗi',
+        message: 'Không thể tải lại dữ liệu',
+      );
     }
   }
 
@@ -412,6 +410,70 @@ class TripDetailController extends BaseController {
         }
 
         AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã xóa địa điểm');
+      }
+    }
+  }
+
+  // Update private location
+  void updatePrivateLocation(int locationIndex, Map<String, dynamic> updatedData) async {
+    if (selectedDay.value < tripDays.length && trip.value != null) {
+      try {
+        // Load existing private locations from Firestore
+        final doc = await FirebaseFirestore.instance.collection('trips').doc(trip.value!.id).get();
+        final data = doc.data();
+
+        if (data != null) {
+          final existingLocations = (data['privateLocations'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ?? [];
+
+          // Find and update the matching location
+          bool updated = false;
+          for (var i = 0; i < existingLocations.length; i++) {
+            final loc = existingLocations[i];
+            if (loc['dayIndex'] == selectedDay.value) {
+              // Match by index in the day's locations
+              final dayLocations = tripDays[selectedDay.value]['locations'] as List;
+              final currentLocation = dayLocations[locationIndex];
+
+              if (loc['title'] == currentLocation['title'] &&
+                  loc['time'] == currentLocation['time']) {
+                // Update this location
+                existingLocations[i] = {
+                  'dayIndex': selectedDay.value,
+                  'time': updatedData['time'] ?? loc['time'],
+                  'title': updatedData['name'] ?? loc['title'],
+                  'address': updatedData['address'] ?? loc['address'],
+                  'latitude': updatedData['latitude'] ?? loc['latitude'],
+                  'longitude': updatedData['longitude'] ?? loc['longitude'],
+                  'type': 'private',
+                  'description': 'Địa điểm riêng tư',
+                  'addedAt': loc['addedAt'],
+                  'updatedAt': DateTime.now().toIso8601String(),
+                };
+                updated = true;
+                break;
+              }
+            }
+          }
+
+          if (updated) {
+            // Save back to database
+            await _tripService.updateTrip(trip.value!.id, {
+              'privateLocations': existingLocations,
+              'updatedAt': DateTime.now(),
+            });
+
+            // Reload data to refresh UI
+            await loadDayNotesAndLocations(trip.value!.id);
+
+            LoggerService.i('Private location updated successfully');
+            AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã cập nhật địa điểm');
+          }
+        }
+      } catch (e) {
+        LoggerService.e('Failed to update private location', error: e);
+        AppSnackbar.showError(title: 'Lỗi', message: 'Không thể cập nhật địa điểm');
       }
     }
   }

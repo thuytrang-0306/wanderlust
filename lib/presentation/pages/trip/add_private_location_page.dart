@@ -23,9 +23,11 @@ class AddPrivateLocationPage extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         centerTitle: true,
-        title: Text(
-          'Địa điểm riêng tư',
-          style: TextStyle(color: AppColors.primary, fontSize: 18.sp, fontWeight: FontWeight.w600),
+        title: Obx(
+          () => Text(
+            controller.isEditMode.value ? 'Chỉnh sửa địa điểm' : 'Thêm địa điểm riêng tư',
+            style: TextStyle(color: AppColors.primary, fontSize: 18.sp, fontWeight: FontWeight.w600),
+          ),
         ),
         actions: [
           TextButton(
@@ -60,12 +62,36 @@ class AddPrivateLocationPage extends StatelessWidget {
 
                 SizedBox(height: 20.h),
 
-                // Address field
-                AppTextField(
-                  label: 'Địa chỉ',
-                  controller: controller.addressController,
-                  hintText: 'Điền địa chỉ mà bạn có sẵn',
-                  onChanged: (value) => controller.updateAddress(value),
+                // Address field with geocode button
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        label: 'Địa chỉ',
+                        controller: controller.addressController,
+                        hintText: 'Nhập địa chỉ để tìm tọa độ',
+                        onChanged: (value) => controller.updateAddress(value),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Container(
+                      height: 48.h,
+                      width: 48.w,
+                      margin: EdgeInsets.only(bottom: 4.h),
+                      child: IconButton(
+                        onPressed: controller.geocodeAddress,
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                        icon: Icon(Icons.search, color: Colors.white, size: 20.sp),
+                        tooltip: 'Tìm vị trí',
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -83,11 +109,12 @@ class AddPrivateLocationPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16.r),
                 child: Stack(
                   children: [
-                    // Interactive Map
+                    // Interactive Map with auto-centering
                     Obx(
                       () => AppMap.locationPicker(
                         onLocationSelected: controller.onMapTap,
                         initialLocation: controller.selectedLocation.value,
+                        controller: controller.mapController,
                       ),
                     ),
 

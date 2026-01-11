@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:wanderlust/core/services/ai_storage_service.dart';
 import 'package:wanderlust/core/services/gemini_service.dart';
 import 'package:wanderlust/core/services/location_service.dart';
+import 'package:wanderlust/core/services/geocoding_service.dart';
 import 'package:wanderlust/core/services/saved_blogs_service.dart';
 import 'package:wanderlust/core/services/unified_image_service.dart';
 import 'package:wanderlust/data/services/user_profile_service.dart';
@@ -29,6 +30,7 @@ class InitialBinding extends Bindings {
     
     // Lazy load services - only init when needed
     Get.lazyPut(() => LocationService(), fenix: true);
+    Get.lazyPut(() => GeocodingService(), fenix: true);
     Get.lazyPut(() => UnifiedImageService(), fenix: true);
     Get.lazyPut(() => UserProfileService(), fenix: true);
     Get.lazyPut(() => BusinessService(), fenix: true);
@@ -36,7 +38,7 @@ class InitialBinding extends Bindings {
     Get.lazyPut(() => BookingService(), fenix: true);
     Get.lazyPut(() => PayOSService(), fenix: true);
     Get.lazyPut(() => SavedBlogsService(), fenix: true);
-    
+
     // AI Services - lazy load
     Get.lazyPut(() => GeminiService(), fenix: true);
     Get.lazyPut(() => AIStorageService(), fenix: true);

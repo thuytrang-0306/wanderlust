@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -42,6 +43,7 @@ class AppMap extends StatefulWidget {
   factory AppMap.locationPicker({
     required Function(LatLng) onLocationSelected,
     LocationPoint? initialLocation,
+    MapController? controller,
     double? height,
   }) {
     return AppMap(
@@ -51,6 +53,7 @@ class AppMap extends StatefulWidget {
       interactive: true,
       onTap: onLocationSelected,
       height: height,
+      controller: controller,
       selectedLocation: initialLocation,
       markers: initialLocation != null ? [initialLocation] : null,
     );
@@ -116,6 +119,31 @@ class _AppMapState extends State<AppMap> {
   }
 
   @override
+  void didUpdateWidget(AppMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Update selected location if changed
+    if (widget.selectedLocation != oldWidget.selectedLocation &&
+        widget.selectedLocation != null) {
+      setState(() {
+        _selectedLocation = widget.selectedLocation;
+      });
+
+      // Auto-center map to new location
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          _mapController.move(
+            LatLng(widget.selectedLocation!.latitude, widget.selectedLocation!.longitude),
+            15.0,
+          );
+        } catch (e) {
+          LoggerService.w('Map not ready for auto-center', error: e);
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final defaultLat = widget.initialLatitude ?? 10.762622; // Ho Chi Minh City
     final defaultLng = widget.initialLongitude ?? 106.660172;
@@ -145,13 +173,13 @@ class _AppMapState extends State<AppMap> {
                 : null,
       ),
       children: [
-        // Tile Layer - Using CartoDB Light with error handling
+        // Tile Layer - Using ESRI World Street Map (Google-like style, FREE)
         TileLayer(
           urlTemplate:
-              'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
-          subdomains: const ['a', 'b', 'c', 'd'],
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
           userAgentPackageName: 'com.wanderlust.app',
           maxZoom: 19,
+          maxNativeZoom: 18,
           errorTileCallback: (tile, error, stackTrace) {
             // Log error but don't crash the app
             LoggerService.e('Map tile error', error: error);
@@ -171,18 +199,48 @@ class _AppMapState extends State<AppMap> {
                 }).toList(),
           ),
 
-        // Marker Layer
-        MarkerLayer(markers: _buildMarkers()),
+        // Marker Layer - only show if no selected location (avoid duplicates)
+        if (_selectedLocation == null)
+          MarkerLayer(markers: _buildMarkers()),
 
-        // Selected location marker
+        // Selected location marker (prominent pin with brand color)
         if (_selectedLocation != null)
           MarkerLayer(
             markers: [
               Marker(
                 point: LatLng(_selectedLocation!.latitude, _selectedLocation!.longitude),
-                width: 50.w,
-                height: 50.w,
-                child: Icon(Icons.location_on, color: AppColors.error, size: 40.sp),
+                width: 56.w,
+                height: 72.h,
+                alignment: Alignment.topCenter,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(10.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.location_on,
+                        color: Colors.white,
+                        size: 26.sp,
+                      ),
+                    ),
+                    // Pointer triangle
+                    CustomPaint(
+                      size: Size(10.w, 6.h),
+                      painter: _TrianglePainter(AppColors.primary),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -299,6 +357,31 @@ class _AppMapState extends State<AppMap> {
     }
     super.dispose();
   }
+}
+
+// Triangle painter for marker pointer
+class _TrianglePainter extends CustomPainter {
+  final Color color;
+
+  _TrianglePainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = ui.Paint()
+      ..color = color
+      ..style = ui.PaintingStyle.fill;
+
+    final path = ui.Path()
+      ..moveTo(size.width / 2, size.height) // Bottom center (point)
+      ..lineTo(0, 0) // Top left
+      ..lineTo(size.width, 0) // Top right
+      ..close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_TrianglePainter oldDelegate) => color != oldDelegate.color;
 }
 
 // Loading placeholder widget

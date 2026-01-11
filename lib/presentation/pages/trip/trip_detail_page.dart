@@ -6,7 +6,6 @@ import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_assets.dart';
 import 'package:wanderlust/core/widgets/shimmer_loading.dart';
-import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/presentation/controllers/trip/trip_detail_controller.dart';
 import 'package:wanderlust/presentation/controllers/search/search_filter_controller.dart';
 
@@ -361,7 +360,7 @@ class TripDetailPage extends StatelessWidget {
               );
 
               if (result != null) {
-                controller.addLocationFromSearch(result);
+                await controller.addLocationFromSearch(result);
               }
             },
           ),
@@ -504,6 +503,7 @@ class TripDetailPage extends StatelessWidget {
         return _buildTimelineItem(
           controller: controller,
           locationIndex: index,
+          location: location,
           time: location['time'],
           title: location['title'],
           address: location['address'],
@@ -518,6 +518,7 @@ class TripDetailPage extends StatelessWidget {
   Widget _buildTimelineItem({
     required TripDetailController controller,
     required int locationIndex,
+    required Map<String, dynamic> location,
     required String time,
     required String title,
     required String address,
@@ -556,92 +557,112 @@ class TripDetailPage extends StatelessWidget {
 
         // Location card
         Expanded(
-          child: Container(
-            margin: EdgeInsets.only(bottom: 16.h),
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-            ),
-            child: Row(
-              children: [
-                // Image
-                if (image != null && image.isNotEmpty)
-                  Container(
-                    width: 60.w,
-                    height: 60.w,
-                    margin: EdgeInsets.only(right: 12.w),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8.r),
-                      child: AppImage(
-                        imageData: image,
-                        width: 60.w,
-                        height: 60.w,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+          child: GestureDetector(
+            onTap: () {
+              // Navigate to detail page based on location type
+              final locationType = location['type'] as String?;
 
-                // Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.black,
+              if (locationType == 'listing') {
+                // Business location - navigate to accommodation detail
+                final listingId = location['listingId'] as String?;
+                if (listingId != null) {
+                  Get.toNamed(
+                    '/accommodation-detail',
+                    arguments: {'listingId': listingId},
+                  );
+                }
+              } else if (locationType == 'private') {
+                // Private location - show edit dialog
+                _showPrivateLocationDetail(controller, locationIndex, location);
+              }
+            },
+            child: Container(
+              margin: EdgeInsets.only(bottom: 16.h),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+              ),
+              child: Row(
+                children: [
+                  // Image
+                  if (image != null && image.isNotEmpty)
+                    Container(
+                      width: 60.w,
+                      height: 60.w,
+                      margin: EdgeInsets.only(right: 12.w),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8.r),
+                        child: AppImage(
+                          imageData: image,
+                          width: 60.w,
+                          height: 60.w,
+                          fit: BoxFit.cover,
                         ),
                       ),
-                      SizedBox(height: 4.h),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on_outlined,
-                            size: 14.sp,
-                            color: const Color(0xFF6B7280),
+                    ),
+
+                  // Content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.black,
                           ),
-                          SizedBox(width: 4.w),
-                          Expanded(
-                            child: Text(
-                              address,
-                              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280)),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (description != null) ...[
+                        ),
                         SizedBox(height: 4.h),
                         Row(
                           children: [
-                            Icon(Icons.notes, size: 14.sp, color: const Color(0xFF6B7280)),
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 14.sp,
+                              color: const Color(0xFF6B7280),
+                            ),
                             SizedBox(width: 4.w),
                             Expanded(
                               child: Text(
-                                description,
+                                address,
                                 style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280)),
-                                maxLines: 2,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
+                        if (description != null) ...[
+                          SizedBox(height: 4.h),
+                          Row(
+                            children: [
+                              Icon(Icons.notes, size: 14.sp, color: const Color(0xFF6B7280)),
+                              SizedBox(width: 4.w),
+                              Expanded(
+                                child: Text(
+                                  description,
+                                  style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280)),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
 
-                // More button
-                IconButton(
-                  icon: Icon(Icons.more_horiz, size: 20.sp, color: const Color(0xFF6B7280)),
-                  onPressed: () => _showLocationMenu(controller, locationIndex, title),
-                ),
-              ],
+                  // More button
+                  IconButton(
+                    icon: Icon(Icons.more_horiz, size: 20.sp, color: const Color(0xFF6B7280)),
+                    onPressed: () => _showLocationMenu(controller, locationIndex, location, title),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -729,8 +750,160 @@ class TripDetailPage extends StatelessWidget {
   }
 }
 
+// Show private location detail for editing
+void _showPrivateLocationDetail(
+  TripDetailController controller,
+  int locationIndex,
+  Map<String, dynamic> location,
+) {
+  Get.bottomSheet(
+    Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.r),
+          topRight: Radius.circular(24.r),
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40.w,
+              height: 4.h,
+              margin: EdgeInsets.symmetric(vertical: 12.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5E7EB),
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+
+            // Title
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+              child: Text(
+                location['title'] ?? 'Địa điểm riêng tư',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.black,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+            // Address
+            if (location['address'] != null)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on_outlined, size: 16.sp, color: AppColors.neutral600),
+                    SizedBox(width: 4.w),
+                    Expanded(
+                      child: Text(
+                        location['address'],
+                        style: TextStyle(fontSize: 14.sp, color: AppColors.neutral600),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            Divider(height: 24.h, color: const Color(0xFFE5E7EB)),
+
+            // Menu options
+            _buildMenuOption(
+              icon: Icons.edit_outlined,
+              text: 'Chỉnh sửa địa điểm',
+              color: AppColors.primary,
+              onTap: () async {
+                Get.back();
+
+                // Navigate to edit page with existing data
+                final result = await Get.toNamed(
+                  '/add-private-location',
+                  arguments: {
+                    'mode': 'edit',
+                    'location': location,
+                  },
+                );
+
+                if (result != null) {
+                  // Update location with edited data
+                  controller.updatePrivateLocation(locationIndex, result);
+                }
+              },
+            ),
+
+            _buildMenuOption(
+              icon: Icons.delete_outline,
+              text: 'Xóa địa điểm',
+              color: AppColors.error,
+              onTap: () async {
+                Get.back();
+
+                // Show confirmation dialog
+                final confirmed = await Get.dialog<bool>(
+                  AlertDialog(
+                    title: Text(
+                      'Xóa địa điểm',
+                      style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+                    ),
+                    content: Text(
+                      'Bạn có chắc chắn muốn xóa địa điểm "${location['title']}" khỏi lịch trình?',
+                      style: TextStyle(fontSize: 16.sp),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(result: false),
+                        child: Text(
+                          'Hủy',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 16.sp),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => Get.back(result: true),
+                        child: Text(
+                          'Xóa',
+                          style: TextStyle(color: AppColors.error, fontSize: 16.sp),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  controller.deleteLocation(locationIndex);
+                }
+              },
+            ),
+
+            SizedBox(height: 20.h),
+          ],
+        ),
+      ),
+    ),
+    isDismissible: true,
+    enableDrag: true,
+  );
+}
+
 // Show location menu bottom sheet
-void _showLocationMenu(TripDetailController controller, int locationIndex, String locationTitle) {
+void _showLocationMenu(
+  TripDetailController controller,
+  int locationIndex,
+  Map<String, dynamic> location,
+  String locationTitle,
+) {
+  final locationType = location['type'] as String?;
+
   Get.bottomSheet(
     Container(
       decoration: BoxDecoration(
@@ -772,7 +945,48 @@ void _showLocationMenu(TripDetailController controller, int locationIndex, Strin
 
           Divider(height: 1.h, color: const Color(0xFFE5E7EB)),
 
-          // Menu options
+          // Menu options based on type
+          if (locationType == 'listing') ...[
+            // Business location - only view and delete
+            _buildMenuOption(
+              icon: Icons.visibility_outlined,
+              text: 'Xem chi tiết',
+              color: AppColors.primary,
+              onTap: () {
+                Get.back();
+                final listingId = location['listingId'] as String?;
+                if (listingId != null) {
+                  Get.toNamed(
+                    '/accommodation-detail',
+                    arguments: {'listingId': listingId},
+                  );
+                }
+              },
+            ),
+          ] else if (locationType == 'private') ...[
+            // Private location - edit and delete
+            _buildMenuOption(
+              icon: Icons.edit_outlined,
+              text: 'Chỉnh sửa',
+              color: AppColors.primary,
+              onTap: () async {
+                Get.back();
+                final result = await Get.toNamed(
+                  '/add-private-location',
+                  arguments: {
+                    'mode': 'edit',
+                    'location': location,
+                  },
+                );
+
+                if (result != null) {
+                  controller.updatePrivateLocation(locationIndex, result);
+                }
+              },
+            ),
+          ],
+
+          // Delete option for all types
           _buildMenuOption(
             icon: Icons.delete_outline,
             text: 'Xóa địa điểm',
