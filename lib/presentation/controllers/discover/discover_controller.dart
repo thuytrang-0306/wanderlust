@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -25,6 +26,9 @@ class DiscoverController extends BaseController {
   final TourService _tourService = Get.find<TourService>();
   final BlogService _blogService = Get.find<BlogService>();
   final ListingService _listingService = Get.find<ListingService>();
+
+  // Stream subscriptions (for proper cleanup)
+  StreamSubscription<List<BlogPostModel>>? _blogsSubscription;
 
   // Lazy load SavedBlogsService
   SavedBlogsService get _savedBlogsService {
@@ -173,10 +177,16 @@ class DiscoverController extends BaseController {
       // ✅ ULTIMATE SPEED: Use STREAM like Community tab!
       // Firestore auto cache → First emit INSTANT from cache (0ms!)
       // Then emit from server (background update)
-      _blogService
+      _blogsSubscription = _blogService
           .getPublishedPosts(limit: 5)
           .listen(
             (blogPosts) {
+              // ✅ SAFETY: Check if controller still active
+              if (isClosed) {
+                LoggerService.d('Controller disposed, skipping blog stream update');
+                return;
+              }
+
               recentBlogs.value = blogPosts;
               isLoadingBlogs.value = false;
 
@@ -186,7 +196,9 @@ class DiscoverController extends BaseController {
             },
             onError: (error) {
               LoggerService.e('❌ Error loading blogs stream', error: error);
-              isLoadingBlogs.value = false;
+              if (!isClosed) {
+                isLoadingBlogs.value = false;
+              }
             },
           );
     } catch (e) {
@@ -311,6 +323,32 @@ class DiscoverController extends BaseController {
     Get.toNamed('/region', arguments: {'region': region});
   }
 
+  /// Helper: Process and sort business listings (DRY principle)
+  List<ListingModel> _processBusinessListings(List<ListingModel> listings) {
+    return listings
+        .where((l) => l.isActive)
+        .toList()
+      ..sort((a, b) {
+        // Sort by rating first, then by newest (createdAt)
+        final ratingCompare = b.rating.compareTo(a.rating);
+        if (ratingCompare != 0) return ratingCompare;
+        return b.createdAt.compareTo(a.createdAt);
+      });
+  }
+
+  /// Helper: Check if listings are identical (prevent unnecessary rebuilds)
+  bool _areListingsEqual(List<ListingModel> list1, List<ListingModel> list2) {
+    // Quick check: Different lengths = different lists
+    if (list1.length != list2.length) return false;
+
+    // Compare IDs in order (already sorted by same criteria)
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i].id != list2[i].id) return false;
+    }
+
+    return true;
+  }
+
   Future<void> loadBusinessListings() async {
     try {
       isLoadingBusinessListings.value = true;
@@ -318,32 +356,29 @@ class DiscoverController extends BaseController {
       // ✅ INSTANT CACHE + BACKGROUND REFRESH
       final listings = await _listingService.searchListings(
         onRefresh: (freshListings) {
-          // Update with fresh data from server in background
-          final activeListings = freshListings
-              .where((l) => l.isActive)
-              .toList()
-            ..sort((a, b) {
-              final ratingCompare = b.rating.compareTo(a.rating);
-              if (ratingCompare != 0) return ratingCompare;
-              return b.createdAt.compareTo(a.createdAt);
-            });
+          // ✅ SAFETY: Check if controller still active before updating
+          if (isClosed) {
+            LoggerService.d('Controller disposed, skipping background refresh update');
+            return;
+          }
 
-          businessListings.value = activeListings.take(10).toList();
-          LoggerService.i('📱 Business Listings: Refreshed with ${businessListings.length} listings from server');
+          // Process fresh data
+          final processed = _processBusinessListings(freshListings);
+          final freshTop10 = processed.take(10).toList();
+
+          // ✅ OPTIMIZATION: Only update if data actually changed (prevent flicker)
+          if (!_areListingsEqual(businessListings, freshTop10)) {
+            businessListings.value = freshTop10;
+            LoggerService.i('📱 Business Listings: Updated with ${businessListings.length} new listings from server');
+          } else {
+            LoggerService.d('📱 Business Listings: No changes detected, skipping UI update');
+          }
         },
       );
 
       // Show cached data instantly
-      final activeListings = listings
-          .where((l) => l.isActive)
-          .toList()
-        ..sort((a, b) {
-          final ratingCompare = b.rating.compareTo(a.rating);
-          if (ratingCompare != 0) return ratingCompare;
-          return b.createdAt.compareTo(a.createdAt);
-        });
-
-      businessListings.value = activeListings.take(10).toList();
+      final processed = _processBusinessListings(listings);
+      businessListings.value = processed.take(10).toList();
       LoggerService.i('📱 Business Listings: ${businessListings.length} listings loaded (cache)');
     } catch (e) {
       LoggerService.e('❌ Error loading business listings', error: e);
@@ -636,6 +671,8 @@ class DiscoverController extends BaseController {
 
   @override
   void onClose() {
+    // ✅ CLEANUP: Cancel stream subscriptions to prevent memory leaks
+    _blogsSubscription?.cancel();
     bannerPageController.dispose();
     super.onClose();
   }

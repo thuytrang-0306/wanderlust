@@ -147,30 +147,37 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
 
                                   SizedBox(width: 8.w),
 
-                                  // Add to Trip button
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(21.r),
-                                    child: BackdropFilter(
-                                      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                                      child: Container(
-                                        width: 42.w,
-                                        height: 42.w,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0x4DFFFFFF),
-                                          borderRadius: BorderRadius.circular(21.r),
-                                        ),
-                                        child: IconButton(
-                                          padding: EdgeInsets.zero,
-                                          icon: Icon(
-                                            Icons.add_circle_outline,
-                                            color: Colors.white,
-                                            size: 26.sp,
+                                  // Add to Trip button - Hidden for tours (per leader's requirement)
+                                  Obx(() {
+                                    // Hide button if listing type is tour
+                                    if (controller.isTourType) {
+                                      return const SizedBox.shrink();
+                                    }
+
+                                    return ClipRRect(
+                                      borderRadius: BorderRadius.circular(21.r),
+                                      child: BackdropFilter(
+                                        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                                        child: Container(
+                                          width: 42.w,
+                                          height: 42.w,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0x4DFFFFFF),
+                                            borderRadius: BorderRadius.circular(21.r),
                                           ),
-                                          onPressed: controller.addToTrip,
+                                          child: IconButton(
+                                            padding: EdgeInsets.zero,
+                                            icon: Icon(
+                                              Icons.add_circle_outline,
+                                              color: Colors.white,
+                                              size: 26.sp,
+                                            ),
+                                            onPressed: controller.addToTrip,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ),
+                                    );
+                                  }),
                                 ],
                               ),
                             ],
