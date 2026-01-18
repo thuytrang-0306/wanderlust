@@ -573,6 +573,12 @@ class AccommodationDetailController extends BaseController {
         'priceBreakdown': priceBreakdown,
         'businessId': listing.value!.businessId,
         'businessName': listing.value!.businessName,
+        // Pass listing details for room info
+        'listingDetails': {
+          'roomSize': listing.value!.details['roomSize'] ?? '25m²',
+          'bedType': listing.value!.details['bedType'] ?? '1 giường đơn',
+          'cancellationPolicy': listing.value!.details['cancellationPolicy'],
+        },
       };
 
       // Add type-specific fields

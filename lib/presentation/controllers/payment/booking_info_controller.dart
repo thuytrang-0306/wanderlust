@@ -52,46 +52,65 @@ class BookingInfoController extends BaseController {
       businessId = args['businessId'];
       checkInDate = args['checkIn'] as DateTime?;
       checkOutDate = args['checkOut'] as DateTime?;
-      
+
       // Format dates for display
       String checkInDisplay = 'Thứ Hai, 1/1/2025 (15:00 - 03:00)';
       String checkOutDisplay = 'Thứ Ba, 2/1/2025 (trước 11:00)';
-      
+
       if (checkInDate != null && checkOutDate != null) {
         // weekday returns 1-7 (Monday-Sunday), we need to map to Vietnamese days
         final weekdays = {
           1: 'Hai', 2: 'Ba', 3: 'Tư', 4: 'Năm', 5: 'Sáu', 6: 'Bảy', 7: 'CN'
         };
-        
+
         final checkInWeekday = weekdays[checkInDate!.weekday] ?? 'Hai';
         final checkOutWeekday = weekdays[checkOutDate!.weekday] ?? 'Ba';
-        
+
         checkInDisplay = 'Thứ $checkInWeekday, ${checkInDate!.day}/${checkInDate!.month}/${checkInDate!.year} (15:00 - 03:00)';
         checkOutDisplay = 'Thứ $checkOutWeekday, ${checkOutDate!.day}/${checkOutDate!.month}/${checkOutDate!.year} (trước 11:00)';
       }
-      
+
+      // Get room details from listing data if available
+      final listingDetails = args['listingDetails'] as Map<String, dynamic>?;
+      final roomSize = listingDetails?['roomSize'] ?? args['roomSize'] ?? '25m²';
+      final bedType = listingDetails?['bedType'] ?? args['bedType'] ?? '1 giường đơn';
+
+      // Use totalPrice from args (already calculated in accom detail) or calculate if not provided
+      final basePrice = args['price'] ?? 480000;
+      final nights = args['nights'] ?? 1;
+      final rooms = args['rooms'] ?? 1;
+
+      // If totalPrice is provided from previous page, use it. Otherwise calculate
+      final subtotal = args['totalPrice'] ?? (basePrice * nights * rooms);
+      final taxAmount = (subtotal * 0.1).round(); // 10% VAT
+      final total = subtotal + taxAmount;
+
       bookingData.value = {
-        'accommodationName': args['accommodationName'] ?? 'Homestay Sơn Thủy',
+        'accommodationName': args['accommodationName'] ?? 'Khách sạn',
         'accommodationImage': args['accommodationImage'] ?? '',
-        'roomType': args['roomType'] ?? 'Phòng đơn homestay',
-        'roomCount': args['rooms'] ?? 1,
-        'roomSize': '25.0m2',
-        'nights': args['nights'] ?? 1,
+        'roomType': args['roomType'] ?? 'Phòng tiêu chuẩn',
+        'roomCount': rooms,
+        'roomSize': roomSize,
+        'nights': nights,
         'guests': args['guests'] ?? 1,
         'quantity': args['quantity'] ?? 1,
-        'bedType': '1 giường đơn',
+        'bedType': bedType,
         'checkIn': checkInDisplay,
         'checkOut': checkOutDisplay,
-        'guestName': _bookingService.currentUser?.displayName?.toUpperCase() ?? 'NGUYEN VAN A',
-        'userName': _bookingService.currentUser?.displayName ?? 'User',
-        'phone': '0123456789',
-        'email': _bookingService.currentUser?.email ?? 'user@example.com',
-        'paymentMethod': 'cash',
-        'price': args['price'] ?? 480000,
+        'guestName': _bookingService.currentUser?.displayName?.toUpperCase() ?? 'KHÁCH HÀNG',
+        'userName': _bookingService.currentUser?.displayName ?? 'Khách hàng',
+        'phone': _bookingService.currentUser?.phoneNumber ?? '',
+        'email': _bookingService.currentUser?.email ?? '',
+        'paymentMethod': 'payos',
+        'paymentMethodDisplay': 'PayOS - QR Ngân hàng',
+        'paymentMethodIcon': 'qr_code',
+        'price': basePrice,
         'priceUnit': args['priceUnit'] ?? '/đêm',
         'priceBreakdown': args['priceBreakdown'] ?? '',
-        'tax': 0,
-        'total': args['totalPrice'] ?? args['price'] ?? 480000,
+        'tax': taxAmount,
+        'total': total,
+        'cancellationPolicy': args['cancellationPolicy'] ?? listingDetails?['cancellationPolicy'] ??
+            'Miễn phí hủy phòng trước 24 giờ. Sau thời gian này sẽ tính phí hủy 50% giá trị đặt phòng.',
       };
     }
   }
@@ -110,20 +129,22 @@ class BookingInfoController extends BaseController {
   }
 
   void selectPaymentMethod() async {
-    // Navigate to payment method page
-    final result = await Get.toNamed('/payment-method');
+    // Navigate to payment method page with current selection
+    final result = await Get.toNamed(
+      '/payment-method',
+      arguments: {
+        'currentMethod': bookingData['paymentMethod'] ?? 'payos',
+      },
+    );
 
     if (result != null && result is Map<String, dynamic>) {
-      // Update payment method display
-      String paymentDisplay = '';
+      // Update payment method from selection
+      bookingData['paymentMethod'] = result['method'] ?? 'payos';
+      bookingData['paymentMethodDisplay'] = result['displayName'] ?? 'PayOS - QR Ngân hàng';
+      bookingData['paymentMethodIcon'] = result['icon'] ?? 'qr_code';
+      bookingData.refresh();
 
-      if (result['type'] == 'card') {
-        paymentDisplay = '${result['cardType']} ••${result['lastFourDigits']}';
-      } else if (result['type'] == 'digital') {
-        paymentDisplay = result['method'];
-      }
-
-      bookingData['paymentMethod'] = paymentDisplay;
+      LoggerService.i('Payment method updated: ${result['method']}');
     }
   }
 

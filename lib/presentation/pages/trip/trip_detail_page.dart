@@ -9,292 +9,406 @@ import 'package:wanderlust/core/widgets/shimmer_loading.dart';
 import 'package:wanderlust/presentation/controllers/trip/trip_detail_controller.dart';
 import 'package:wanderlust/presentation/controllers/search/search_filter_controller.dart';
 
-class TripDetailPage extends StatelessWidget {
+class TripDetailPage extends StatefulWidget {
   const TripDetailPage({super.key});
 
   @override
+  State<TripDetailPage> createState() => _TripDetailPageState();
+}
+
+class _TripDetailPageState extends State<TripDetailPage> {
+  late TripDetailController controller;
+  late ScrollController _scrollController;
+
+  // Animation values
+  double _scrollOffset = 0;
+  bool _isCollapsed = false;
+  double _titleOpacity = 0.0;
+
+  // Constants
+  static final double _headerHeight = 280.h;
+  static final double _collapseTrigger = 180.h;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(TripDetailController());
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    setState(() {
+      _scrollOffset = _scrollController.offset;
+      _isCollapsed = _scrollOffset > _collapseTrigger;
+      _titleOpacity = ((_scrollOffset - _collapseTrigger) / 50).clamp(0.0, 1.0);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(TripDetailController());
+    final statusBarHeight = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: AppColors.neutral100,
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Main content with header image
-          CustomScrollView(
-            slivers: [
-              // Header with image
-              SliverAppBar(
-                expandedHeight: 207.h,
-                pinned: false,
-                automaticallyImplyLeading: false,
-                backgroundColor: Colors.transparent,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: SizedBox(
-                    height: 207.h,
-                    child:
-                        controller.tripImage.value.isNotEmpty
-                            ? Hero(
-                              tag: 'trip-cover-${controller.trip.value!.id}',
-                              child: AppImage(
-                                imageData: controller.tripImage.value,
-                                width: double.infinity,
-                                height: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                            : Container(
-                              color: AppColors.primary.withOpacity(0.8),
-                              child: Center(
-                                child: Icon(
-                                  Icons.travel_explore,
-                                  size: 50.sp,
-                                  color: Colors.white.withOpacity(0.7),
-                                ),
-                              ),
-                            ),
-                  ),
-                ),
-              ),
+          // ===== MAIN SCROLLABLE CONTENT =====
+          SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              children: [
+                // Header Image (fixed height, scrolls with content)
+                SizedBox(
+                  height: _headerHeight,
+                  width: double.infinity,
+                  child: Obx(() {
+                    final tripData = controller.trip.value;
+                    final imageData = controller.tripImage.value;
 
-              // White card content
-              SliverToBoxAdapter(
-                child: Transform.translate(
-                  offset: Offset(0, -20.h),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(24.r),
-                        topRight: Radius.circular(24.r),
+                    if (imageData.isNotEmpty && tripData != null) {
+                      return Hero(
+                        tag: 'trip-cover-${tripData.id}',
+                        child: AppImage(
+                          imageData: imageData,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                    }
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary.withOpacity(0.8),
+                            AppColors.primary,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                       ),
+                      child: Center(
+                        child: Icon(
+                          Icons.travel_explore,
+                          size: 60.sp,
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+
+                // ===== CONTENT CARD WITH OVERLAP & RADIUS =====
+                Container(
+                  transform: Matrix4.translationValues(0, -24.h, 0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(24.r),
+                      topRight: Radius.circular(24.r),
                     ),
-                    child: Column(
-                      children: [
-                        // Title and date section
-                        Padding(
-                          padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Title row
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          controller.tripName.value,
-                                          style: TextStyle(
-                                            fontSize: 20.sp,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.black,
+                  ),
+                  child: Column(
+                    children: [
+                      // Title and date section
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Title row
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Obx(() => Text(
+                                        controller.tripName.value,
+                                        style: TextStyle(
+                                          fontSize: 20.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF392856),
+                                          height: 1.2,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      )),
+                                      SizedBox(height: 8.h),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_today_outlined,
+                                            size: 16.sp,
+                                            color: AppColors.primary,
                                           ),
-                                        ),
-                                        SizedBox(height: 8.h),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.calendar_today_outlined,
-                                              size: 16.sp,
-                                              color: AppColors.primary,
+                                          SizedBox(width: 4.w),
+                                          Obx(() => Text(
+                                            controller.tripDateRange.value,
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              color: const Color(0xFF6B7280),
                                             ),
-                                            SizedBox(width: 4.w),
-                                            Text(
-                                              controller.tripDateRange.value,
-                                              style: TextStyle(
-                                                fontSize: 14.sp,
-                                                color: const Color(0xFF6B7280),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                                          )),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                  // People count
-                                  Row(
+                                ),
+                                // People count badge
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20.r),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
                                         Icons.people_outline,
-                                        size: 20.sp,
-                                        color: const Color(0xFF6B7280),
+                                        size: 18.sp,
+                                        color: AppColors.primary,
                                       ),
                                       SizedBox(width: 4.w),
-                                      Text(
+                                      Obx(() => Text(
                                         controller.peopleCount.value.toString(),
                                         style: TextStyle(
                                           fontSize: 14.sp,
-                                          color: const Color(0xFF6B7280),
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.primary,
                                         ),
-                                      ),
+                                      )),
                                     ],
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            SizedBox(height: 16.h),
+
+                            // Divider
+                            Container(
+                              height: 1.h,
+                              color: const Color(0xFFEEE8FF),
+                            ),
+
+                            SizedBox(height: 16.h),
+
+                            // Tab navigation
+                            SizedBox(
+                              height: 40.h,
+                              child: Obx(() {
+                                final totalDays = controller.totalDays.value;
+                                if (totalDays <= 5) {
+                                  return Row(
+                                    children: List.generate(
+                                      totalDays,
+                                      (index) => Expanded(
+                                        child: _buildDayTab(controller, index),
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  return ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: totalDays,
+                                    itemBuilder: (context, index) => SizedBox(
+                                      width: 80.w,
+                                      child: _buildDayTab(controller, index),
+                                    ),
+                                  );
+                                }
+                              }),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Content area
+                      Padding(
+                        padding: EdgeInsets.all(20.w),
+                        child: Obx(() {
+                          if (controller.isInitialLoading.value) {
+                            return _buildContentShimmer();
+                          }
+
+                          if (controller.isError) {
+                            return _buildErrorState(controller);
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Ngày ${controller.selectedDay.value + 1}',
+                                style: TextStyle(
+                                  fontSize: 24.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    controller.getDayDate(controller.selectedDay.value),
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Bắt đầu: ${controller.getStartTime(controller.selectedDay.value)}',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: const Color(0xFF6B7280),
+                                    ),
                                   ),
                                 ],
                               ),
 
-                              SizedBox(height: 16.h),
+                              SizedBox(height: 24.h),
+                              _buildNoteSection(controller),
+                              SizedBox(height: 24.h),
 
-                              // Tab navigation
-                              SizedBox(
-                                height: 40.h,
-                                child: Row(
-                                  children: List.generate(
-                                    controller.totalDays.value,
-                                    (index) => Expanded(
-                                      child: GestureDetector(
-                                        onTap: () => controller.selectDay(index),
-                                        child: Obx(
-                                          () => Container(
-                                            decoration: BoxDecoration(
-                                              border: Border(
-                                                bottom: BorderSide(
-                                                  color:
-                                                      controller.selectedDay.value == index
-                                                          ? AppColors.primary
-                                                          : Colors.transparent,
-                                                  width: 2,
-                                                ),
-                                              ),
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                'Ngày ${index + 1}',
-                                                style: TextStyle(
-                                                  fontSize: 15.sp,
-                                                  fontWeight: FontWeight.w500,
-                                                  color:
-                                                      controller.selectedDay.value == index
-                                                          ? AppColors.primary
-                                                          : const Color(0xFF6B7280),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              if (controller.dayHasItems(controller.selectedDay.value))
+                                _buildTimelineView(controller)
+                              else
+                                _buildEmptyPlaceholder(),
+
+                              SizedBox(height: 24.h),
+                              _buildActionButtons(controller),
                             ],
+                          );
+                        }),
+                      ),
+
+                      SizedBox(height: 20.h),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ===== ANIMATED HEADER BAR (ALWAYS ON TOP) =====
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                color: _isCollapsed ? Colors.white : Colors.transparent,
+                boxShadow: _isCollapsed
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : [],
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Container(
+                  height: 56.h,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Row(
+                    children: [
+                      // Back button
+                      _isCollapsed
+                          ? _buildCollapsedButton(
+                              icon: Icons.chevron_left_rounded,
+                              onTap: () => Get.back(),
+                            )
+                          : _buildBlurButton(
+                              icon: Icons.chevron_left_rounded,
+                              onTap: () => Get.back(),
+                            ),
+
+                      // Title (fade in when collapsed)
+                      Expanded(
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: _titleOpacity,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w),
+                            child: Obx(() => Text(
+                              controller.tripName.value,
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF392856),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                            )),
                           ),
                         ),
+                      ),
 
-                        // Content area
-                        Padding(
-                          padding: EdgeInsets.all(20.w),
-                          child: Obx(() {
-                            // Show shimmer only for content area while loading
-                            if (controller.isInitialLoading.value) {
-                              return _buildContentShimmer();
-                            }
-
-                            // ✅ Show error state with retry button
-                            if (controller.isError) {
-                              return _buildErrorState(controller);
-                            }
-
-                            // Day header
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Day label
-                                Text(
-                                  'Ngày ${controller.selectedDay.value + 1}',
-                                  style: TextStyle(
-                                    fontSize: 24.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                                SizedBox(height: 8.h),
-
-                                // Date and time row
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      controller.getDayDate(controller.selectedDay.value),
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: const Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                    Text(
-                                      'Bắt đầu: ${controller.getStartTime(controller.selectedDay.value)}',
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: const Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                SizedBox(height: 24.h),
-
-                                // Day note section
-                                _buildNoteSection(controller),
-
-                                SizedBox(height: 24.h),
-
-                                // Check if day has items
-                                if (controller.dayHasItems(controller.selectedDay.value))
-                                  _buildTimelineView(controller)
-                                else
-                                  _buildEmptyPlaceholder(),
-
-                                SizedBox(height: 24.h),
-
-                                // Action buttons - Always show
-                                _buildActionButtons(controller),
-                              ],
-                            );
-                          }),
-                        ),
-
-                        // Bottom padding
-                        SizedBox(height: 20.h),
-                      ],
-                    ),
+                      // Edit button
+                      _isCollapsed
+                          ? _buildCollapsedButton(
+                              icon: Icons.edit_outlined,
+                              onTap: controller.editTrip,
+                            )
+                          : _buildBlurButton(
+                              icon: Icons.edit_outlined,
+                              onTap: controller.editTrip,
+                            ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
-
-          // Floating action buttons
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8.h,
-            left: 16.w,
-            child: _buildBlurButton(icon: Icons.chevron_left, onTap: () => Get.back()),
-          ),
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8.h,
-            right: 16.w,
-            child: _buildBlurButton(icon: Icons.edit_outlined, onTap: controller.editTrip),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBlurButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _buildDayTab(TripDetailController controller, int index) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40.w,
-        height: 40.w,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.3)),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20.r),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-            child: Container(
-              color: Colors.white.withOpacity(0.3),
-              child: Icon(icon, color: Colors.white, size: 24.sp),
+      onTap: () => controller.selectDay(index),
+      child: Obx(
+        () => Container(
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: controller.selectedDay.value == index
+                    ? AppColors.primary
+                    : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
+          child: Center(
+            child: Text(
+              'Ngày ${index + 1}',
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w500,
+                color: controller.selectedDay.value == index
+                    ? AppColors.primary
+                    : const Color(0xFF6B7280),
+              ),
             ),
           ),
         ),
@@ -302,10 +416,57 @@ class TripDetailPage extends StatelessWidget {
     );
   }
 
+  // Blur button for expanded state (on image)
+  Widget _buildBlurButton({required IconData icon, required VoidCallback onTap}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(21.r),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          width: 42.w,
+          height: 42.w,
+          decoration: BoxDecoration(
+            color: const Color(0x4DFFFFFF),
+            borderRadius: BorderRadius.circular(21.r),
+          ),
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              icon,
+              color: Colors.white,
+              size: icon == Icons.chevron_left_rounded ? 31.sp : 24.sp,
+            ),
+            onPressed: onTap,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Solid button for collapsed state (on white background)
+  Widget _buildCollapsedButton({required IconData icon, required VoidCallback onTap}) {
+    return Container(
+      width: 40.w,
+      height: 40.w,
+      decoration: BoxDecoration(
+        color: AppColors.neutral100,
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        icon: Icon(
+          icon,
+          color: const Color(0xFF392856),
+          size: icon == Icons.chevron_left_rounded ? 28.sp : 22.sp,
+        ),
+        onPressed: onTap,
+      ),
+    );
+  }
+
   Widget _buildEmptyPlaceholder() {
     return Column(
       children: [
-        // Illustration - Trip empty state
         Container(
           width: double.infinity,
           height: 200.h,
@@ -313,7 +474,6 @@ class TripDetailPage extends StatelessWidget {
             AppAssets.tripEmptyState,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) {
-              // Fallback if image not found
               return Icon(
                 Icons.travel_explore,
                 size: 100.sp,
@@ -322,10 +482,7 @@ class TripDetailPage extends StatelessWidget {
             },
           ),
         ),
-
         SizedBox(height: 12.h),
-
-        // Empty state text
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 40.w),
           child: Text(
@@ -347,7 +504,6 @@ class TripDetailPage extends StatelessWidget {
             icon: Icons.search,
             text: 'Tìm kiếm địa điểm',
             onTap: () async {
-              // FORCE delete controller completely
               Get.delete<SearchFilterController>(force: true);
 
               final args = {
@@ -356,7 +512,6 @@ class TripDetailPage extends StatelessWidget {
                 'dayNumber': controller.selectedDay.value,
               };
 
-              // Navigate with parameters in route
               final result = await Get.toNamed(
                 '/search-filter',
                 arguments: args,
@@ -376,7 +531,6 @@ class TripDetailPage extends StatelessWidget {
             onTap: () {
               Get.toNamed('/add-private-location')?.then((result) {
                 if (result != null) {
-                  // Handle the returned location data
                   controller.addPrivateLocation(result);
                 }
               });
@@ -534,7 +688,6 @@ class TripDetailPage extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Timeline line and dot
         Column(
           children: [
             Container(
@@ -545,10 +698,7 @@ class TripDetailPage extends StatelessWidget {
             if (!isLast) Container(width: 2.w, height: 100.h, color: const Color(0xFFE5E7EB)),
           ],
         ),
-
         SizedBox(width: 12.w),
-
-        // Time
         Container(
           padding: EdgeInsets.only(top: 0),
           width: 50.w,
@@ -557,27 +707,17 @@ class TripDetailPage extends StatelessWidget {
             style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.black),
           ),
         ),
-
         SizedBox(width: 12.w),
-
-        // Location card
         Expanded(
           child: GestureDetector(
             onTap: () {
-              // Navigate to detail page based on location type
               final locationType = location['type'] as String?;
-
               if (locationType == 'listing') {
-                // Business location - navigate to accommodation detail
                 final listingId = location['listingId'] as String?;
                 if (listingId != null) {
-                  Get.toNamed(
-                    '/accommodation-detail',
-                    arguments: {'listingId': listingId},
-                  );
+                  Get.toNamed('/accommodation-detail', arguments: {'listingId': listingId});
                 }
               } else if (locationType == 'private') {
-                // Private location - show edit dialog
                 _showPrivateLocationDetail(controller, locationIndex, location);
               }
             },
@@ -591,7 +731,6 @@ class TripDetailPage extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  // Image
                   if (image != null && image.isNotEmpty)
                     Container(
                       width: 60.w,
@@ -607,8 +746,6 @@ class TripDetailPage extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                  // Content
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -624,11 +761,7 @@ class TripDetailPage extends StatelessWidget {
                         SizedBox(height: 4.h),
                         Row(
                           children: [
-                            Icon(
-                              Icons.location_on_outlined,
-                              size: 14.sp,
-                              color: const Color(0xFF6B7280),
-                            ),
+                            Icon(Icons.location_on_outlined, size: 14.sp, color: const Color(0xFF6B7280)),
                             SizedBox(width: 4.w),
                             Expanded(
                               child: Text(
@@ -660,8 +793,6 @@ class TripDetailPage extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  // More button
                   IconButton(
                     icon: Icon(Icons.more_horiz, size: 20.sp, color: const Color(0xFF6B7280)),
                     onPressed: () => _showLocationMenu(controller, locationIndex, location, title),
@@ -682,29 +813,18 @@ class TripDetailPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64.sp,
-              color: AppColors.error,
-            ),
+            Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
             SizedBox(height: 16.h),
             Text(
               'Không thể tải dữ liệu',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.black,
-              ),
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: AppColors.black),
             ),
             SizedBox(height: 8.h),
             Text(
               controller.errorMessage.isNotEmpty
                   ? controller.errorMessage
                   : 'Đã xảy ra lỗi khi tải thông tin chuyến đi',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: const Color(0xFF6B7280),
-              ),
+              style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 24.h),
@@ -716,9 +836,7 @@ class TripDetailPage extends StatelessWidget {
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
               ),
             ),
           ],
@@ -731,20 +849,14 @@ class TripDetailPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Day title shimmer
         ShimmerLoading(
           child: Container(
             width: 100.w,
             height: 28.h,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(4.r),
-            ),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4.r)),
           ),
         ),
         SizedBox(height: 8.h),
-
-        // Date row shimmer
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -752,40 +864,27 @@ class TripDetailPage extends StatelessWidget {
               child: Container(
                 width: 150.w,
                 height: 16.h,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4.r),
-                ),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4.r)),
               ),
             ),
             ShimmerLoading(
               child: Container(
                 width: 100.w,
                 height: 16.h,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4.r),
-                ),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4.r)),
               ),
             ),
           ],
         ),
         SizedBox(height: 24.h),
-
-        // Note section shimmer
         ShimmerLoading(
           child: Container(
             width: double.infinity,
             height: 80.h,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12.r)),
           ),
         ),
         SizedBox(height: 24.h),
-
-        // Location cards shimmer
         ...List.generate(
           2,
           (index) => Padding(
@@ -794,10 +893,7 @@ class TripDetailPage extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 height: 100.h,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12.r)),
               ),
             ),
           ),
@@ -805,28 +901,138 @@ class TripDetailPage extends StatelessWidget {
       ],
     );
   }
-}
 
-// Show private location detail for editing
-void _showPrivateLocationDetail(
-  TripDetailController controller,
-  int locationIndex,
-  Map<String, dynamic> location,
-) {
-  Get.bottomSheet(
-    Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24.r),
-          topRight: Radius.circular(24.r),
+  void _showPrivateLocationDetail(
+    TripDetailController controller,
+    int locationIndex,
+    Map<String, dynamic> location,
+  ) {
+    Get.bottomSheet(
+      Container(
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.r),
+            topRight: Radius.circular(24.r),
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                margin: EdgeInsets.symmetric(vertical: 12.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5E7EB),
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                child: Text(
+                  location['title'] ?? 'Địa điểm riêng tư',
+                  style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: AppColors.black),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              if (location['address'] != null)
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, size: 16.sp, color: AppColors.neutral600),
+                      SizedBox(width: 4.w),
+                      Expanded(
+                        child: Text(
+                          location['address'],
+                          style: TextStyle(fontSize: 14.sp, color: AppColors.neutral600),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Divider(height: 24.h, color: const Color(0xFFE5E7EB)),
+              _buildMenuOption(
+                icon: Icons.edit_outlined,
+                text: 'Chỉnh sửa địa điểm',
+                color: AppColors.primary,
+                onTap: () async {
+                  Get.back();
+                  final result = await Get.toNamed(
+                    '/add-private-location',
+                    arguments: {'mode': 'edit', 'location': location},
+                  );
+                  if (result != null) {
+                    controller.updatePrivateLocation(locationIndex, result);
+                  }
+                },
+              ),
+              _buildMenuOption(
+                icon: Icons.delete_outline,
+                text: 'Xóa địa điểm',
+                color: AppColors.error,
+                onTap: () async {
+                  Get.back();
+                  final confirmed = await Get.dialog<bool>(
+                    AlertDialog(
+                      title: Text('Xóa địa điểm', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600)),
+                      content: Text(
+                        'Bạn có chắc chắn muốn xóa địa điểm "${location['title']}" khỏi lịch trình?',
+                        style: TextStyle(fontSize: 16.sp),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Get.back(result: false),
+                          child: Text('Hủy', style: TextStyle(color: AppColors.textSecondary, fontSize: 16.sp)),
+                        ),
+                        TextButton(
+                          onPressed: () => Get.back(result: true),
+                          child: Text('Xóa', style: TextStyle(color: AppColors.error, fontSize: 16.sp)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) {
+                    controller.deleteLocation(locationIndex);
+                  }
+                },
+              ),
+              SizedBox(height: 20.h),
+            ],
+          ),
         ),
       ),
-      child: SafeArea(
+      isDismissible: true,
+      enableDrag: true,
+    );
+  }
+
+  void _showLocationMenu(
+    TripDetailController controller,
+    int locationIndex,
+    Map<String, dynamic> location,
+    String locationTitle,
+  ) {
+    final locationType = location['type'] as String?;
+
+    Get.bottomSheet(
+      Container(
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.r),
+            topRight: Radius.circular(24.r),
+          ),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
             Container(
               width: 40.w,
               height: 4.h,
@@ -836,290 +1042,104 @@ void _showPrivateLocationDetail(
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
-
-            // Title
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
               child: Text(
-                location['title'] ?? 'Địa điểm riêng tư',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.black,
-                ),
+                locationTitle,
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: AppColors.black),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
               ),
             ),
-
-            // Address
-            if (location['address'] != null)
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: Row(
-                  children: [
-                    Icon(Icons.location_on_outlined, size: 16.sp, color: AppColors.neutral600),
-                    SizedBox(width: 4.w),
-                    Expanded(
-                      child: Text(
-                        location['address'],
-                        style: TextStyle(fontSize: 14.sp, color: AppColors.neutral600),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
+            Divider(height: 1.h, color: const Color(0xFFE5E7EB)),
+            if (locationType == 'listing') ...[
+              _buildMenuOption(
+                icon: Icons.visibility_outlined,
+                text: 'Xem chi tiết',
+                color: AppColors.primary,
+                onTap: () {
+                  Get.back();
+                  final listingId = location['listingId'] as String?;
+                  if (listingId != null) {
+                    Get.toNamed('/accommodation-detail', arguments: {'listingId': listingId});
+                  }
+                },
               ),
-
-            Divider(height: 24.h, color: const Color(0xFFE5E7EB)),
-
-            // Menu options
-            _buildMenuOption(
-              icon: Icons.edit_outlined,
-              text: 'Chỉnh sửa địa điểm',
-              color: AppColors.primary,
-              onTap: () async {
-                Get.back();
-
-                // Navigate to edit page with existing data
-                final result = await Get.toNamed(
-                  '/add-private-location',
-                  arguments: {
-                    'mode': 'edit',
-                    'location': location,
-                  },
-                );
-
-                if (result != null) {
-                  // Update location with edited data
-                  controller.updatePrivateLocation(locationIndex, result);
-                }
-              },
-            ),
-
+            ] else if (locationType == 'private') ...[
+              _buildMenuOption(
+                icon: Icons.edit_outlined,
+                text: 'Chỉnh sửa',
+                color: AppColors.primary,
+                onTap: () async {
+                  Get.back();
+                  final result = await Get.toNamed(
+                    '/add-private-location',
+                    arguments: {'mode': 'edit', 'location': location},
+                  );
+                  if (result != null) {
+                    controller.updatePrivateLocation(locationIndex, result);
+                  }
+                },
+              ),
+            ],
             _buildMenuOption(
               icon: Icons.delete_outline,
               text: 'Xóa địa điểm',
               color: AppColors.error,
               onTap: () async {
                 Get.back();
-
-                // Show confirmation dialog
                 final confirmed = await Get.dialog<bool>(
                   AlertDialog(
-                    title: Text(
-                      'Xóa địa điểm',
-                      style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
-                    ),
+                    title: Text('Xóa địa điểm', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600)),
                     content: Text(
-                      'Bạn có chắc chắn muốn xóa địa điểm "${location['title']}" khỏi lịch trình?',
+                      'Bạn có chắc chắn muốn xóa địa điểm "$locationTitle" khỏi lịch trình?',
                       style: TextStyle(fontSize: 16.sp),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Get.back(result: false),
-                        child: Text(
-                          'Hủy',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 16.sp),
-                        ),
+                        child: Text('Hủy', style: TextStyle(color: AppColors.textSecondary, fontSize: 16.sp)),
                       ),
                       TextButton(
                         onPressed: () => Get.back(result: true),
-                        child: Text(
-                          'Xóa',
-                          style: TextStyle(color: AppColors.error, fontSize: 16.sp),
-                        ),
+                        child: Text('Xóa', style: TextStyle(color: AppColors.error, fontSize: 16.sp)),
                       ),
                     ],
                   ),
                 );
-
                 if (confirmed == true) {
                   controller.deleteLocation(locationIndex);
                 }
               },
             ),
-
             SizedBox(height: 20.h),
           ],
         ),
       ),
-    ),
-    isDismissible: true,
-    enableDrag: true,
-  );
-}
+      isDismissible: true,
+      enableDrag: true,
+    );
+  }
 
-// Show location menu bottom sheet
-void _showLocationMenu(
-  TripDetailController controller,
-  int locationIndex,
-  Map<String, dynamic> location,
-  String locationTitle,
-) {
-  final locationType = location['type'] as String?;
-
-  Get.bottomSheet(
-    Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24.r),
-          topRight: Radius.circular(24.r),
+  Widget _buildMenuOption({
+    required IconData icon,
+    required String text,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        child: Row(
+          children: [
+            Icon(icon, size: 24.sp, color: color),
+            SizedBox(width: 12.w),
+            Text(text, style: TextStyle(fontSize: 16.sp, color: color, fontWeight: FontWeight.w500)),
+          ],
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Container(
-            width: 40.w,
-            height: 4.h,
-            margin: EdgeInsets.symmetric(vertical: 12.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE5E7EB),
-              borderRadius: BorderRadius.circular(2.r),
-            ),
-          ),
-
-          // Title
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-            child: Text(
-              locationTitle,
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.black,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-          ),
-
-          Divider(height: 1.h, color: const Color(0xFFE5E7EB)),
-
-          // Menu options based on type
-          if (locationType == 'listing') ...[
-            // Business location - only view and delete
-            _buildMenuOption(
-              icon: Icons.visibility_outlined,
-              text: 'Xem chi tiết',
-              color: AppColors.primary,
-              onTap: () {
-                Get.back();
-                final listingId = location['listingId'] as String?;
-                if (listingId != null) {
-                  Get.toNamed(
-                    '/accommodation-detail',
-                    arguments: {'listingId': listingId},
-                  );
-                }
-              },
-            ),
-          ] else if (locationType == 'private') ...[
-            // Private location - edit and delete
-            _buildMenuOption(
-              icon: Icons.edit_outlined,
-              text: 'Chỉnh sửa',
-              color: AppColors.primary,
-              onTap: () async {
-                Get.back();
-                final result = await Get.toNamed(
-                  '/add-private-location',
-                  arguments: {
-                    'mode': 'edit',
-                    'location': location,
-                  },
-                );
-
-                if (result != null) {
-                  controller.updatePrivateLocation(locationIndex, result);
-                }
-              },
-            ),
-          ],
-
-          // Delete option for all types
-          _buildMenuOption(
-            icon: Icons.delete_outline,
-            text: 'Xóa địa điểm',
-            color: AppColors.error,
-            onTap: () async {
-              Get.back(); // Close bottom sheet first
-
-              // Show confirmation dialog
-              final confirmed = await Get.dialog<bool>(
-                AlertDialog(
-                  title: Text(
-                    'Xóa địa điểm',
-                    style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
-                  ),
-                  content: Text(
-                    'Bạn có chắc chắn muốn xóa địa điểm "$locationTitle" khỏi lịch trình?',
-                    style: TextStyle(fontSize: 16.sp),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Get.back(result: false),
-                      child: Text(
-                        'Hủy',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 16.sp),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => Get.back(result: true),
-                      child: Text(
-                        'Xóa',
-                        style: TextStyle(color: AppColors.error, fontSize: 16.sp),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-
-              if (confirmed == true) {
-                controller.deleteLocation(locationIndex);
-              }
-            },
-          ),
-
-          SizedBox(height: 20.h),
-        ],
-      ),
-    ),
-    isDismissible: true,
-    enableDrag: true,
-  );
-}
-
-Widget _buildMenuOption({
-  required IconData icon,
-  required String text,
-  required Color color,
-  required VoidCallback onTap,
-}) {
-  return InkWell(
-    onTap: onTap,
-    child: Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-      child: Row(
-        children: [
-          Icon(icon, size: 24.sp, color: color),
-          SizedBox(width: 12.w),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 16.sp,
-              color: color,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+    );
+  }
 }

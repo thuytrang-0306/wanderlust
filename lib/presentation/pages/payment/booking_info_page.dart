@@ -60,8 +60,8 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                 // Price details
                 _buildPriceDetailsSection(),
 
-                // Bottom spacing
-                SizedBox(height: 120.h),
+                // Bottom spacing to avoid bottom bar overlap
+                SizedBox(height: 180.h),
               ],
             ),
           ),
@@ -299,7 +299,7 @@ class BookingInfoPage extends GetView<BookingInfoController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Chính sách khách sạn và phòng',
+            'Chính sách hủy đặt chỗ',
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w600,
@@ -307,15 +307,11 @@ class BookingInfoPage extends GetView<BookingInfoController> {
             ),
           ),
           SizedBox(height: 8.h),
-          Text(
-            'Áp dụng chính sách hủy phòng',
-            style: TextStyle(fontSize: 14.sp, color: const Color(0xFF374151)),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            'Miễn phí hủy trước 6-thg 12-2024 14:00. Nếu hủy hoặc sửa đổi sau 6-thg 12-2022 14:01, phí hủy đặt phòng sẽ được tính.',
+          Obx(() => Text(
+            controller.bookingData['cancellationPolicy'] ??
+                'Miễn phí hủy phòng trước 24 giờ. Sau thời gian này sẽ tính phí hủy 50% giá trị đặt phòng.',
             style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280), height: 1.4),
-          ),
+          )),
         ],
       ),
     );
@@ -491,53 +487,53 @@ class BookingInfoPage extends GetView<BookingInfoController> {
             SizedBox(height: 12.h),
 
             // Payment method
-            Row(
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 25.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEB001B),
-                    borderRadius: BorderRadius.circular(4.r),
+            Obx(() {
+              final paymentIcon = controller.bookingData['paymentMethodIcon'] ?? 'qr_code';
+              final paymentDisplay = controller.bookingData['paymentMethodDisplay'] ?? 'PayOS - QR Ngân hàng';
+
+              return Row(
+                children: [
+                  // Payment icon based on method
+                  Container(
+                    width: 48.w,
+                    height: 48.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Icon(
+                      paymentIcon == 'qr_code' ? Icons.qr_code_scanner : Icons.account_balance_wallet,
+                      color: AppColors.primary,
+                      size: 24.sp,
+                    ),
                   ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 12.w,
-                          height: 12.w,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.8),
-                            shape: BoxShape.circle,
+                        Text(
+                          paymentDisplay,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF374151),
                           ),
                         ),
-                        Container(
-                          width: 12.w,
-                          height: 12.w,
-                          margin: EdgeInsets.only(left: 2.w),
-                          decoration: BoxDecoration(
-                            color: Colors.yellow.withOpacity(0.8),
-                            shape: BoxShape.circle,
+                        SizedBox(height: 2.h),
+                        Text(
+                          'Nhấn để thay đổi',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: const Color(0xFF9CA3AF),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-                SizedBox(width: 12.w),
-                Obx(
-                  () => Text(
-                    controller.bookingData['paymentMethod'] ?? 'Tiền mặt',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF374151),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+                ],
+              );
+            }),
           ],
         ),
       ),
@@ -546,7 +542,7 @@ class BookingInfoPage extends GetView<BookingInfoController> {
 
   Widget _buildPriceDetailsSection() {
     return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12.r)),
       child: Column(
