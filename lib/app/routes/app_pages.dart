@@ -20,6 +20,7 @@ import 'package:wanderlust/presentation/pages/payment/booking_info_page.dart';
 import 'package:wanderlust/presentation/pages/payment/customer_info_page.dart';
 import 'package:wanderlust/presentation/pages/payment/payment_method_page.dart';
 import 'package:wanderlust/presentation/pages/payment/payment_qr_page.dart';
+import 'package:wanderlust/presentation/pages/payment/payment_zalopay_page.dart';
 import 'package:wanderlust/presentation/pages/payment/payment_success_page.dart';
 import 'package:wanderlust/presentation/controllers/payment/payment_qr_controller.dart';
 import 'package:wanderlust/presentation/pages/combo/combo_detail_page.dart';
@@ -153,6 +154,10 @@ class AppPages {
       binding: BindingsBuilder(() {
         Get.lazyPut(() => PaymentQRController());
       }),
+    ),
+    GetPage(
+      name: Routes.PAYMENT_ZALOPAY,
+      page: () => const PaymentZaloPayPage(),
     ),
     GetPage(
       name: Routes.COMBO_DETAIL,

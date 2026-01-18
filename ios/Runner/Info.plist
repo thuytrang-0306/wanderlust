@@ -63,6 +63,21 @@
 					<string>com.googleusercontent.apps.399185771213-jvhgv1qscvttn0ob5h9v8irm75as5sm2</string>
 				</array>
 			</dict>
+			<!-- ZaloPay Deep Link -->
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>wanderlust</string>
+				</array>
+			</dict>
+		</array>
+		<!-- ZaloPay SDK - Query ZaloPay app -->
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>zalopay</string>
+			<string>zalopay.sandbox</string>
 		</array>
 		<key>GIDClientID</key>
 		<string>399185771213-jvhgv1qscvttn0ob5h9v8irm75as5sm2.apps.googleusercontent.com</string>

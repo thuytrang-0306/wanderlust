@@ -2,17 +2,23 @@ import 'package:get/get.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/data/services/booking_service.dart';
 import 'package:wanderlust/data/services/payos_service.dart';
+import 'package:wanderlust/data/services/zalopay_service.dart';
 import 'package:wanderlust/data/models/booking_model.dart';
+import 'package:wanderlust/data/models/zalopay_payment_model.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 
 class BookingInfoController extends BaseController {
   final BookingService _bookingService = Get.find<BookingService>();
   final PayOSService _payosService = Get.find<PayOSService>();
-  
+  final ZaloPayService _zaloPayService = Get.find<ZaloPayService>();
+
   // Observable values
   final RxMap<String, dynamic> bookingData = <String, dynamic>{}.obs;
   final RxBool isProcessing = false.obs;
+
+  // Selected payment method
+  final Rx<PaymentMethod> selectedPaymentMethod = PaymentMethod.vietQR.obs;
 
   // Store listing/accommodation data from arguments
   String? listingId;
@@ -133,18 +139,20 @@ class BookingInfoController extends BaseController {
     final result = await Get.toNamed(
       '/payment-method',
       arguments: {
-        'currentMethod': bookingData['paymentMethod'] ?? 'payos',
+        'currentMethod': selectedPaymentMethod.value,
       },
     );
 
-    if (result != null && result is Map<String, dynamic>) {
+    if (result != null && result is PaymentMethod) {
       // Update payment method from selection
-      bookingData['paymentMethod'] = result['method'] ?? 'payos';
-      bookingData['paymentMethodDisplay'] = result['displayName'] ?? 'PayOS - QR Ngân hàng';
-      bookingData['paymentMethodIcon'] = result['icon'] ?? 'qr_code';
+      selectedPaymentMethod.value = result;
+
+      // Update display info in bookingData
+      bookingData['paymentMethod'] = result.name;
+      bookingData['paymentMethodDisplay'] = result.displayName;
       bookingData.refresh();
 
-      LoggerService.i('Payment method updated: ${result['method']}');
+      LoggerService.i('Payment method updated: ${result.name}');
     }
   }
 
@@ -154,6 +162,9 @@ class BookingInfoController extends BaseController {
     isProcessing.value = true;
 
     try {
+      // Determine payment method string for booking
+      final paymentMethodStr = selectedPaymentMethod.value.name;
+
       // Create customer info
       final customerInfo = CustomerInfo(
         fullName: bookingData['guestName'] ?? 'Guest',
@@ -170,140 +181,214 @@ class BookingInfoController extends BaseController {
       );
 
       // Create booking in Firestore with PENDING status
-      String? bookingId;
+      String? bookingId = await _createBooking(customerInfo, paymentMethodStr);
 
-      // Create booking based on listing type
-      switch (listingType) {
-        case 'room':
-          // Room/Accommodation booking - requires checkIn/checkOut
-          if (checkInDate != null && checkOutDate != null) {
-            bookingId = await _bookingService.createAccommodationBooking(
-              accommodationId: accommodationId ?? listingId ?? '',
-              accommodationName: bookingData['accommodationName'] ?? '',
-              accommodationImage: bookingData['accommodationImage'] ?? '',
-              checkIn: checkInDate!,
-              checkOut: checkOutDate!,
-              rooms: bookingData['roomCount'] ?? 1,
-              adults: bookingData['guests'] ?? 1,
-              children: 0,
-              unitPrice: (bookingData['price'] as num).toDouble(),
-              totalPrice: (bookingData['total'] as num).toDouble(),
-              customerInfo: customerInfo,
-              paymentMethod: 'payos',
-              specialRequests: '',
-            );
-          }
-          break;
+      if (bookingId != null) {
+        LoggerService.i('Booking created successfully (pending payment): $bookingId');
 
-        case 'tour':
-          // Tour booking - requires departure date
-          bookingId = await _bookingService.createTourBooking(
-            tourId: listingId ?? '',
-            tourName: bookingData['accommodationName'] ?? '',
-            tourImage: bookingData['accommodationImage'] ?? '',
-            departureDate: checkInDate ?? DateTime.now(),
+        // Route to appropriate payment flow based on selected method
+        switch (selectedPaymentMethod.value) {
+          case PaymentMethod.vietQR:
+            await _processPayOSPayment(bookingId);
+            break;
+
+          case PaymentMethod.zaloPay:
+            await _processZaloPayPayment(bookingId);
+            break;
+
+          case PaymentMethod.cash:
+            await _processCashPayment(bookingId);
+            break;
+
+          case PaymentMethod.momo:
+            // MoMo not yet implemented
+            AppSnackbar.showInfo(message: 'MoMo sẽ sớm được hỗ trợ');
+            break;
+        }
+      } else {
+        throw Exception(_getErrorMessage('create'));
+      }
+    } catch (e) {
+      LoggerService.e('Error processing payment', error: e);
+      AppSnackbar.showError(message: _getErrorMessage('process'));
+    } finally {
+      isProcessing.value = false;
+    }
+  }
+
+  /// Create booking based on listing type
+  Future<String?> _createBooking(CustomerInfo customerInfo, String paymentMethod) async {
+    switch (listingType) {
+      case 'room':
+        if (checkInDate != null && checkOutDate != null) {
+          return await _bookingService.createAccommodationBooking(
+            accommodationId: accommodationId ?? listingId ?? '',
+            accommodationName: bookingData['accommodationName'] ?? '',
+            accommodationImage: bookingData['accommodationImage'] ?? '',
+            checkIn: checkInDate!,
+            checkOut: checkOutDate!,
+            rooms: bookingData['roomCount'] ?? 1,
             adults: bookingData['guests'] ?? 1,
             children: 0,
             unitPrice: (bookingData['price'] as num).toDouble(),
             totalPrice: (bookingData['total'] as num).toDouble(),
             customerInfo: customerInfo,
-            paymentMethod: 'payos',
+            paymentMethod: paymentMethod,
             specialRequests: '',
           );
-          break;
+        }
+        return null;
 
-        case 'food':
-          // Food booking - quantity based
-          bookingId = await _bookingService.createFoodBooking(
-            foodId: listingId ?? '',
-            foodName: bookingData['accommodationName'] ?? '',
-            foodImage: bookingData['accommodationImage'] ?? '',
-            quantity: bookingData['quantity'] ?? 1,
-            unitPrice: (bookingData['price'] as num).toDouble(),
-            totalPrice: (bookingData['total'] as num).toDouble(),
-            customerInfo: customerInfo,
-            paymentMethod: 'payos',
-            specialRequests: '',
-            orderDate: checkInDate,
-          );
-          break;
-
-        case 'service':
-          // Service booking - quantity based
-          bookingId = await _bookingService.createServiceBooking(
-            serviceId: listingId ?? '',
-            serviceName: bookingData['accommodationName'] ?? '',
-            serviceImage: bookingData['accommodationImage'] ?? '',
-            quantity: bookingData['quantity'] ?? 1,
-            unitPrice: (bookingData['price'] as num).toDouble(),
-            totalPrice: (bookingData['total'] as num).toDouble(),
-            customerInfo: customerInfo,
-            paymentMethod: 'payos',
-            specialRequests: '',
-            serviceDate: checkInDate,
-          );
-          break;
-
-        default:
-          // Fallback to accommodation if type is unknown
-          if (checkInDate != null && checkOutDate != null) {
-            bookingId = await _bookingService.createAccommodationBooking(
-              accommodationId: accommodationId ?? listingId ?? '',
-              accommodationName: bookingData['accommodationName'] ?? '',
-              accommodationImage: bookingData['accommodationImage'] ?? '',
-              checkIn: checkInDate!,
-              checkOut: checkOutDate!,
-              rooms: bookingData['roomCount'] ?? 1,
-              adults: bookingData['guests'] ?? 1,
-              children: 0,
-              unitPrice: (bookingData['price'] as num).toDouble(),
-              totalPrice: (bookingData['total'] as num).toDouble(),
-              customerInfo: customerInfo,
-              paymentMethod: 'payos',
-              specialRequests: '',
-            );
-          }
-      }
-
-      if (bookingId != null) {
-        LoggerService.i('Booking created successfully (pending payment): $bookingId');
-
-        // Generate unique order code for PayOS
-        final orderCode = _payosService.generateOrderCode();
-
-        // Navigate to PayOS QR payment page
-        Get.toNamed(
-          '/payment-qr',
-          arguments: {
-            'bookingId': bookingId,
-            'orderCode': orderCode,
-            'totalAmount': (bookingData['total'] as num).toInt(),
-            'bookingData': bookingData,
-          },
+      case 'tour':
+        return await _bookingService.createTourBooking(
+          tourId: listingId ?? '',
+          tourName: bookingData['accommodationName'] ?? '',
+          tourImage: bookingData['accommodationImage'] ?? '',
+          departureDate: checkInDate ?? DateTime.now(),
+          adults: bookingData['guests'] ?? 1,
+          children: 0,
+          unitPrice: (bookingData['price'] as num).toDouble(),
+          totalPrice: (bookingData['total'] as num).toDouble(),
+          customerInfo: customerInfo,
+          paymentMethod: paymentMethod,
+          specialRequests: '',
         );
-      } else {
-        // Dynamic error message based on listing type
-        String errorMsg = 'Không thể tạo đặt chỗ';
-        if (isTour) errorMsg = 'Không thể tạo đặt tour';
-        else if (isFood) errorMsg = 'Không thể tạo đặt món';
-        else if (isService) errorMsg = 'Không thể tạo đặt dịch vụ';
-        else errorMsg = 'Không thể tạo đặt phòng';
 
-        throw Exception(errorMsg);
-      }
-    } catch (e) {
-      LoggerService.e('Error creating booking', error: e);
+      case 'food':
+        return await _bookingService.createFoodBooking(
+          foodId: listingId ?? '',
+          foodName: bookingData['accommodationName'] ?? '',
+          foodImage: bookingData['accommodationImage'] ?? '',
+          quantity: bookingData['quantity'] ?? 1,
+          unitPrice: (bookingData['price'] as num).toDouble(),
+          totalPrice: (bookingData['total'] as num).toDouble(),
+          customerInfo: customerInfo,
+          paymentMethod: paymentMethod,
+          specialRequests: '',
+          orderDate: checkInDate,
+        );
 
-      // Dynamic error message based on listing type
-      String errorMsg = 'Có lỗi xảy ra khi tạo đặt chỗ. Vui lòng thử lại.';
-      if (isTour) errorMsg = 'Có lỗi xảy ra khi tạo đặt tour. Vui lòng thử lại.';
-      else if (isFood) errorMsg = 'Có lỗi xảy ra khi tạo đặt món. Vui lòng thử lại.';
-      else if (isService) errorMsg = 'Có lỗi xảy ra khi tạo đặt dịch vụ. Vui lòng thử lại.';
-      else errorMsg = 'Có lỗi xảy ra khi tạo đặt phòng. Vui lòng thử lại.';
+      case 'service':
+        return await _bookingService.createServiceBooking(
+          serviceId: listingId ?? '',
+          serviceName: bookingData['accommodationName'] ?? '',
+          serviceImage: bookingData['accommodationImage'] ?? '',
+          quantity: bookingData['quantity'] ?? 1,
+          unitPrice: (bookingData['price'] as num).toDouble(),
+          totalPrice: (bookingData['total'] as num).toDouble(),
+          customerInfo: customerInfo,
+          paymentMethod: paymentMethod,
+          specialRequests: '',
+          serviceDate: checkInDate,
+        );
 
-      AppSnackbar.showError(message: errorMsg);
-    } finally {
-      isProcessing.value = false;
+      default:
+        // Fallback to accommodation
+        if (checkInDate != null && checkOutDate != null) {
+          return await _bookingService.createAccommodationBooking(
+            accommodationId: accommodationId ?? listingId ?? '',
+            accommodationName: bookingData['accommodationName'] ?? '',
+            accommodationImage: bookingData['accommodationImage'] ?? '',
+            checkIn: checkInDate!,
+            checkOut: checkOutDate!,
+            rooms: bookingData['roomCount'] ?? 1,
+            adults: bookingData['guests'] ?? 1,
+            children: 0,
+            unitPrice: (bookingData['price'] as num).toDouble(),
+            totalPrice: (bookingData['total'] as num).toDouble(),
+            customerInfo: customerInfo,
+            paymentMethod: paymentMethod,
+            specialRequests: '',
+          );
+        }
+        return null;
     }
+  }
+
+  /// Process PayOS (VietQR) payment
+  Future<void> _processPayOSPayment(String bookingId) async {
+    final orderCode = _payosService.generateOrderCode();
+
+    Get.toNamed(
+      '/payment-qr',
+      arguments: {
+        'bookingId': bookingId,
+        'orderCode': orderCode,
+        'totalAmount': (bookingData['total'] as num).toInt(),
+        'bookingData': Map<String, dynamic>.from(bookingData),
+      },
+    );
+  }
+
+  /// Process ZaloPay payment (Web Redirect flow)
+  Future<void> _processZaloPayPayment(String bookingId) async {
+    final totalAmount = (bookingData['total'] as num).toInt();
+
+    // ZaloPay description max 50 chars
+    String description = 'Dat phong ${bookingData['accommodationName'] ?? 'Wanderlust'}';
+    if (description.length > 50) {
+      description = description.substring(0, 47) + '...';
+    }
+
+    // Create ZaloPay order
+    final order = await _zaloPayService.createOrder(
+      amount: totalAmount,
+      description: description,
+    );
+
+    if (order == null || !order.isSuccess) {
+      AppSnackbar.showError(
+        message: order?.returnMessage ?? 'Không thể tạo đơn hàng ZaloPay',
+      );
+      return;
+    }
+
+    LoggerService.i('ZaloPay order created: ${order.appTransId}');
+
+    // Navigate to ZaloPay payment page with polling
+    Get.toNamed(
+      '/payment-zalopay',
+      arguments: {
+        'bookingId': bookingId,
+        'appTransId': order.appTransId,
+        'orderUrl': order.orderUrl,
+        'totalAmount': totalAmount,
+        'bookingData': Map<String, dynamic>.from(bookingData),
+      },
+    );
+  }
+
+  /// Process Cash payment (pay at hotel)
+  Future<void> _processCashPayment(String bookingId) async {
+    // For cash payment, just navigate to success with pending payment status
+    Get.offNamed(
+      '/payment-success',
+      arguments: {
+        'bookingId': bookingId,
+        'totalAmount': (bookingData['total'] as num).toString(),
+        'paymentMethod': 'Thanh toán tại nơi',
+        'isPending': true,
+        ...bookingData,
+      },
+    );
+
+    AppSnackbar.showSuccess(
+      message: 'Đặt phòng thành công! Vui lòng thanh toán khi nhận phòng.',
+    );
+  }
+
+  /// Get error message based on listing type
+  String _getErrorMessage(String action) {
+    final base = action == 'create' ? 'Không thể tạo' : 'Có lỗi xảy ra khi tạo';
+    final suffix = action == 'create' ? '' : '. Vui lòng thử lại.';
+
+    if (isTour) {
+      return '$base đặt tour$suffix';
+    } else if (isFood) {
+      return '$base đặt món$suffix';
+    } else if (isService) {
+      return '$base đặt dịch vụ$suffix';
+    }
+    return '$base đặt phòng$suffix';
   }
 }

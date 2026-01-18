@@ -104,6 +104,8 @@ dependencies:
   
   # Payment
   # flutter_stripe: ^11.1.0  # Temporarily disabled due to Kotlin conflict
+  # flutter_zalopay_sdk: ^0.1.14  # Disabled - incompatible with AGP 8.x
+  # Using web redirect flow instead for ZaloPay
 
 dev_dependencies:
   flutter_test:
