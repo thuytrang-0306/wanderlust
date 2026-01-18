@@ -258,29 +258,17 @@ class _TripDetailPageState extends State<TripDetailPage> {
                                   color: AppColors.primary,
                                 ),
                               ),
-                              SizedBox(height: 8.h),
+                              SizedBox(height: 4.h),
 
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    controller.getDayDate(controller.selectedDay.value),
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      color: const Color(0xFF6B7280),
-                                    ),
-                                  ),
-                                  Text(
-                                    'Bắt đầu: ${controller.getStartTime(controller.selectedDay.value)}',
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      color: const Color(0xFF6B7280),
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                controller.getDayDate(controller.selectedDay.value),
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: const Color(0xFF6B7280),
+                                ),
                               ),
 
-                              SizedBox(height: 24.h),
+                              SizedBox(height: 20.h),
                               _buildNoteSection(controller),
                               SizedBox(height: 24.h),
 
@@ -654,21 +642,19 @@ class _TripDetailPageState extends State<TripDetailPage> {
   }
 
   Widget _buildTimelineView(TripDetailController controller) {
+    final locations = controller.getLocationsForDay(controller.selectedDay.value);
     return Column(
-      children: List.generate(controller.getLocationsForDay(controller.selectedDay.value).length, (
-        index,
-      ) {
-        final location = controller.getLocationsForDay(controller.selectedDay.value)[index];
+      children: List.generate(locations.length, (index) {
+        final location = locations[index];
         return _buildTimelineItem(
           controller: controller,
           locationIndex: index,
           location: location,
-          time: location['time'],
           title: location['title'],
           address: location['address'],
           description: location['description'],
           image: location['image'],
-          isLast: index == controller.getLocationsForDay(controller.selectedDay.value).length - 1,
+          isLast: index == locations.length - 1,
         );
       }),
     );
@@ -678,7 +664,6 @@ class _TripDetailPageState extends State<TripDetailPage> {
     required TripDetailController controller,
     required int locationIndex,
     required Map<String, dynamic> location,
-    required String time,
     required String title,
     required String address,
     required String? description,
@@ -688,6 +673,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Timeline indicator
         Column(
           children: [
             Container(
@@ -698,16 +684,8 @@ class _TripDetailPageState extends State<TripDetailPage> {
             if (!isLast) Container(width: 2.w, height: 100.h, color: const Color(0xFFE5E7EB)),
           ],
         ),
-        SizedBox(width: 12.w),
-        Container(
-          padding: EdgeInsets.only(top: 0),
-          width: 50.w,
-          child: Text(
-            time,
-            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.black),
-          ),
-        ),
-        SizedBox(width: 12.w),
+        SizedBox(width: 16.w),
+        // Location card
         Expanded(
           child: GestureDetector(
             onTap: () {

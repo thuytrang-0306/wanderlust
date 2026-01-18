@@ -304,14 +304,6 @@ class TripDetailController extends BaseController {
     return '';
   }
 
-  // Get start time for a day
-  String getStartTime(int dayIndex) {
-    if (dayIndex < tripDays.length) {
-      return tripDays[dayIndex]['startTime'] ?? '8:00';
-    }
-    return '8:00';
-  }
-
   // Check if a day has locations
   bool dayHasItems(int dayIndex) {
     if (dayIndex < tripDays.length) {
