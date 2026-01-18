@@ -405,18 +405,21 @@ class AIChatController extends GetxController {
     try {
       // Read image as bytes
       final bytes = await File(image.path).readAsBytes();
-      
+
       // Convert to base64
       final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-      
-      // Add to selection (max 3 images)
-      if (selectedImages.length < 3) {
-        selectedImages.add(base64Image);
-      } else {
+
+      // Add to selection - UNLIMITED images for max user experience
+      // Gemini 2.5 Flash supports unlimited images
+      selectedImages.add(base64Image);
+
+      // Optional warning for very large batches (UX consideration only)
+      if (selectedImages.length > 20) {
         Get.snackbar(
-          'Giới hạn',
-          'Chỉ có thể gửi tối đa 3 ảnh',
+          'Thông báo',
+          'Bạn đã chọn ${selectedImages.length} ảnh. Xử lý có thể mất thời gian.',
           snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2),
         );
       }
     } catch (e) {

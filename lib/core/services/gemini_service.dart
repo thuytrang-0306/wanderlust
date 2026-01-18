@@ -44,8 +44,8 @@ class GeminiService extends GetxService {
         model: _modelName,
         apiKey: _apiKey,
         generationConfig: GenerationConfig(
-          temperature: 0.7,
-          maxOutputTokens: 2048,
+          temperature: 0.9, // Increased for more creative and engaging responses
+          maxOutputTokens: 8192, // MAX for Gemini Flash - full detailed responses
           topK: 40,
           topP: 0.95,
           stopSequences: [],
@@ -70,21 +70,29 @@ class GeminiService extends GetxService {
   ChatSession _getOrCreateSession(AIConversation conversation) {
     // Create history from existing messages
     final history = <Content>[];
-    
+
     // Add system prompt based on context
     final systemPrompt = _getSystemPrompt(conversation.context);
     if (systemPrompt.isNotEmpty) {
       history.add(Content.text(systemPrompt));
     }
 
-    // Add existing messages to history
-    for (final message in conversation.messages) {
+    // OPTIMIZATION: Limit history to avoid input token overflow
+    // Keep only last 20 messages (10 exchanges) for context efficiency
+    final messages = conversation.messages;
+    final startIndex = messages.length > 20 ? messages.length - 20 : 0;
+    final recentMessages = messages.sublist(startIndex);
+
+    // Add recent messages to history
+    for (final message in recentMessages) {
       if (message.role == MessageRole.user) {
         history.add(Content.text(message.content));
       } else if (message.role == MessageRole.assistant) {
         history.add(Content.model([TextPart(message.content)]));
       }
     }
+
+    LoggerService.i('📝 Session created with ${history.length} history items (${recentMessages.length} recent messages)');
 
     // Create new session with history
     _currentSession = _model.startChat(history: history);
@@ -138,24 +146,65 @@ class GeminiService extends GetxService {
       // Send message and get streaming response
       final response = session.sendMessageStream(content);
 
-      // Stream response chunks
+      // Stream response chunks with AUTO-CONTINUE on MAX_TOKENS
       String fullResponse = '';
+      bool shouldContinue = false;
+
       await for (final chunk in response) {
         final text = chunk.text ?? '';
         fullResponse += text;
         yield fullResponse;
 
-        // Log safety ratings if response is blocked
-        if (text.isEmpty && chunk.candidates.isNotEmpty) {
+        // Check finish reason - AUTO CONTINUE if hit max tokens
+        if (chunk.candidates.isNotEmpty) {
           final candidate = chunk.candidates.first;
-          LoggerService.w('Empty response - Safety ratings: ${candidate.safetyRatings}, Finish reason: ${candidate.finishReason}');
+          final finishReason = candidate.finishReason?.toString() ?? '';
+
+          // Log if response is blocked or stopped
+          if (text.isEmpty) {
+            LoggerService.w('Empty response - Safety ratings: ${candidate.safetyRatings}, Finish reason: $finishReason');
+          }
+
+          // Check if stopped due to MAX_TOKENS - need to continue
+          if (finishReason.contains('MAX_TOKENS') || finishReason.contains('LENGTH')) {
+            shouldContinue = true;
+            LoggerService.i('⚠️ Hit MAX_TOKENS, will auto-continue...');
+          }
+        }
+      }
+
+      // AUTO-CONTINUE if stopped due to max tokens (up to 3 times for safety)
+      int continueCount = 0;
+      while (shouldContinue && continueCount < 3) {
+        continueCount++;
+        shouldContinue = false;
+
+        LoggerService.i('🔄 Auto-continuing response (attempt $continueCount/3)...');
+
+        // Send "continue" message to get rest of response
+        final continueContent = Content.text('Hãy tiếp tục phần còn lại.');
+        final continueResponse = session.sendMessageStream(continueContent);
+
+        await for (final chunk in continueResponse) {
+          final text = chunk.text ?? '';
+          fullResponse += text;
+          yield fullResponse;
+
+          // Check if need to continue again
+          if (chunk.candidates.isNotEmpty) {
+            final candidate = chunk.candidates.first;
+            final finishReason = candidate.finishReason?.toString() ?? '';
+            if (finishReason.contains('MAX_TOKENS') || finishReason.contains('LENGTH')) {
+              shouldContinue = true;
+            }
+          }
         }
       }
 
       if (fullResponse.isEmpty) {
         LoggerService.w('Warning: Gemini returned empty response');
       }
-      LoggerService.i('Message sent successfully, response length: ${fullResponse.length}');
+      LoggerService.i('✅ Message sent successfully, response length: ${fullResponse.length}');
     } catch (e) {
       LoggerService.e('Error sending message', error: e);
       lastError.value = e.toString();
@@ -364,8 +413,8 @@ Tập trung vào thời tiết và khí hậu:
         model: _modelName,
         apiKey: _apiKey,
         generationConfig: GenerationConfig(
-          temperature: temperature ?? 0.7,
-          maxOutputTokens: maxTokens ?? 2048,
+          temperature: temperature ?? 0.9, // Default to 0.9 for creative responses
+          maxOutputTokens: maxTokens ?? 8192, // Default to MAX tokens
           topK: topK ?? 40,
           topP: topP ?? 0.95,
         ),
@@ -379,7 +428,7 @@ Tập trung vào thời tiết và khí hậu:
 
       // Clear current session to use new config
       clearSession();
-      
+
       LoggerService.i('Generation config updated');
     } catch (e) {
       LoggerService.e('Error updating generation config', error: e);
