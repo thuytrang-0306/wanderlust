@@ -14,7 +14,7 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
   Widget build(BuildContext context) {
     final controller = Get.put(AccommodationDetailController());
 
-    // Get Hero tag from arguments immediately (before data loads)
+    // ✅ Get Hero tag from arguments immediately (before data loads)
     final args = Get.arguments;
     String heroTag = 'accommodation-image-default';
 
@@ -22,7 +22,12 @@ class AccommodationDetailPage extends GetView<AccommodationDetailController> {
       if (args is String) {
         heroTag = 'business-listing-image-$args';
       } else if (args is Map) {
-        if (args['listingId'] != null) {
+        // ✅ PRIORITY: Use heroTag if explicitly passed from navigation
+        if (args['heroTag'] != null) {
+          heroTag = args['heroTag'] as String;
+        }
+        // Fallback: Generate from IDs
+        else if (args['listingId'] != null) {
           heroTag = 'business-listing-image-${args['listingId']}';
         } else if (args['accommodationId'] != null) {
           heroTag = 'accommodation-image-${args['accommodationId']}';

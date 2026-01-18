@@ -226,7 +226,7 @@ class BusinessListingCard extends StatelessWidget {
             ),
           ),
 
-          // Discount badge
+          // Discount badge (no action buttons in Discovery cards)
           if (listing.hasDiscount)
             Positioned(
               top: 8.h,

@@ -140,7 +140,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.s3, vertical: AppSpacing.s2),
             decoration: BoxDecoration(
-              color: active ? AppColors.primary.withOpacity(0.1) : Colors.white,
+              color: active ? AppColors.primary.withValues(alpha: 0.1) : Colors.white,
               borderRadius: BorderRadius.circular(16.r),
               border: Border.all(color: active ? AppColors.primary : AppColors.neutral300),
             ),
@@ -244,7 +244,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
         decoration: BoxDecoration(
           color:
               controller.selectedSort.value != 'default'
-                  ? AppColors.primary.withOpacity(0.1)
+                  ? AppColors.primary.withValues(alpha: 0.1)
                   : Colors.white,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
@@ -435,7 +435,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -449,31 +449,35 @@ class SearchFilterPage extends GetView<SearchFilterController> {
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
+            // Image with Hero animation
             Stack(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
-                  child: SizedBox(
-                    height: 180.h,
-                    width: double.infinity,
-                    child: item['image'] != null && item['image'].toString().isNotEmpty
-                        ? AppImage(
-                            imageData: item['image'],
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                            errorWidget: Container(
+                // ✅ Hero animation for smooth transition
+                Hero(
+                  tag: 'search-listing-image-${item['listingId'] ?? item['id']}',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                    child: SizedBox(
+                      height: 180.h,
+                      width: double.infinity,
+                      child: item['image'] != null && item['image'].toString().isNotEmpty
+                          ? AppImage(
+                              imageData: item['image'],
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorWidget: Container(
+                                color: AppColors.neutral200,
+                                child: Icon(Icons.image, size: 48.sp, color: AppColors.neutral400),
+                              ),
+                            )
+                          : Container(
                               color: AppColors.neutral200,
-                              child: Icon(Icons.image, size: 48.sp, color: AppColors.neutral400),
+                              child: Center(
+                                child: Icon(Icons.image, size: 48.sp, color: AppColors.neutral400),
+                              ),
                             ),
-                          )
-                        : Container(
-                            color: AppColors.neutral200,
-                            child: Center(
-                              child: Icon(Icons.image, size: 48.sp, color: AppColors.neutral400),
-                            ),
-                          ),
+                    ),
                   ),
                 ),
 
@@ -500,21 +504,53 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                   ),
                 ),
 
-                // Favorite button
+                // Action buttons (Bookmark + Add to Trip) - Match detail page
                 Positioned(
                   top: AppSpacing.s3,
                   right: AppSpacing.s3,
-                  child: Container(
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                    child: IconButton(
-                      icon: Icon(
-                        item['isFavorite'] ? Icons.favorite : Icons.favorite_border,
-                        color: item['isFavorite'] ? AppColors.error : AppColors.grey,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Bookmark button
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            item['isBookmarked'] == true
+                                ? Icons.bookmark_rounded
+                                : Icons.bookmark_border_rounded,
+                            color: item['isBookmarked'] == true
+                                ? const Color(0xFFFBBF24)
+                                : AppColors.neutral600,
+                            size: 22.sp,
+                          ),
+                          onPressed: () => controller.toggleBookmark(item),
+                          padding: EdgeInsets.all(AppSpacing.s2),
+                          constraints: const BoxConstraints(),
+                        ),
                       ),
-                      onPressed: () => controller.toggleFavorite(item),
-                      padding: EdgeInsets.all(AppSpacing.s2),
-                      constraints: const BoxConstraints(),
-                    ),
+                      SizedBox(width: AppSpacing.s2),
+                      // Add to Trip button
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.add_circle_outline,
+                            color: AppColors.neutral600,
+                            size: 22.sp,
+                          ),
+                          onPressed: () => controller.addToTrip(item),
+                          padding: EdgeInsets.all(AppSpacing.s2),
+                          constraints: const BoxConstraints(),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -626,7 +662,7 @@ class SearchFilterPage extends GetView<SearchFilterController> {
                   onTap: () => controller.searchFromSuggestion(suggestion),
                   child: Chip(
                     label: Text(suggestion),
-                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                     labelStyle: AppTypography.bodyS.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w500,

@@ -329,7 +329,8 @@ class _AddToTripBottomSheetState extends State<AddToTripBottomSheet> {
 
     final isSelected = selectedDayIndex == dayIndex;
     final dayDate = selectedTrip!.startDate.add(Duration(days: dayIndex));
-    final DateFormat formatter = DateFormat('E, dd/MM', 'vi_VN');
+    // Use default locale to avoid LocaleDataException
+    final DateFormat formatter = DateFormat('E, dd/MM');
 
     return InkWell(
       onTap: () => _selectDay(dayIndex),

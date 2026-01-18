@@ -12,9 +12,15 @@ import 'package:wanderlust/core/services/storage_service.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
+import 'package:wanderlust/core/widgets/add_to_trip_bottom_sheet.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class SearchFilterController extends BaseController with GetTickerProviderStateMixin {
+  // Services
+  final ListingService listingService = Get.find<ListingService>();
+  final TripService tripService = Get.find<TripService>();
+  final BlogService blogService = Get.find<BlogService>();
+
   // Controllers
   late TabController tabController;
   final searchController = TextEditingController();
@@ -101,10 +107,10 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
   void loadFeaturedItems() async {
     try {
       // Load featured/trending items from ListingService
-      final listingService = Get.find<ListingService>();
+      // Use instance service (already initialized)
       final listings = await listingService.searchListings(query: '', type: null);
 
-      // Store all listings (will be filtered by tab via getter)
+      // ✅ Store all listings with FULL data structure (same as search results)
       _allFeaturedItems.value = listings.map((listing) {
         return {
           'id': listing.id,
@@ -118,10 +124,12 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
               : '${NumberFormat('#,###').format(listing.price)}đ',
           'originalPrice': listing.hasDiscount ? '${NumberFormat('#,###').format(listing.price)}đ' : null,
           'isFavorite': false,
+          'isBookmarked': false, // ✅ Added for bookmark button
           'category': listing.type.value,
           'image': listing.images.isNotEmpty ? listing.images.first : '',
           'businessName': listing.businessName,
           'listingId': listing.id,
+          'listing': listing, // ✅ CRITICAL: Store full ListingModel for buttons to work
         };
       }).toList();
 
@@ -236,9 +244,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
       }
 
       // Get services
-      final listingService = Get.find<ListingService>();
-      final blogService = Get.find<BlogService>();
-      final tripService = Get.find<TripService>();
+      // Use instance services (already initialized)
 
       final results = <Map<String, dynamic>>[];
       final query = searchQuery.value;
@@ -279,6 +285,10 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
           continue;
         }
 
+        // ✅ PERFORMANCE FIX: Don't check isFavorited for each listing in search
+        // This was causing 20+ Firestore queries per search, making it very slow
+        // User can toggle bookmark/favorite from the card directly
+
         results.add({
           'id': listing.id,
           'name': listing.title,
@@ -290,11 +300,13 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
               ? '${NumberFormat('#,###').format(listing.discountPrice)}đ'
               : '${NumberFormat('#,###').format(listing.price)}đ',
           'originalPrice': listing.hasDiscount ? '${NumberFormat('#,###').format(listing.price)}đ' : null,
-          'isFavorite': false,
+          'isFavorite': false, // Will be updated async
+          'isBookmarked': false, // Will be updated async
           'category': listing.type.value,
           'image': listing.images.isNotEmpty ? listing.images.first : '',
           'businessName': listing.businessName,
           'listingId': listing.id,
+          'listing': listing, // ✅ Store full ListingModel object for optimistic loading
         });
       }
 
@@ -629,7 +641,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
                                 onSelected: (selected) {
                                   selectedRating.value = selected ? rating.toDouble() : 0;
                                 },
-                                selectedColor: AppColors.primary.withOpacity(0.2),
+                                selectedColor: AppColors.primary.withValues(alpha: 0.2),
                                 checkmarkColor: AppColors.primary,
                               ),
                             );
@@ -664,7 +676,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
                                     selectedCategories.remove(category);
                                   }
                                 },
-                                selectedColor: AppColors.primary.withOpacity(0.2),
+                                selectedColor: AppColors.primary.withValues(alpha: 0.2),
                                 checkmarkColor: AppColors.primary,
                               ),
                             );
@@ -701,7 +713,7 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
                                     selectedAmenities.remove(amenity);
                                   }
                                 },
-                                selectedColor: AppColors.primary.withOpacity(0.2),
+                                selectedColor: AppColors.primary.withValues(alpha: 0.2),
                                 checkmarkColor: AppColors.primary,
                               ),
                             );
@@ -818,16 +830,133 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
     performSearch();
   }
 
-  void toggleFavorite(Map<String, dynamic> item) {
-    final index = searchResults.indexWhere((i) => i['id'] == item['id']);
-    if (index != -1) {
-      searchResults[index]['isFavorite'] = !searchResults[index]['isFavorite'];
-      searchResults.refresh();
+  // ✅ Add to trip - Match AccommodationDetailController logic
+  Future<void> addToTrip(Map<String, dynamic> item) async {
+    try {
+      LoggerService.d('addToTrip called for item: ${item['id']}');
 
-      AppSnackbar.showInfo(
-        message:
-            searchResults[index]['isFavorite'] ? 'Đã thêm vào yêu thích' : 'Đã xóa khỏi yêu thích',
+      // Only for listings (room, tour, food, service)
+      final category = item['category'] as String?;
+      if (category == null || !['room', 'tour', 'food', 'service'].contains(category)) {
+        LoggerService.w('Invalid category for add to trip: $category');
+        return;
+      }
+
+      // Get listing model from search results
+      final listingModel = item['listing'] as ListingModel?;
+      if (listingModel == null) {
+        LoggerService.w('No listing model found in item');
+        AppSnackbar.showError(message: 'Không có dữ liệu dịch vụ');
+        return;
+      }
+
+      LoggerService.d('Opening AddToTripBottomSheet for listing: ${listingModel.id}');
+
+      // Show bottom sheet to select trip and day (same as detail page)
+      final result = await AddToTripBottomSheet.show(
+        context: Get.context!,
+        listing: listingModel,
       );
+
+      if (result != null) {
+        LoggerService.d('User selected trip: ${result['tripId']}, day: ${result['dayIndex']}');
+
+        // Convert listing model to map for TripService (same as detail page)
+        final listingData = {
+          'id': listingModel.id,
+          'title': listingModel.title,
+          'location': listingModel.businessName,
+          'images': listingModel.images,
+          'businessName': listingModel.businessName,
+          'price': listingModel.price,
+          'type': listingModel.type.toString().split('.').last,
+        };
+
+        // Add listing to selected trip day
+        final success = await tripService.addListingToTripDay(
+          tripId: result['tripId'],
+          dayIndex: result['dayIndex'],
+          listingData: listingData,
+        );
+
+        if (success) {
+          AppSnackbar.showSuccess(
+            title: 'Thành công',
+            message: 'Đã thêm vào ${result['tripName']} - Ngày ${result['dayIndex'] + 1}',
+          );
+          LoggerService.i('Listing added to trip: ${result['tripId']} day ${result['dayIndex']}');
+        } else {
+          AppSnackbar.showError(
+            title: 'Lỗi',
+            message: 'Không thể thêm vào kế hoạch',
+          );
+        }
+      } else {
+        LoggerService.d('User cancelled trip selection');
+      }
+    } catch (e) {
+      LoggerService.e('Error adding to trip', error: e);
+      AppSnackbar.showError(message: 'Có lỗi xảy ra: ${e.toString()}');
+    }
+  }
+
+  // ✅ Toggle bookmark - Match AccommodationDetailController logic
+  Future<void> toggleBookmark(Map<String, dynamic> item) async {
+    try {
+      LoggerService.d('toggleBookmark called for item: ${item['id']}');
+
+      // Only toggle for listings (room, tour, food, service)
+      final category = item['category'] as String?;
+      if (category == null || !['room', 'tour', 'food', 'service'].contains(category)) {
+        LoggerService.w('Invalid category: $category');
+        return;
+      }
+
+      final listingId = item['listingId'] ?? item['id'];
+      if (listingId == null) {
+        LoggerService.w('No listingId found');
+        return;
+      }
+
+      LoggerService.d('Toggling favorite for listingId: $listingId');
+
+      // Call service to toggle (same as AccommodationDetailController)
+      final success = await listingService.toggleFavorite(listingId);
+
+      LoggerService.i('Toggle favorite result: $success');
+
+      // Update state in BOTH searchResults AND _allFeaturedItems
+      // Search results update
+      final searchIndex = searchResults.indexWhere((i) => i['id'] == item['id']);
+      if (searchIndex != -1) {
+        searchResults[searchIndex]['isBookmarked'] = success;
+        searchResults.refresh();
+        LoggerService.d('Updated bookmark in search results');
+      }
+
+      // Featured items update
+      final featuredIndex = _allFeaturedItems.indexWhere((i) => i['id'] == item['id']);
+      if (featuredIndex != -1) {
+        _allFeaturedItems[featuredIndex]['isBookmarked'] = success;
+        _allFeaturedItems.refresh();
+        LoggerService.d('Updated bookmark in featured items');
+      }
+
+      // Show snackbar (same messages as detail page)
+      if (success) {
+        AppSnackbar.showSuccess(message: 'Đã thêm vào danh sách yêu thích');
+      } else {
+        AppSnackbar.showInfo(message: 'Đã xóa khỏi danh sách yêu thích');
+      }
+    } catch (e) {
+      LoggerService.e('Error toggling favorite', error: e);
+
+      // More specific error messages
+      if (e.toString().contains('not authenticated')) {
+        AppSnackbar.showError(message: 'Vui lòng đăng nhập để sử dụng tính năng này');
+      } else {
+        AppSnackbar.showError(message: 'Có lỗi xảy ra: ${e.toString()}');
+      }
     }
   }
 
@@ -841,9 +970,12 @@ class SearchFilterController extends BaseController with GetTickerProviderStateM
       case 'tour':
       case 'food':
       case 'service':
-        // Navigate to accommodation detail page with listingId
+        // ✅ Navigate with full listing object for optimistic loading
+        final listingId = item['listingId'] ?? item['id'];
         Get.toNamed('/accommodation-detail', arguments: {
-          'listingId': item['listingId'] ?? item['id'],
+          'listingId': listingId,
+          'listing': item['listing'], // Pass full ListingModel for instant loading
+          'heroTag': 'search-listing-image-$listingId', // Hero animation tag
         });
         break;
 
