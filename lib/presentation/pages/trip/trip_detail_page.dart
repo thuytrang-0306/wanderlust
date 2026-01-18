@@ -192,6 +192,11 @@ class TripDetailPage extends StatelessWidget {
                               return _buildContentShimmer();
                             }
 
+                            // ✅ Show error state with retry button
+                            if (controller.isError) {
+                              return _buildErrorState(controller);
+                            }
+
                             // Day header
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -667,6 +672,58 @@ class TripDetailPage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildErrorState(TripDetailController controller) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 40.h),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64.sp,
+              color: AppColors.error,
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              'Không thể tải dữ liệu',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.black,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              controller.errorMessage.isNotEmpty
+                  ? controller.errorMessage
+                  : 'Đã xảy ra lỗi khi tải thông tin chuyến đi',
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: const Color(0xFF6B7280),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 24.h),
+            ElevatedButton.icon(
+              onPressed: () => controller.retryLoadTrip(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Thử lại'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

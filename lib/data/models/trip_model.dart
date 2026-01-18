@@ -21,6 +21,10 @@ class TripModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  // ✅ NEW: Day-specific data (type-safe)
+  final Map<String, String> dayNotes; // key: "1", "2", etc. value: note text
+  final List<TripPrivateLocation> privateLocations;
+
   TripModel({
     required this.id,
     required this.userId,
@@ -41,9 +45,26 @@ class TripModel {
     required this.stats,
     this.createdAt,
     this.updatedAt,
+    this.dayNotes = const {},
+    this.privateLocations = const [],
   });
 
   factory TripModel.fromJson(Map<String, dynamic> json, String id) {
+    // Parse dayNotes
+    Map<String, String> parsedDayNotes = {};
+    if (json['dayNotes'] != null) {
+      final rawNotes = json['dayNotes'] as Map<String, dynamic>;
+      parsedDayNotes = rawNotes.map((k, v) => MapEntry(k, v.toString()));
+    }
+
+    // Parse privateLocations
+    List<TripPrivateLocation> parsedLocations = [];
+    if (json['privateLocations'] != null) {
+      parsedLocations = (json['privateLocations'] as List<dynamic>)
+          .map((l) => TripPrivateLocation.fromJson(l as Map<String, dynamic>))
+          .toList();
+    }
+
     return TripModel(
       id: id,
       userId: json['userId'] ?? '',
@@ -65,6 +86,51 @@ class TripModel {
       stats: json['stats'] != null ? TripStats.fromJson(json['stats']) : TripStats.empty(),
       createdAt: json['createdAt'] != null ? (json['createdAt'] as Timestamp).toDate() : null,
       updatedAt: json['updatedAt'] != null ? (json['updatedAt'] as Timestamp).toDate() : null,
+      dayNotes: parsedDayNotes,
+      privateLocations: parsedLocations,
+    );
+  }
+
+  /// Create from cache JSON (uses int timestamps instead of Firestore Timestamp)
+  factory TripModel.fromCacheJson(Map<String, dynamic> json) {
+    // Parse dayNotes
+    Map<String, String> parsedDayNotes = {};
+    if (json['dayNotes'] != null) {
+      final rawNotes = json['dayNotes'] as Map<String, dynamic>;
+      parsedDayNotes = rawNotes.map((k, v) => MapEntry(k, v.toString()));
+    }
+
+    // Parse privateLocations
+    List<TripPrivateLocation> parsedLocations = [];
+    if (json['privateLocations'] != null) {
+      parsedLocations = (json['privateLocations'] as List<dynamic>)
+          .map((l) => TripPrivateLocation.fromJson(l as Map<String, dynamic>))
+          .toList();
+    }
+
+    return TripModel(
+      id: json['id'] ?? '',
+      userId: json['userId'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      destination: json['destination'] ?? '',
+      destinationId: json['destinationId'],
+      startDate: DateTime.fromMillisecondsSinceEpoch(json['startDate'] as int),
+      endDate: DateTime.fromMillisecondsSinceEpoch(json['endDate'] as int),
+      budget: (json['budget'] ?? 0).toDouble(),
+      spentAmount: (json['spentAmount'] ?? 0).toDouble(),
+      travelers:
+          (json['travelers'] as List<dynamic>? ?? []).map((t) => TripTraveler.fromJson(t as Map<String, dynamic>)).toList(),
+      status: json['status'] ?? 'planning',
+      visibility: json['visibility'] ?? 'private',
+      coverImage: json['coverImage'] ?? '',
+      notes: json['notes'] ?? '',
+      tags: List<String>.from(json['tags'] ?? []),
+      stats: json['stats'] != null ? TripStats.fromJson(json['stats'] as Map<String, dynamic>) : TripStats.empty(),
+      createdAt: json['createdAt'] != null ? DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] as int) : null,
+      dayNotes: parsedDayNotes,
+      privateLocations: parsedLocations,
     );
   }
 
@@ -86,9 +152,38 @@ class TripModel {
       'notes': notes,
       'tags': tags,
       'stats': stats.toJson(),
+      'dayNotes': dayNotes,
+      'privateLocations': privateLocations.map((l) => l.toJson()).toList(),
       'createdAt':
           createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
+    };
+  }
+
+  /// Convert to cache JSON (uses int timestamps for GetStorage compatibility)
+  Map<String, dynamic> toCacheJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'title': title,
+      'description': description,
+      'destination': destination,
+      'destinationId': destinationId,
+      'startDate': startDate.millisecondsSinceEpoch,
+      'endDate': endDate.millisecondsSinceEpoch,
+      'budget': budget,
+      'spentAmount': spentAmount,
+      'travelers': travelers.map((t) => t.toJson()).toList(),
+      'status': status,
+      'visibility': visibility,
+      'coverImage': coverImage,
+      'notes': notes,
+      'tags': tags,
+      'stats': stats.toJson(),
+      'dayNotes': dayNotes,
+      'privateLocations': privateLocations.map((l) => l.toJson()).toList(),
+      'createdAt': createdAt?.millisecondsSinceEpoch,
+      'updatedAt': updatedAt?.millisecondsSinceEpoch,
     };
   }
 
@@ -305,6 +400,91 @@ class ItineraryActivity {
         return '📌';
     }
   }
+}
+
+// Private Location Model (for user-added locations)
+class TripPrivateLocation {
+  final int dayIndex;
+  final String time;
+  final String title;
+  final String address;
+  final String? description;
+  final String? image;
+  final double? latitude;
+  final double? longitude;
+  final String type; // 'private' or 'listing'
+  final String? listingId; // If added from a business listing
+  final String? businessName;
+  final double? price;
+  final String? addedAt;
+  final String? updatedAt;
+
+  TripPrivateLocation({
+    required this.dayIndex,
+    required this.time,
+    required this.title,
+    required this.address,
+    this.description,
+    this.image,
+    this.latitude,
+    this.longitude,
+    this.type = 'private',
+    this.listingId,
+    this.businessName,
+    this.price,
+    this.addedAt,
+    this.updatedAt,
+  });
+
+  factory TripPrivateLocation.fromJson(Map<String, dynamic> json) {
+    // Helper to convert Timestamp or String to String
+    String? parseDateTime(dynamic value) {
+      if (value == null) return null;
+      if (value is String) return value;
+      if (value is Timestamp) return value.toDate().toIso8601String();
+      if (value is DateTime) return value.toIso8601String();
+      return value.toString();
+    }
+
+    return TripPrivateLocation(
+      dayIndex: json['dayIndex'] ?? 0,
+      time: json['time'] ?? '',
+      title: json['title'] ?? '',
+      address: json['address'] ?? '',
+      description: json['description'],
+      image: json['image'],
+      latitude: json['latitude']?.toDouble(),
+      longitude: json['longitude']?.toDouble(),
+      type: json['type'] ?? 'private',
+      listingId: json['listingId'],
+      businessName: json['businessName'],
+      price: json['price']?.toDouble(),
+      addedAt: parseDateTime(json['addedAt']),
+      updatedAt: parseDateTime(json['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'dayIndex': dayIndex,
+      'time': time,
+      'title': title,
+      'address': address,
+      'description': description,
+      'image': image,
+      'latitude': latitude,
+      'longitude': longitude,
+      'type': type,
+      'listingId': listingId,
+      'businessName': businessName,
+      'price': price,
+      'addedAt': addedAt,
+      'updatedAt': updatedAt,
+    };
+  }
+
+  /// Create a unique identifier for deduplication
+  String get uniqueKey => '${dayIndex}_${title}_${time}';
 }
 
 // Expense Model

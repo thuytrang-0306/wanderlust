@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
+import 'package:wanderlust/core/services/storage_service.dart';
 import 'package:wanderlust/data/models/trip_model.dart';
 import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
@@ -12,6 +14,15 @@ import 'package:intl/intl.dart';
 class PlanningController extends BaseController {
   // Services
   final TripService _tripService = Get.find<TripService>();
+  final StorageService _storageService = StorageService.to;
+
+  // Stream subscription for proper cleanup
+  StreamSubscription<List<TripModel>>? _tripsSubscription;
+
+  // Retry configuration
+  int _retryCount = 0;
+  static const int _maxRetries = 3;
+  Timer? _retryTimer;
 
   // Data
   final RxList<TripModel> allTrips = <TripModel>[].obs;
@@ -53,11 +64,56 @@ class PlanningController extends BaseController {
   void onInit() {
     super.onInit();
 
-    // Listen to real-time updates only - no need to call loadTrips separately
-    _tripService.streamUserTrips().listen(
+    // Set initial loading state
+    isLoadingTrips.value = true;
+    setLoading();
+
+    // ✅ CACHE-FIRST: Show cached data immediately if available
+    _loadCachedTripsFirst();
+
+    // ✅ THEN subscribe to real-time updates
+    _subscribeToTrips();
+  }
+
+  /// Load cached trips first for instant UI (offline-first strategy)
+  void _loadCachedTripsFirst() {
+    final cachedTrips = _storageService.getCachedTripsOffline();
+    if (cachedTrips != null && cachedTrips.isNotEmpty) {
+      try {
+        final trips = cachedTrips.map((json) => TripModel.fromCacheJson(json)).toList();
+        allTrips.value = trips;
+        _categorizeTrips(trips);
+
+        // Show cached data immediately (still loading fresh data)
+        if (isLoadingTrips.value) {
+          isLoadingTrips.value = false;
+          setSuccess();
+        }
+
+        LoggerService.i('Loaded ${trips.length} trips from cache (offline-first)');
+      } catch (e) {
+        LoggerService.e('Failed to parse cached trips', error: e);
+      }
+    }
+  }
+
+  /// Subscribe to real-time trips stream with proper cleanup
+  void _subscribeToTrips({bool isRetry = false}) {
+    // Cancel existing subscription if any
+    _tripsSubscription?.cancel();
+
+    // Only reset retry count on fresh subscribe, not on retry
+    if (!isRetry) {
+      _retryCount = 0;
+    }
+
+    _tripsSubscription = _tripService.streamUserTrips().listen(
       (trips) {
         allTrips.value = trips;
         _categorizeTrips(trips);
+
+        // ✅ Cache trips for offline-first
+        _cacheTrips(trips);
 
         // Update loading state
         if (isLoadingTrips.value) {
@@ -69,20 +125,61 @@ class PlanningController extends BaseController {
           }
         }
 
+        // Reset retry count on success
+        _retryCount = 0;
+
         LoggerService.i('Stream updated with ${trips.length} trips');
       },
       onError: (error) {
         LoggerService.e('Error streaming trips', error: error);
-        setError('Không thể tải danh sách chuyến đi');
-        isLoadingTrips.value = false;
-        // Fallback to loading static data if stream fails
-        loadTrips();
+
+        // ✅ RETRY with exponential backoff
+        _handleStreamError(error);
       },
     );
+  }
 
-    // Set initial loading state
-    isLoadingTrips.value = true;
-    setLoading();
+  /// Handle stream error with exponential backoff retry
+  void _handleStreamError(dynamic error) {
+    _retryCount++;
+
+    if (_retryCount <= _maxRetries) {
+      final delay = Duration(seconds: _retryCount * 2); // 2s, 4s, 6s
+
+      LoggerService.w('Stream error, retrying in ${delay.inSeconds}s (attempt $_retryCount/$_maxRetries)');
+
+      _retryTimer?.cancel();
+      _retryTimer = Timer(delay, () {
+        _subscribeToTrips(isRetry: true); // Pass isRetry to avoid resetting counter
+      });
+    } else {
+      // Max retries reached, fallback to static load
+      LoggerService.e('Max retries reached ($_retryCount), falling back to static load');
+      setError('Không thể tải danh sách chuyến đi');
+      isLoadingTrips.value = false;
+      loadTrips();
+    }
+  }
+
+  /// Cache trips for offline-first
+  Future<void> _cacheTrips(List<TripModel> trips) async {
+    try {
+      final tripsJson = trips.map((t) => t.toCacheJson()).toList();
+      await _storageService.cacheTrips(tripsJson);
+    } catch (e) {
+      LoggerService.e('Failed to cache trips', error: e);
+    }
+  }
+
+  @override
+  void onClose() {
+    // ✅ Properly cancel stream subscription to prevent memory leak
+    _tripsSubscription?.cancel();
+    _tripsSubscription = null;
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    LoggerService.d('PlanningController: Stream subscription cancelled');
+    super.onClose();
   }
 
   @override

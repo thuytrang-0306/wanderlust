@@ -20,6 +20,15 @@ class StorageService extends GetxService {
   static const String keySearchHistory = 'search_history';
   static const String keyFavorites = 'favorites';
 
+  // Trip Cache Keys
+  static const String keyTripsCache = 'trips_cache';
+  static const String keyTripsCacheTimestamp = 'trips_cache_timestamp';
+  static const String keyTripDetailCache = 'trip_detail_cache';
+  static const String keyTripDayDataCache = 'trip_day_data_cache';
+
+  // Cache TTL (Time To Live) - 5 minutes for trips list
+  static const int tripsCacheTTLMs = 5 * 60 * 1000;
+
   Future<StorageService> init() async {
     await GetStorage.init('wanderlust_storage');
     _box = GetStorage('wanderlust_storage');
@@ -119,6 +128,94 @@ class StorageService extends GetxService {
     await clearUserData();
     await remove(keyUserId);
     await remove(keyFavorites);
+    await clearTripsCache();
     LoggerService.i('User session cleared');
+  }
+
+  // ============ TRIP CACHE METHODS ============
+
+  /// Save trips list to cache
+  Future<void> cacheTrips(List<Map<String, dynamic>> trips) async {
+    await write(keyTripsCache, trips);
+    await write(keyTripsCacheTimestamp, DateTime.now().millisecondsSinceEpoch);
+    LoggerService.d('Cached ${trips.length} trips');
+  }
+
+  /// Get cached trips list
+  List<Map<String, dynamic>>? getCachedTrips() {
+    final cached = read<List<dynamic>>(keyTripsCache);
+    if (cached == null) return null;
+
+    // Check if cache is still valid
+    final timestamp = read<int>(keyTripsCacheTimestamp);
+    if (timestamp != null) {
+      final age = DateTime.now().millisecondsSinceEpoch - timestamp;
+      if (age > tripsCacheTTLMs) {
+        LoggerService.d('Trips cache expired (age: ${age}ms)');
+        return null; // Cache expired, but still return for offline-first
+      }
+    }
+
+    return cached.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  /// Check if trips cache is valid (not expired)
+  bool isTripsCacheValid() {
+    final timestamp = read<int>(keyTripsCacheTimestamp);
+    if (timestamp == null) return false;
+
+    final age = DateTime.now().millisecondsSinceEpoch - timestamp;
+    return age <= tripsCacheTTLMs;
+  }
+
+  /// Get cached trips even if expired (for offline-first)
+  List<Map<String, dynamic>>? getCachedTripsOffline() {
+    final cached = read<List<dynamic>>(keyTripsCache);
+    if (cached == null) return null;
+    return cached.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  /// Cache trip detail (dayNotes, privateLocations)
+  Future<void> cacheTripDayData(String tripId, Map<String, dynamic> dayData) async {
+    final allCache = read<Map<String, dynamic>>(keyTripDayDataCache) ?? {};
+    allCache[tripId] = {
+      'data': dayData,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    };
+    await write(keyTripDayDataCache, allCache);
+    LoggerService.d('Cached day data for trip: $tripId');
+  }
+
+  /// Get cached trip day data
+  Map<String, dynamic>? getCachedTripDayData(String tripId) {
+    final allCache = read<Map<String, dynamic>>(keyTripDayDataCache);
+    if (allCache == null) return null;
+
+    final tripCache = allCache[tripId];
+    if (tripCache == null) return null;
+
+    return Map<String, dynamic>.from(tripCache['data'] as Map);
+  }
+
+  /// Clear all trips cache
+  Future<void> clearTripsCache() async {
+    await remove(keyTripsCache);
+    await remove(keyTripsCacheTimestamp);
+    await remove(keyTripDayDataCache);
+    LoggerService.d('Trips cache cleared');
+  }
+
+  /// Invalidate cache for specific trip
+  Future<void> invalidateTripCache(String tripId) async {
+    // Remove from day data cache
+    final allCache = read<Map<String, dynamic>>(keyTripDayDataCache);
+    if (allCache != null && allCache.containsKey(tripId)) {
+      allCache.remove(tripId);
+      await write(keyTripDayDataCache, allCache);
+      LoggerService.d('Invalidated cache for trip: $tripId');
+    }
+
+    // Also invalidate trips list cache timestamp to force refresh
+    await remove(keyTripsCacheTimestamp);
   }
 }

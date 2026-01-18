@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
+import 'package:wanderlust/core/services/storage_service.dart';
 import 'package:wanderlust/data/models/trip_model.dart';
 import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
@@ -11,6 +12,7 @@ import 'package:wanderlust/core/widgets/app_snackbar.dart';
 class TripDetailController extends BaseController {
   // Services
   final TripService _tripService = Get.find<TripService>();
+  final StorageService _storageService = StorageService.to;
 
   // Trip model
   final Rx<TripModel?> trip = Rx<TripModel?>(null);
@@ -59,15 +61,17 @@ class TripDetailController extends BaseController {
     }
   }
 
-  // Load trip from passed model (OPTIMIZED with optimistic loading)
+  // Load trip from passed model (OPTIMIZED with cache-first loading)
   Future<void> loadTrip(TripModel tripModel) async {
-    // ✅ OPTIMISTIC LOADING - Show data immediately
+    // ✅ CACHE-FIRST - Show basic info immediately from passed model
     trip.value = tripModel;
     updateUIFromTrip(tripModel);
-    isInitialLoading.value = false; // ✅ Hide shimmer ASAP
 
-    // ✅ PARALLEL LOADING - Load all data concurrently
+    // ✅ KEEP LOADING STATE - Wait for ALL data to load before hiding shimmer
+    // This prevents empty UI flash before data appears
+
     try {
+      // ✅ PARALLEL LOADING - Load all data concurrently
       await Future.wait([
         generateTripDays(tripModel),
         loadItineraries(tripModel.id),
@@ -77,6 +81,9 @@ class TripDetailController extends BaseController {
     } catch (e) {
       LoggerService.e('Error loading trip data', error: e);
       AppSnackbar.showError(title: 'Lỗi', message: 'Không thể tải một số thông tin chuyến đi');
+    } finally {
+      // ✅ NOW hide shimmer after all data is loaded
+      isInitialLoading.value = false;
     }
   }
 
@@ -137,46 +144,101 @@ class TripDetailController extends BaseController {
     await loadDayNotesAndLocations(tripModel.id);
   }
 
-  // Load day notes and private locations from Firestore
+  // Load day notes and private locations from Firestore with cache-first strategy
   Future<void> loadDayNotesAndLocations(String tripId) async {
     try {
-      // Read directly from Firestore to get custom fields (dayNotes, privateLocations)
+      // ✅ CACHE-FIRST: Try to load from cache first for instant UI
+      final cachedData = _storageService.getCachedTripDayData(tripId);
+      if (cachedData != null) {
+        _applyDayData(cachedData);
+        LoggerService.i('Loaded day data from cache (instant)');
+      }
+
+      // ✅ THEN load fresh data from Firestore
       final doc = await FirebaseFirestore.instance.collection('trips').doc(tripId).get();
 
       if (doc.exists) {
         final data = doc.data();
         if (data != null) {
-          // Load day notes (Map<String, String>)
-          final dayNotes = data['dayNotes'] as Map<String, dynamic>?;
-          if (dayNotes != null) {
-            dayNotes.forEach((key, value) {
-              final dayIndex = int.tryParse(key);
-              if (dayIndex != null && dayIndex > 0 && dayIndex <= tripDays.length) {
-                tripDays[dayIndex - 1]['note'] = value.toString();
-              }
-            });
+          // Clear existing locations before applying fresh data
+          for (var day in tripDays) {
+            (day['locations'] as List).clear();
+            day['note'] = '';
           }
 
-          // Load private locations (List<Map>)
-          final privateLocations = data['privateLocations'] as List<dynamic>?;
-          if (privateLocations != null) {
-            for (var location in privateLocations) {
-              final locationMap = location as Map<String, dynamic>;
-              final dayIndex = locationMap['dayIndex'] as int?;
-              if (dayIndex != null && dayIndex >= 0 && dayIndex < tripDays.length) {
-                final locations = tripDays[dayIndex]['locations'] as List;
-                locations.add(locationMap);
-              }
-            }
-          }
+          _applyDayData(data);
 
-          tripDays.refresh();
-          LoggerService.i('Loaded day notes and private locations');
+          // ✅ Cache the fresh data for next time
+          // Convert Timestamps to strings before caching (GetStorage can't handle Timestamp)
+          final locationsToCache = (data['privateLocations'] as List<dynamic>?)
+              ?.map((loc) => _convertTimestampsInMap(loc as Map<String, dynamic>))
+              .toList();
+
+          await _storageService.cacheTripDayData(tripId, {
+            'dayNotes': data['dayNotes'],
+            'privateLocations': locationsToCache,
+          });
+
+          LoggerService.i('Loaded and cached fresh day notes and private locations');
         }
       }
     } catch (e) {
       LoggerService.e('Failed to load day notes and locations', error: e);
+      // If network fails but we have cache, the cached data is already applied
     }
+  }
+
+  /// Convert Timestamps in a map to ISO strings for caching
+  Map<String, dynamic> _convertTimestampsInMap(Map<String, dynamic> map) {
+    final result = <String, dynamic>{};
+    for (final entry in map.entries) {
+      final value = entry.value;
+      if (value is Timestamp) {
+        result[entry.key] = value.toDate().toIso8601String();
+      } else if (value is DateTime) {
+        result[entry.key] = value.toIso8601String();
+      } else if (value is Map<String, dynamic>) {
+        result[entry.key] = _convertTimestampsInMap(value);
+      } else {
+        result[entry.key] = value;
+      }
+    }
+    return result;
+  }
+
+  /// Apply day notes and private locations to tripDays
+  void _applyDayData(Map<String, dynamic> data) {
+    // Load day notes (Map<String, String>)
+    final dayNotes = data['dayNotes'] as Map<String, dynamic>?;
+    if (dayNotes != null) {
+      dayNotes.forEach((key, value) {
+        final dayIndex = int.tryParse(key);
+        if (dayIndex != null && dayIndex > 0 && dayIndex <= tripDays.length) {
+          tripDays[dayIndex - 1]['note'] = value.toString();
+        }
+      });
+    }
+
+    // Load private locations (List<Map>)
+    final privateLocations = data['privateLocations'] as List<dynamic>?;
+    if (privateLocations != null) {
+      for (var location in privateLocations) {
+        final locationMap = location as Map<String, dynamic>;
+        final dayIndex = locationMap['dayIndex'] as int?;
+        if (dayIndex != null && dayIndex >= 0 && dayIndex < tripDays.length) {
+          final locations = tripDays[dayIndex]['locations'] as List;
+          // Avoid duplicates when refreshing
+          final isDuplicate = locations.any((loc) =>
+              loc['title'] == locationMap['title'] &&
+              loc['time'] == locationMap['time']);
+          if (!isDuplicate) {
+            locations.add(locationMap);
+          }
+        }
+      }
+    }
+
+    tripDays.refresh();
   }
 
   // Load itineraries from backend
@@ -478,14 +540,14 @@ class TripDetailController extends BaseController {
     }
   }
 
-  // Add private location
+  // Add private location with deduplication
   void addPrivateLocation(Map<String, dynamic> locationData) async {
     // Add the location to current day's locations
     if (selectedDay.value < tripDays.length) {
       final currentDayData = tripDays[selectedDay.value];
       final locations = List<Map<String, dynamic>>.from(currentDayData['locations'] ?? []);
 
-      // Add new location with time
+      // Create new location with time
       final newLocation = {
         'dayIndex': selectedDay.value, // Track which day this location belongs to
         'time':
@@ -497,12 +559,24 @@ class TripDetailController extends BaseController {
         'latitude': locationData['latitude'],
         'longitude': locationData['longitude'],
         'type': 'private',
-        'addedAt': DateTime.now(),
+        'addedAt': DateTime.now().toIso8601String(),
       };
+
+      // ✅ DEDUPLICATION: Check if same location already exists in this day
+      final isDuplicate = locations.any((loc) =>
+          loc['title'] == newLocation['title'] &&
+          loc['dayIndex'] == newLocation['dayIndex'] &&
+          loc['type'] == 'private');
+
+      if (isDuplicate) {
+        LoggerService.w('Duplicate location detected, skipping add');
+        AppSnackbar.showWarning(title: 'Thông báo', message: 'Địa điểm này đã có trong kế hoạch');
+        return;
+      }
 
       locations.add(newLocation);
 
-      // Update UI immediately
+      // Update UI immediately (optimistic update)
       tripDays[selectedDay.value]['locations'] = locations;
       tripDays.refresh();
 
@@ -517,6 +591,17 @@ class TripDetailController extends BaseController {
           final existingLocations = (data?['privateLocations'] as List<dynamic>?)
               ?.map((e) => e as Map<String, dynamic>)
               .toList() ?? [];
+
+          // ✅ DEDUPLICATION at DB level: Check again before saving
+          final alreadyExists = existingLocations.any((loc) =>
+              loc['title'] == newLocation['title'] &&
+              loc['dayIndex'] == newLocation['dayIndex'] &&
+              loc['type'] == 'private');
+
+          if (alreadyExists) {
+            LoggerService.w('Location already exists in DB, skipping save');
+            return;
+          }
 
           // ✅ APPEND new location to existing list
           existingLocations.add(newLocation);
@@ -533,9 +618,21 @@ class TripDetailController extends BaseController {
           AppSnackbar.showSuccess(title: 'Thành công', message: 'Đã thêm địa điểm riêng tư');
         } catch (e) {
           LoggerService.e('Failed to save private location', error: e);
+          // Rollback UI if save failed
+          locations.remove(newLocation);
+          tripDays[selectedDay.value]['locations'] = locations;
+          tripDays.refresh();
           AppSnackbar.showError(title: 'Lỗi', message: 'Không thể thêm địa điểm');
         }
       }
+    }
+  }
+
+  /// Retry loading trip data (for error recovery)
+  Future<void> retryLoadTrip() async {
+    if (trip.value != null) {
+      isInitialLoading.value = true;
+      await loadTrip(trip.value!);
     }
   }
 }
