@@ -225,22 +225,65 @@ class ListingService extends GetxService {
     }
   }
   
-  /// Get listing by ID
-  Future<ListingModel?> getListingById(String id) async {
+  /// Get listing by ID with CACHE-FIRST approach
+  Future<ListingModel?> getListingById(String id, {Function(ListingModel?)? onRefresh}) async {
     try {
+      // ✅ ULTRA-FAST: Try cache first for instant loading!
+      try {
+        final cacheDoc = await _firestore
+            .collection(_collection)
+            .doc(id)
+            .get(const GetOptions(source: Source.cache));
+
+        if (cacheDoc.exists && cacheDoc.data() != null) {
+          final cachedListing = ListingModel.fromJson(cacheDoc.data()!, cacheDoc.id);
+          LoggerService.d('📱 Got listing $id from CACHE (instant)');
+
+          // Then fetch fresh data in background
+          _fetchFreshListing(id, onRefresh);
+
+          return cachedListing;
+        }
+      } catch (cacheError) {
+        LoggerService.d('Cache miss for listing $id, will fetch from server');
+      }
+
+      // No cache or cache error, fetch from server
       final doc = await _firestore
           .collection(_collection)
           .doc(id)
           .get();
-      
+
       if (doc.exists && doc.data() != null) {
-        return ListingModel.fromJson(doc.data()!, doc.id);
+        final listing = ListingModel.fromJson(doc.data()!, doc.id);
+        LoggerService.d('📱 Got listing $id from SERVER');
+        return listing;
       }
       return null;
     } catch (e) {
       LoggerService.e('Error getting listing', error: e);
       return null;
     }
+  }
+
+  /// Background fetch for fresh listing data
+  void _fetchFreshListing(String id, Function(ListingModel?)? onRefresh) {
+    _firestore
+        .collection(_collection)
+        .doc(id)
+        .get()
+        .then((doc) {
+      if (doc.exists && doc.data() != null) {
+        final freshListing = ListingModel.fromJson(doc.data()!, doc.id);
+        LoggerService.d('📱 Background refresh: Got fresh listing $id from server');
+        onRefresh?.call(freshListing);
+      } else {
+        onRefresh?.call(null);
+      }
+    }).catchError((e) {
+      LoggerService.e('Error in background listing refresh', error: e);
+      onRefresh?.call(null);
+    });
   }
   
   /// Search listings with CACHE-FIRST + BACKGROUND REFRESH approach

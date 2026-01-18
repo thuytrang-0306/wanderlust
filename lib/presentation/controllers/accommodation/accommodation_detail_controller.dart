@@ -67,6 +67,31 @@ class AccommodationDetailController extends BaseController {
         } else if (args['id'] != null) {
           accommodationId = args['id'];
         }
+
+        // ✅ OPTIMISTIC LOADING: Check if full listing object was passed
+        final passedListing = args['listing'];
+        if (passedListing != null && passedListing is ListingModel) {
+          // Use the passed data immediately - NO LOADING SPINNER!
+          listing.value = passedListing;
+          _convertListingToAccommodation(passedListing);
+          isListingSource = true;
+          listingId = passedListing.id;
+
+          // Check if favorited
+          _listingService.isFavorited(listingId!).then((isFav) {
+            isBookmarked.value = isFav;
+          });
+
+          // Mark as success immediately
+          setSuccess();
+
+          // Background refresh to sync latest data (non-blocking)
+          Future.microtask(() => loadListingData());
+
+          // Initialize dates and skip the regular loading flow
+          _initializeDates();
+          return;
+        }
       }
     }
 
@@ -112,10 +137,24 @@ class AccommodationDetailController extends BaseController {
     }
 
     try {
-      setLoading();
+      // Only show loading if we don't already have data (optimistic loading)
+      final shouldShowLoading = listing.value == null;
+      if (shouldShowLoading) {
+        setLoading();
+      }
 
-      // Load listing from Firestore
-      final listingData = await _listingService.getListingById(listingId!);
+      // Load listing from Firestore with cache-first + background refresh
+      final listingData = await _listingService.getListingById(
+        listingId!,
+        onRefresh: (freshListing) {
+          if (freshListing != null) {
+            // Update with fresh data from server in background
+            listing.value = freshListing;
+            _convertListingToAccommodation(freshListing);
+            LoggerService.d('📱 Listing Detail: Refreshed with fresh data from server');
+          }
+        },
+      );
 
       if (listingData != null) {
         listing.value = listingData;
@@ -123,16 +162,29 @@ class AccommodationDetailController extends BaseController {
         // Convert listing to accommodation-like data for UI compatibility
         _convertListingToAccommodation(listingData);
 
-        // Check if favorited
-        isBookmarked.value = await _listingService.isFavorited(listingId!);
+        // Check if favorited (only if we showed loading)
+        if (shouldShowLoading) {
+          isBookmarked.value = await _listingService.isFavorited(listingId!);
+        } else {
+          // Update in background
+          _listingService.isFavorited(listingId!).then((isFav) {
+            isBookmarked.value = isFav;
+          });
+        }
 
         setSuccess();
-      } else {
+      } else if (shouldShowLoading) {
         setError('Không tìm thấy thông tin');
       }
     } catch (e) {
       LoggerService.e('Error loading listing', error: e);
-      setError('Có lỗi xảy ra khi tải dữ liệu');
+      if (listing.value == null) {
+        // Only show error if we don't have cached data
+        setError('Có lỗi xảy ra khi tải dữ liệu');
+      } else {
+        // Silently fail if we already have data
+        LoggerService.w('Background refresh failed, using cached data');
+      }
     }
   }
   
@@ -477,13 +529,13 @@ class AccommodationDetailController extends BaseController {
 
     if (!isListingSource) {
       // Old accommodation - room type
-      return '${formatter.format(basePrice)} VNĐ x ${roomCount.value} phòng x ${totalNights} đêm';
+      return '${formatter.format(basePrice)} VNĐ x ${roomCount.value} phòng x $totalNights đêm';
     }
 
     // New listing - dynamic breakdown
     switch (listingType) {
       case ListingType.room:
-        return '${formatter.format(basePrice)} VNĐ x ${roomCount.value} phòng x ${totalNights} đêm';
+        return '${formatter.format(basePrice)} VNĐ x ${roomCount.value} phòng x $totalNights đêm';
       case ListingType.tour:
         return '${formatter.format(basePrice)} VNĐ x ${guestCount.value} người';
       case ListingType.food:

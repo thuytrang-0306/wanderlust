@@ -116,14 +116,17 @@ class LoginPage extends StatelessWidget {
                 SizedBox(height: AppSpacing.s5),
 
                 // Social login buttons
-                SocialLoginButtons(
-                  onGooglePressed: controller.signInWithGoogle,
-                  onFacebookPressed: () {
-                    // TODO: Facebook login
-                  },
-                  onApplePressed: () {
-                    // TODO: Apple login
-                  },
+                Obx(
+                  () => SocialLoginButtons(
+                    isLoading: controller.isSocialLoading.value,
+                    onGooglePressed: controller.signInWithGoogle,
+                    onFacebookPressed: () {
+                      // TODO: Facebook login
+                    },
+                    onApplePressed: () {
+                      // TODO: Apple login
+                    },
+                  ),
                 ),
 
                 SizedBox(height: AppSpacing.s6),

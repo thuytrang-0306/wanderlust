@@ -28,6 +28,8 @@ class BusinessListingCard extends StatelessWidget {
         onTap: () {
           Get.toNamed('/accommodation-detail', arguments: {
             'listingId': listing.id,
+            'listing': listing, // ✅ Pass full object for instant loading
+            'heroTag': 'business-listing-image-${listing.id}', // Pass hero tag
           });
         },
         child: Container(
@@ -202,7 +204,7 @@ class BusinessListingCard extends StatelessWidget {
                 vertical: 4.h,
               ),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Row(
