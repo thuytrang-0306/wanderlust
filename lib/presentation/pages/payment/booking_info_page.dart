@@ -31,44 +31,49 @@ class BookingInfoPage extends GetView<BookingInfoController> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                // Room info card with gradient
-                _buildRoomInfoCard(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Scrollable content
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Room info card with gradient
+                    _buildRoomInfoCard(),
 
-                // Room details grid - only for Room type
-                if (controller.isRoom) _buildRoomDetailsGrid(),
+                    // Room details grid - only for Room type
+                    if (controller.isRoom) _buildRoomDetailsGrid(),
 
-                // Check-in/out times
-                _buildCheckInOutSection(),
+                    // Check-in/out times
+                    _buildCheckInOutSection(),
 
-                // Cancellation policy
-                _buildCancellationPolicy(),
+                    // Cancellation policy
+                    _buildCancellationPolicy(),
 
-                // Guest info
-                _buildGuestInfoSection(),
+                    // Guest info
+                    _buildGuestInfoSection(),
 
-                // Contact info
-                _buildContactInfoSection(),
+                    // Contact info
+                    _buildContactInfoSection(),
 
-                // Payment method
-                _buildPaymentMethodSection(),
+                    // Payment method
+                    _buildPaymentMethodSection(),
 
-                // Price details
-                _buildPriceDetailsSection(),
+                    // Price details
+                    _buildPriceDetailsSection(),
 
-                // Bottom spacing to avoid bottom bar overlap
-                SizedBox(height: 180.h),
-              ],
+                    // Small bottom padding for last item
+                    SizedBox(height: 16.h),
+                  ],
+                ),
+              ),
             ),
-          ),
 
-          // Bottom payment bar
-          _buildBottomPaymentBar(),
-        ],
+            // Bottom payment bar (not overlapping)
+            _buildBottomPaymentBar(),
+          ],
+        ),
       ),
     );
   }
@@ -663,97 +668,89 @@ class BookingInfoPage extends GetView<BookingInfoController> {
   }
 
   Widget _buildBottomPaymentBar() {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              offset: const Offset(0, -2),
-              blurRadius: 10,
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, -2),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Total price
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Total price
+              Text(
+                'Tổng giá tiền',
+                style: TextStyle(fontSize: 15.sp, color: const Color(0xFF6B7280)),
+              ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    'Tổng giá tiền',
-                    style: TextStyle(fontSize: 15.sp, color: const Color(0xFF6B7280)),
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Obx(() => Text(
-                        '${NumberFormat('#,###').format(controller.bookingData['total'] ?? 0)} VND',
-                        style: TextStyle(
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      )),
-                      SizedBox(width: 4.w),
-                      Icon(Icons.info_outline, size: 16.sp, color: const Color(0xFF9CA3AF)),
-                    ],
-                  ),
-                ],
-              ),
-              SizedBox(height: 4.h),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'Đã bao gồm thuế',
-                  style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF)),
-                ),
-              ),
-
-              SizedBox(height: 12.h),
-
-              // Payment button
-              GestureDetector(
-                onTap: controller.processPayment,
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [const Color(0xFFB794F4), AppColors.primary],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
+                  Obx(() => Text(
+                    '${NumberFormat('#,###').format(controller.bookingData['total'] ?? 0)} VND',
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
                     ),
-                    borderRadius: BorderRadius.circular(30.r),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.payment, color: Colors.white, size: 20.sp),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'Thanh toán',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                  )),
+                  SizedBox(width: 4.w),
+                  Icon(Icons.info_outline, size: 16.sp, color: const Color(0xFF9CA3AF)),
+                ],
               ),
             ],
           ),
-        ),
+          SizedBox(height: 4.h),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'Đã bao gồm thuế',
+              style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF)),
+            ),
+          ),
+
+          SizedBox(height: 12.h),
+
+          // Payment button
+          GestureDetector(
+            onTap: controller.processPayment,
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [const Color(0xFFB794F4), AppColors.primary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(30.r),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.payment, color: Colors.white, size: 20.sp),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'Thanh toán',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
