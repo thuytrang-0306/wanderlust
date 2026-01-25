@@ -1,16 +1,16 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:wanderlust/core/services/ai_storage_service.dart';
 import 'package:wanderlust/core/services/gemini_service.dart';
 import 'package:wanderlust/core/services/unified_image_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/data/models/ai_chat_message.dart';
 import 'package:wanderlust/data/models/ai_conversation.dart';
-import 'package:wanderlust/data/models/user_profile_model.dart';
 import 'package:wanderlust/data/services/user_profile_service.dart';
 import 'package:wanderlust/presentation/controllers/auth_controller.dart';
 import 'dart:convert';
@@ -564,6 +564,72 @@ class AIChatController extends GetxController {
   // Get storage stats
   Map<String, dynamic> getStorageStats() {
     return _storageService.getStorageStats();
+  }
+
+  // Regenerate the last AI response
+  Future<void> regenerateLastResponse() async {
+    final conversation = currentConversation.value;
+    if (conversation == null || conversation.messages.isEmpty) return;
+    if (isSending.value) return;
+
+    // Find the last user message
+    String? lastUserMessage;
+    int lastAssistantIndex = -1;
+
+    for (int i = conversation.messages.length - 1; i >= 0; i--) {
+      if (conversation.messages[i].role == MessageRole.assistant && lastAssistantIndex == -1) {
+        lastAssistantIndex = i;
+      }
+      if (conversation.messages[i].role == MessageRole.user) {
+        lastUserMessage = conversation.messages[i].content;
+        break;
+      }
+    }
+
+    if (lastUserMessage == null || lastUserMessage.isEmpty) {
+      AppSnackbar.showWarning(
+        title: 'Thông báo',
+        message: 'Không tìm thấy tin nhắn để tạo lại',
+      );
+      return;
+    }
+
+    // Remove the last assistant message
+    if (lastAssistantIndex != -1) {
+      conversation.messages.removeAt(lastAssistantIndex);
+      await _storageService.updateConversation(conversation);
+      currentConversation.refresh();
+    }
+
+    // Resend by putting text in controller and calling sendMessage
+    messageController.text = lastUserMessage;
+    await sendMessage();
+  }
+
+  // Copy message content to clipboard
+  void copyMessageContent(String content) {
+    if (content.isEmpty) return;
+
+    Clipboard.setData(ClipboardData(text: content));
+    AppSnackbar.showSuccess(
+      title: 'Đã sao chép',
+      message: 'Nội dung đã được sao chép vào clipboard',
+    );
+  }
+
+  // Copy last assistant response
+  void copyLastResponse() {
+    final conversation = currentConversation.value;
+    if (conversation == null || conversation.messages.isEmpty) return;
+
+    // Find the last assistant message
+    for (int i = conversation.messages.length - 1; i >= 0; i--) {
+      if (conversation.messages[i].role == MessageRole.assistant &&
+          conversation.messages[i].content.isNotEmpty) {
+        copyMessageContent(conversation.messages[i].content);
+        return;
+      }
+    }
   }
 
   // Generate conversation title in background

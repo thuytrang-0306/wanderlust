@@ -303,16 +303,34 @@ class AIChatPage extends GetView<AIChatController> {
                   // Removed circular progress indicator to fix state issues
                   // The typing animation effect is already shown through streaming text
 
-                  // Only show timestamp if there's actual content
+                  // Only show timestamp and actions if there's actual content
                   if (displayContent.isNotEmpty || message.error != null) ...[
                     SizedBox(height: AppSpacing.s2),
-                    Text(
-                      _formatTime(message.timestamp),
-                      style: AppTypography.bodyXS.copyWith(
-                        color: isUser
-                            ? Colors.white.withValues(alpha: 0.7)
-                            : AppColors.neutral500,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatTime(message.timestamp),
+                          style: AppTypography.bodyXS.copyWith(
+                            color: isUser
+                                ? Colors.white.withValues(alpha: 0.7)
+                                : AppColors.neutral500,
+                          ),
+                        ),
+                        // Action buttons for assistant messages
+                        if (!isUser && displayContent.isNotEmpty && !message.isStreaming) ...[
+                          SizedBox(width: AppSpacing.s2),
+                          _buildMessageActionButton(
+                            icon: Icons.copy,
+                            onTap: () => controller.copyMessageContent(displayContent),
+                          ),
+                          SizedBox(width: AppSpacing.s1),
+                          _buildMessageActionButton(
+                            icon: Icons.refresh,
+                            onTap: () => controller.regenerateLastResponse(),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ],
@@ -475,7 +493,7 @@ class AIChatPage extends GetView<AIChatController> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -929,12 +947,32 @@ class AIChatPage extends GetView<AIChatController> {
   String _getInitials(String name) {
     final words = name.trim().split(' ');
     if (words.isEmpty) return '';
-    
+
     if (words.length == 1) {
       return words[0].substring(0, 1).toUpperCase();
     }
-    
+
     return '${words[0].substring(0, 1)}${words.last.substring(0, 1)}'.toUpperCase();
   }
 
+  Widget _buildMessageActionButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(4.w),
+        decoration: BoxDecoration(
+          color: AppColors.neutral100,
+          borderRadius: BorderRadius.circular(4.r),
+        ),
+        child: Icon(
+          icon,
+          size: 14.sp,
+          color: AppColors.neutral500,
+        ),
+      ),
+    );
+  }
 }

@@ -8,6 +8,7 @@ import 'package:wanderlust/core/constants/app_assets.dart';
 import 'package:wanderlust/core/widgets/shimmer_loading.dart';
 import 'package:wanderlust/presentation/controllers/trip/trip_detail_controller.dart';
 import 'package:wanderlust/presentation/controllers/search/search_filter_controller.dart';
+import 'package:wanderlust/presentation/widgets/ai_trip_planner_sheet.dart';
 
 class TripDetailPage extends StatefulWidget {
   const TripDetailPage({super.key});
@@ -292,6 +293,13 @@ class _TripDetailPageState extends State<TripDetailPage> {
             ),
           ),
 
+          // ===== AI FAB BUTTON =====
+          Positioned(
+            bottom: 24.h,
+            right: 20.w,
+            child: _buildAiFab(),
+          ),
+
           // ===== ANIMATED HEADER BAR (ALWAYS ON TOP) =====
           Positioned(
             top: 0,
@@ -402,6 +410,66 @@ class _TripDetailPageState extends State<TripDetailPage> {
         ),
       ),
     );
+  }
+
+  // AI FAB Button
+  Widget _buildAiFab() {
+    return GestureDetector(
+      onTap: _showAiTripPlanner,
+      child: Container(
+        width: 56.w,
+        height: 56.w,
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28.r),
+          child: Image.asset(
+            AppAssets.aiFabIcon,
+            width: 56.w,
+            height: 56.w,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Center(
+                child: Icon(
+                  Icons.smart_toy,
+                  size: 28.sp,
+                  color: Colors.white,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Show AI Trip Planner Bottom Sheet
+  void _showAiTripPlanner() async {
+    if (controller.trip.value == null) return;
+
+    final result = await AiTripPlannerSheet.show(
+      trip: controller.trip.value!,
+      selectedDay: controller.selectedDay.value,
+      tripDays: controller.tripDays.toList(),
+      onSaveNote: (content) {
+        // Save AI content to day note
+        controller.updateDayNote({'note': content});
+      },
+    );
+
+    // Handle result if needed
+    if (result != null && result['action'] == 'save_to_note') {
+      controller.updateDayNote({'note': result['content']});
+    }
   }
 
   // Blur button for expanded state (on image)
