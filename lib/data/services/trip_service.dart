@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/data/models/trip_model.dart';
+import 'package:wanderlust/data/models/ai_itinerary_model.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:uuid/uuid.dart';
 
@@ -553,4 +554,118 @@ class TripService extends GetxService {
   }
 
   // Sample data creation removed for production
+
+  // === AI ITINERARY METHODS ===
+
+  /// Save AI-generated itinerary to a trip day
+  Future<bool> saveAiItinerary({
+    required String tripId,
+    required String dayIndex, // "0", "1", "2", etc.
+    required AiItineraryModel itinerary,
+  }) async {
+    try {
+      // Update trip document with AI itinerary in the map
+      await _firestore.collection(_tripsCollection).doc(tripId).update({
+        'aiItineraries.$dayIndex': itinerary.toJson(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      LoggerService.i('AI itinerary saved for trip $tripId day $dayIndex');
+      return true;
+    } catch (e) {
+      LoggerService.e('Error saving AI itinerary', error: e);
+      return false;
+    }
+  }
+
+  /// Get AI itinerary for a specific day
+  Future<AiItineraryModel?> getAiItinerary({
+    required String tripId,
+    required String dayIndex,
+  }) async {
+    try {
+      final doc = await _firestore.collection(_tripsCollection).doc(tripId).get();
+
+      if (!doc.exists || doc.data() == null) {
+        return null;
+      }
+
+      final data = doc.data()!;
+      final aiItineraries = data['aiItineraries'] as Map<String, dynamic>?;
+
+      if (aiItineraries == null || !aiItineraries.containsKey(dayIndex)) {
+        return null;
+      }
+
+      return AiItineraryModel.fromJson(aiItineraries[dayIndex] as Map<String, dynamic>);
+    } catch (e) {
+      LoggerService.e('Error getting AI itinerary', error: e);
+      return null;
+    }
+  }
+
+  /// Delete AI itinerary for a specific day
+  Future<bool> deleteAiItinerary({
+    required String tripId,
+    required String dayIndex,
+  }) async {
+    try {
+      // Remove the AI itinerary from the map
+      await _firestore.collection(_tripsCollection).doc(tripId).update({
+        'aiItineraries.$dayIndex': FieldValue.delete(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      LoggerService.i('AI itinerary deleted for trip $tripId day $dayIndex');
+      return true;
+    } catch (e) {
+      LoggerService.e('Error deleting AI itinerary', error: e);
+      return false;
+    }
+  }
+
+  /// Update AI itinerary for a specific day (same as save)
+  Future<bool> updateAiItinerary({
+    required String tripId,
+    required String dayIndex,
+    required AiItineraryModel itinerary,
+  }) async {
+    return await saveAiItinerary(
+      tripId: tripId,
+      dayIndex: dayIndex,
+      itinerary: itinerary,
+    );
+  }
+
+  /// Get all AI itineraries for a trip
+  Future<Map<String, AiItineraryModel>> getAllAiItineraries(String tripId) async {
+    try {
+      final doc = await _firestore.collection(_tripsCollection).doc(tripId).get();
+
+      if (!doc.exists || doc.data() == null) {
+        return {};
+      }
+
+      final data = doc.data()!;
+      final aiItinerariesData = data['aiItineraries'] as Map<String, dynamic>?;
+
+      if (aiItinerariesData == null) {
+        return {};
+      }
+
+      final aiItineraries = <String, AiItineraryModel>{};
+      aiItinerariesData.forEach((key, value) {
+        try {
+          aiItineraries[key] = AiItineraryModel.fromJson(value as Map<String, dynamic>);
+        } catch (e) {
+          LoggerService.e('Error parsing AI itinerary for day $key', error: e);
+        }
+      });
+
+      return aiItineraries;
+    } catch (e) {
+      LoggerService.e('Error getting all AI itineraries', error: e);
+      return {};
+    }
+  }
 }

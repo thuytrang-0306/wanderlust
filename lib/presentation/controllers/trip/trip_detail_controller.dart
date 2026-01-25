@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -5,9 +6,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:wanderlust/core/base/base_controller.dart';
 import 'package:wanderlust/core/services/storage_service.dart';
 import 'package:wanderlust/data/models/trip_model.dart';
+import 'package:wanderlust/data/models/ai_itinerary_model.dart';
 import 'package:wanderlust/data/services/trip_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
+import 'package:wanderlust/presentation/widgets/ai_trip_planner_sheet.dart';
 
 class TripDetailController extends BaseController {
   // Services
@@ -137,6 +140,7 @@ class TripDetailController extends BaseController {
         'startTime': '8:00',
         'locations': [], // Will be populated from itineraries
         'note': '', // Initialize note field
+        'aiItinerary': null, // AI-generated itinerary
       });
     }
 
@@ -160,12 +164,8 @@ class TripDetailController extends BaseController {
       if (doc.exists) {
         final data = doc.data();
         if (data != null) {
-          // Clear existing locations before applying fresh data
-          for (var day in tripDays) {
-            (day['locations'] as List).clear();
-            day['note'] = '';
-          }
-
+          // ✅ DON'T clear - just apply/merge data
+          // GetX will update UI when we assign new Map instances in _applyDayData
           _applyDayData(data);
 
           // ✅ Cache the fresh data for next time
@@ -174,9 +174,27 @@ class TripDetailController extends BaseController {
               ?.map((loc) => _convertTimestampsInMap(loc as Map<String, dynamic>))
               .toList();
 
+          // Convert AI itineraries to cache format
+          final aiItinerariesToCache = <String, dynamic>{};
+          final aiItineraries = data['aiItineraries'] as Map<String, dynamic>?;
+          if (aiItineraries != null) {
+            aiItineraries.forEach((key, value) {
+              if (value is Map<String, dynamic>) {
+                try {
+                  // Parse from Firestore format and convert to cache format
+                  final itinerary = AiItineraryModel.fromJson(value);
+                  aiItinerariesToCache[key] = itinerary.toCache();
+                } catch (e) {
+                  LoggerService.e('Error converting AI itinerary to cache for day $key', error: e);
+                }
+              }
+            });
+          }
+
           await _storageService.cacheTripDayData(tripId, {
             'dayNotes': data['dayNotes'],
             'privateLocations': locationsToCache,
+            'aiItineraries': aiItinerariesToCache,
           });
 
           LoggerService.i('Loaded and cached fresh day notes and private locations');
@@ -238,7 +256,35 @@ class TripDetailController extends BaseController {
       }
     }
 
-    tripDays.refresh();
+    // Load AI itineraries (Map<String, AiItineraryModel>)
+    final aiItineraries = data['aiItineraries'] as Map<String, dynamic>?;
+    if (aiItineraries != null) {
+      aiItineraries.forEach((key, value) {
+        try {
+          final dayIndex = int.tryParse(key);
+          if (dayIndex != null && dayIndex >= 0 && dayIndex < tripDays.length) {
+            final itineraryData = value as Map<String, dynamic>;
+
+            // Detect format: cache has int timestamps, Firestore has Timestamp objects
+            final createdAt = itineraryData['createdAt'];
+            final isCache = createdAt is int;
+
+            final itinerary = isCache
+                ? AiItineraryModel.fromCache(itineraryData)
+                : AiItineraryModel.fromJson(itineraryData);
+
+            // CRITICAL: Clone Map to trigger GetX reactivity
+            final updatedDay = Map<String, dynamic>.from(tripDays[dayIndex]);
+            updatedDay['aiItinerary'] = itinerary;
+            tripDays[dayIndex] = updatedDay;
+
+            LoggerService.i('Loaded AI itinerary for day $dayIndex (${isCache ? "cache" : "Firestore"})');
+          }
+        } catch (e) {
+          LoggerService.e('Error parsing AI itinerary for day $key', error: e);
+        }
+      });
+    }
   }
 
   // Load itineraries from backend
@@ -626,5 +672,143 @@ class TripDetailController extends BaseController {
       isInitialLoading.value = true;
       await loadTrip(trip.value!);
     }
+  }
+
+  // === AI ITINERARY METHODS ===
+
+  /// Open AI Trip Planner bottom sheet
+  Future<void> openAiTripPlanner() async {
+    if (trip.value == null) return;
+
+    await AiTripPlannerSheet.show(
+      trip: trip.value!,
+      selectedDay: selectedDay.value,
+      tripDays: tripDays.toList(),
+      // ✅ CALLBACK: Được gọi khi save thành công
+      onSaved: (AiItineraryModel itinerary, int dayIndex) async {
+        LoggerService.i('AI itinerary saved callback triggered for day $dayIndex');
+
+        // ✅ SIMPLE RELOAD: Chỉ cần reload data, không cần logic phức tạp
+        await loadDayNotesAndLocations(trip.value!.id);
+
+        LoggerService.i('Reloaded trip data after save');
+      },
+    );
+  }
+
+  /// Delete AI itinerary for current day
+  Future<void> deleteAiItinerary(int dayIndex) async {
+    if (trip.value == null) return;
+
+    try {
+      // ✅ Confirm deletion
+      final confirmed = await Get.dialog<bool>(
+        AlertDialog(
+          title: const Text('Xóa lịch trình AI'),
+          content: const Text('Bạn có chắc muốn xóa lịch trình AI này? Hành động này không thể hoàn tác.'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () => Get.back(result: true),
+              child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+
+      // ✅ CRITICAL: Return immediately if not confirmed
+      if (confirmed != true) return;
+
+      // ✅ Update UI optimistically FIRST (before async operations)
+      if (dayIndex >= 0 && dayIndex < tripDays.length) {
+        final updatedDay = Map<String, dynamic>.from(tripDays[dayIndex]);
+        updatedDay['aiItinerary'] = null;
+        tripDays[dayIndex] = updatedDay;
+        tripDays.refresh();
+      }
+
+      // ✅ Show loading indicator or immediate success feedback
+      AppSnackbar.showSuccess(
+        title: 'Đang xóa...',
+        message: 'Đang xóa lịch trình AI',
+      );
+
+      // ✅ Delete from Firestore in background
+      final success = await _tripService.deleteAiItinerary(
+        tripId: trip.value!.id,
+        dayIndex: dayIndex.toString(),
+      );
+
+      if (success) {
+        // ✅ Show final success message
+        AppSnackbar.showSuccess(
+          title: 'Thành công',
+          message: 'Đã xóa lịch trình AI',
+        );
+        LoggerService.i('AI itinerary deleted for day $dayIndex');
+      } else {
+        // ✅ Rollback UI if failed
+        await loadDayNotesAndLocations(trip.value!.id);
+        AppSnackbar.showError(
+          title: 'Lỗi',
+          message: 'Không thể xóa lịch trình',
+        );
+      }
+    } catch (e) {
+      LoggerService.e('Error deleting AI itinerary', error: e);
+      // ✅ Rollback UI on error
+      await loadDayNotesAndLocations(trip.value!.id);
+      AppSnackbar.showError(
+        title: 'Lỗi',
+        message: 'Đã có lỗi xảy ra khi xóa lịch trình',
+      );
+    }
+  }
+
+  /// Regenerate AI itinerary for current day
+  Future<void> regenerateAiItinerary(int dayIndex) async {
+    if (trip.value == null) return;
+
+    // ✅ Clear existing AI itinerary if present
+    if (dayIndex >= 0 && dayIndex < tripDays.length) {
+      final existingItinerary = tripDays[dayIndex]['aiItinerary'];
+      if (existingItinerary != null) {
+        // Clear UI immediately for instant feedback
+        final updatedDay = Map<String, dynamic>.from(tripDays[dayIndex]);
+        updatedDay['aiItinerary'] = null;
+        tripDays[dayIndex] = updatedDay;
+        tripDays.refresh();
+
+        // Delete from Firestore in background
+        _tripService.deleteAiItinerary(
+          tripId: trip.value!.id,
+          dayIndex: dayIndex.toString(),
+        );
+
+        LoggerService.i('Cleared old AI itinerary from UI');
+      }
+    }
+
+    // Change to the day that needs regeneration
+    selectedDay.value = dayIndex;
+
+    // Open AI planner to generate new itinerary
+    await openAiTripPlanner();
+  }
+
+  /// Get AI itinerary for specific day
+  AiItineraryModel? getAiItinerary(int dayIndex) {
+    if (dayIndex >= 0 && dayIndex < tripDays.length) {
+      return tripDays[dayIndex]['aiItinerary'] as AiItineraryModel?;
+    }
+    return null;
+  }
+
+  /// Check if day has AI itinerary
+  bool hasAiItinerary(int dayIndex) {
+    return getAiItinerary(dayIndex) != null;
   }
 }

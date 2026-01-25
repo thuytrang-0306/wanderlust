@@ -3,16 +3,20 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/services/gemini_service.dart';
 import 'package:wanderlust/core/utils/logger_service.dart';
+import 'package:wanderlust/core/utils/ai_itinerary_parser.dart';
 import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/data/models/ai_chat_message.dart';
 import 'package:wanderlust/data/models/ai_conversation.dart';
+import 'package:wanderlust/data/models/ai_itinerary_model.dart';
 import 'package:wanderlust/data/models/trip_model.dart';
+import 'package:wanderlust/data/services/trip_service.dart';
 
 /// Controller for AI Trip Planner Bottom Sheet
 /// Provides AI-powered itinerary suggestions based on trip context
 class AiTripPlannerController extends GetxController {
   // Services
   final GeminiService _geminiService = GeminiService.to;
+  final TripService _tripService = Get.find<TripService>();
 
   // Controllers
   final TextEditingController messageController = TextEditingController();
@@ -22,6 +26,9 @@ class AiTripPlannerController extends GetxController {
   TripModel? trip;
   int selectedDay = 0;
   List<Map<String, dynamic>> tripDays = [];
+
+  // Callback when save successful
+  Function(AiItineraryModel itinerary, int dayIndex)? onSaved;
 
   // Conversation state (in-memory, not persisted)
   final RxList<AIChatMessage> messages = <AIChatMessage>[].obs;
@@ -39,10 +46,12 @@ class AiTripPlannerController extends GetxController {
     required TripModel tripModel,
     required int dayIndex,
     required List<Map<String, dynamic>> days,
+    Function(AiItineraryModel itinerary, int dayIndex)? onSavedCallback,
   }) {
     trip = tripModel;
     selectedDay = dayIndex;
     tripDays = days;
+    onSaved = onSavedCallback;
     isInitialized.value = true;
 
     LoggerService.i('AI Trip Planner initialized for ${tripModel.title}, Day ${dayIndex + 1}');
@@ -278,27 +287,79 @@ class AiTripPlannerController extends GetxController {
     }
   }
 
-  // Save AI response to day note
-  Future<void> saveToNote() async {
+  // Save AI response to AI Itinerary
+  Future<void> saveToItinerary() async {
     if (messages.isEmpty || trip == null) return;
 
-    // Find the last assistant message
-    String? aiContent;
-    for (int i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role == MessageRole.assistant && messages[i].content.isNotEmpty) {
-        aiContent = messages[i].content;
-        break;
+    try {
+      // Find the last assistant message
+      String? aiContent;
+      for (int i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role == MessageRole.assistant && messages[i].content.isNotEmpty) {
+          aiContent = messages[i].content;
+          break;
+        }
       }
+
+      if (aiContent == null || aiContent.isEmpty) {
+        AppSnackbar.showWarning(
+          title: 'Thông báo',
+          message: 'Không có nội dung lịch trình để lưu',
+        );
+        return;
+      }
+
+      // Parse markdown to AiItineraryModel
+      final dayData = tripDays.isNotEmpty && selectedDay < tripDays.length
+          ? tripDays[selectedDay]
+          : null;
+
+      final date = dayData?['date'] as DateTime? ?? DateTime.now();
+
+      final itinerary = AiItineraryParser.parse(
+        markdown: aiContent,
+        tripId: trip!.id,
+        dayNumber: selectedDay + 1, // 1-based
+        date: date,
+      );
+
+      LoggerService.i('Parsed ${itinerary.activityCount} activities from AI response');
+
+      // Save to Firestore
+      final success = await _tripService.saveAiItinerary(
+        tripId: trip!.id,
+        dayIndex: selectedDay.toString(),
+        itinerary: itinerary,
+      );
+
+      if (success) {
+        // ✅ Close sheet FIRST for immediate UX feedback
+        Get.back();
+
+        // ✅ Show success message immediately
+        AppSnackbar.showSuccess(
+          title: 'Thành công',
+          message: 'Đã lưu lịch trình AI với ${itinerary.activityCount} hoạt động',
+        );
+
+        // ✅ Call callback AFTER closing (UI update happens in background)
+        if (onSaved != null) {
+          // Run callback without awaiting to prevent blocking
+          onSaved!(itinerary, selectedDay);
+        }
+      } else {
+        AppSnackbar.showError(
+          title: 'Lỗi',
+          message: 'Không thể lưu lịch trình. Vui lòng thử lại.',
+        );
+      }
+    } catch (e) {
+      LoggerService.e('Error saving AI itinerary', error: e);
+      AppSnackbar.showError(
+        title: 'Lỗi',
+        message: 'Đã có lỗi xảy ra khi lưu lịch trình',
+      );
     }
-
-    if (aiContent == null) return;
-
-    // Return the AI content to be saved as note
-    Get.back(result: {
-      'action': 'save_to_note',
-      'content': aiContent,
-      'dayIndex': selectedDay,
-    });
   }
 
   // Scroll to bottom of chat

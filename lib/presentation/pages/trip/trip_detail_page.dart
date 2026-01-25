@@ -8,7 +8,7 @@ import 'package:wanderlust/core/constants/app_assets.dart';
 import 'package:wanderlust/core/widgets/shimmer_loading.dart';
 import 'package:wanderlust/presentation/controllers/trip/trip_detail_controller.dart';
 import 'package:wanderlust/presentation/controllers/search/search_filter_controller.dart';
-import 'package:wanderlust/presentation/widgets/ai_trip_planner_sheet.dart';
+import 'package:wanderlust/presentation/widgets/ai_itinerary_card.dart';
 
 class TripDetailPage extends StatefulWidget {
   const TripDetailPage({super.key});
@@ -90,7 +90,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.primary.withOpacity(0.8),
+                            AppColors.primary.withValues(alpha: 0.8),
                             AppColors.primary,
                           ],
                           begin: Alignment.topLeft,
@@ -101,7 +101,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
                         child: Icon(
                           Icons.travel_explore,
                           size: 60.sp,
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                         ),
                       ),
                     );
@@ -170,7 +170,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
                                 Container(
                                   padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.1),
+                                    color: AppColors.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(20.r),
                                   ),
                                   child: Row(
@@ -273,7 +273,8 @@ class _TripDetailPageState extends State<TripDetailPage> {
                               _buildNoteSection(controller),
                               SizedBox(height: 24.h),
 
-                              if (controller.dayHasItems(controller.selectedDay.value))
+                              if (controller.dayHasItems(controller.selectedDay.value) ||
+                                  controller.hasAiItinerary(controller.selectedDay.value))
                                 _buildTimelineView(controller)
                               else
                                 _buildEmptyPlaceholder(),
@@ -312,7 +313,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
                 boxShadow: _isCollapsed
                     ? [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -454,22 +455,7 @@ class _TripDetailPageState extends State<TripDetailPage> {
 
   // Show AI Trip Planner Bottom Sheet
   void _showAiTripPlanner() async {
-    if (controller.trip.value == null) return;
-
-    final result = await AiTripPlannerSheet.show(
-      trip: controller.trip.value!,
-      selectedDay: controller.selectedDay.value,
-      tripDays: controller.tripDays.toList(),
-      onSaveNote: (content) {
-        // Save AI content to day note
-        controller.updateDayNote({'note': content});
-      },
-    );
-
-    // Handle result if needed
-    if (result != null && result['action'] == 'save_to_note') {
-      controller.updateDayNote({'note': result['content']});
-    }
+    await controller.openAiTripPlanner();
   }
 
   // Blur button for expanded state (on image)
@@ -710,21 +696,37 @@ class _TripDetailPageState extends State<TripDetailPage> {
   }
 
   Widget _buildTimelineView(TripDetailController controller) {
+    final aiItinerary = controller.getAiItinerary(controller.selectedDay.value);
     final locations = controller.getLocationsForDay(controller.selectedDay.value);
+
     return Column(
-      children: List.generate(locations.length, (index) {
-        final location = locations[index];
-        return _buildTimelineItem(
-          controller: controller,
-          locationIndex: index,
-          location: location,
-          title: location['title'],
-          address: location['address'],
-          description: location['description'],
-          image: location['image'],
-          isLast: index == locations.length - 1,
-        );
-      }),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Show AI Itinerary Card first if exists
+        if (aiItinerary != null) ...[
+          AiItineraryCard(
+            itinerary: aiItinerary,
+            onDelete: () => controller.deleteAiItinerary(controller.selectedDay.value),
+            onRegenerate: () => controller.regenerateAiItinerary(controller.selectedDay.value),
+          ),
+          if (locations.isNotEmpty) SizedBox(height: 16.h),
+        ],
+
+        // Then show existing location timeline items
+        ...List.generate(locations.length, (index) {
+          final location = locations[index];
+          return _buildTimelineItem(
+            controller: controller,
+            locationIndex: index,
+            location: location,
+            title: location['title'],
+            address: location['address'],
+            description: location['description'],
+            image: location['image'],
+            isLast: index == locations.length - 1,
+          );
+        }),
+      ],
     );
   }
 

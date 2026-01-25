@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:wanderlust/data/models/ai_itinerary_model.dart';
 
 class TripModel {
   final String id;
@@ -24,6 +25,7 @@ class TripModel {
   // ✅ NEW: Day-specific data (type-safe)
   final Map<String, String> dayNotes; // key: "1", "2", etc. value: note text
   final List<TripPrivateLocation> privateLocations;
+  final Map<String, AiItineraryModel> aiItineraries; // key: dayIndex ("0", "1", etc.)
 
   TripModel({
     required this.id,
@@ -47,6 +49,7 @@ class TripModel {
     this.updatedAt,
     this.dayNotes = const {},
     this.privateLocations = const [],
+    this.aiItineraries = const {},
   });
 
   factory TripModel.fromJson(Map<String, dynamic> json, String id) {
@@ -63,6 +66,15 @@ class TripModel {
       parsedLocations = (json['privateLocations'] as List<dynamic>)
           .map((l) => TripPrivateLocation.fromJson(l as Map<String, dynamic>))
           .toList();
+    }
+
+    // Parse aiItineraries
+    Map<String, AiItineraryModel> parsedAiItineraries = {};
+    if (json['aiItineraries'] != null) {
+      final rawItineraries = json['aiItineraries'] as Map<String, dynamic>;
+      parsedAiItineraries = rawItineraries.map(
+        (k, v) => MapEntry(k, AiItineraryModel.fromJson(v as Map<String, dynamic>)),
+      );
     }
 
     return TripModel(
@@ -88,6 +100,7 @@ class TripModel {
       updatedAt: json['updatedAt'] != null ? (json['updatedAt'] as Timestamp).toDate() : null,
       dayNotes: parsedDayNotes,
       privateLocations: parsedLocations,
+      aiItineraries: parsedAiItineraries,
     );
   }
 
@@ -106,6 +119,15 @@ class TripModel {
       parsedLocations = (json['privateLocations'] as List<dynamic>)
           .map((l) => TripPrivateLocation.fromJson(l as Map<String, dynamic>))
           .toList();
+    }
+
+    // Parse aiItineraries
+    Map<String, AiItineraryModel> parsedAiItineraries = {};
+    if (json['aiItineraries'] != null) {
+      final rawItineraries = json['aiItineraries'] as Map<String, dynamic>;
+      parsedAiItineraries = rawItineraries.map(
+        (k, v) => MapEntry(k, AiItineraryModel.fromCache(v as Map<String, dynamic>)),
+      );
     }
 
     return TripModel(
@@ -131,6 +153,7 @@ class TripModel {
       updatedAt: json['updatedAt'] != null ? DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] as int) : null,
       dayNotes: parsedDayNotes,
       privateLocations: parsedLocations,
+      aiItineraries: parsedAiItineraries,
     );
   }
 
@@ -154,6 +177,7 @@ class TripModel {
       'stats': stats.toJson(),
       'dayNotes': dayNotes,
       'privateLocations': privateLocations.map((l) => l.toJson()).toList(),
+      'aiItineraries': aiItineraries.map((k, v) => MapEntry(k, v.toJson())),
       'createdAt':
           createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
@@ -182,6 +206,7 @@ class TripModel {
       'stats': stats.toJson(),
       'dayNotes': dayNotes,
       'privateLocations': privateLocations.map((l) => l.toJson()).toList(),
+      'aiItineraries': aiItineraries.map((k, v) => MapEntry(k, v.toCache())),
       'createdAt': createdAt?.millisecondsSinceEpoch,
       'updatedAt': updatedAt?.millisecondsSinceEpoch,
     };

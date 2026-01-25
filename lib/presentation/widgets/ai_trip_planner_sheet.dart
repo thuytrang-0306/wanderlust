@@ -8,6 +8,7 @@ import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/core/widgets/typing_indicator.dart';
 import 'package:wanderlust/data/models/ai_chat_message.dart';
+import 'package:wanderlust/data/models/ai_itinerary_model.dart';
 import 'package:wanderlust/data/models/trip_model.dart';
 import 'package:wanderlust/presentation/controllers/trip/ai_trip_planner_controller.dart';
 
@@ -18,6 +19,7 @@ class AiTripPlannerSheet extends StatefulWidget {
   final int selectedDay;
   final List<Map<String, dynamic>> tripDays;
   final Function(String note)? onSaveNote;
+  final Function(AiItineraryModel itinerary, int dayIndex)? onSaved;
 
   const AiTripPlannerSheet({
     super.key,
@@ -25,21 +27,24 @@ class AiTripPlannerSheet extends StatefulWidget {
     required this.selectedDay,
     required this.tripDays,
     this.onSaveNote,
+    this.onSaved,
   });
 
   /// Show the AI Trip Planner bottom sheet
-  static Future<Map<String, dynamic>?> show({
+  static Future<void> show({
     required TripModel trip,
     required int selectedDay,
     required List<Map<String, dynamic>> tripDays,
     Function(String note)? onSaveNote,
+    Function(AiItineraryModel itinerary, int dayIndex)? onSaved,
   }) async {
-    return await Get.bottomSheet<Map<String, dynamic>>(
+    await Get.bottomSheet(
       AiTripPlannerSheet(
         trip: trip,
         selectedDay: selectedDay,
         tripDays: tripDays,
         onSaveNote: onSaveNote,
+        onSaved: onSaved,
       ),
       isScrollControlled: true,
       isDismissible: true,
@@ -66,6 +71,7 @@ class _AiTripPlannerSheetState extends State<AiTripPlannerSheet> {
       tripModel: widget.trip,
       dayIndex: widget.selectedDay,
       days: widget.tripDays,
+      onSavedCallback: widget.onSaved,
     );
   }
 
@@ -446,34 +452,17 @@ class _AiTripPlannerSheetState extends State<AiTripPlannerSheet> {
               onTap: controller.copyLastResponse,
             ),
 
-            // Save to note button
+            // Save to itinerary button
             _buildActionButton(
               icon: Icons.save_alt,
-              label: 'Lưu ghi chú',
-              onTap: () => _handleSaveToNote(),
+              label: 'Lưu lịch trình',
+              onTap: () => controller.saveToItinerary(),
               isPrimary: true,
             ),
           ],
         ),
       );
     });
-  }
-
-  void _handleSaveToNote() {
-    // Find the last assistant message content
-    String? aiContent;
-    for (int i = controller.messages.length - 1; i >= 0; i--) {
-      if (controller.messages[i].role == MessageRole.assistant &&
-          controller.messages[i].content.isNotEmpty) {
-        aiContent = controller.messages[i].content;
-        break;
-      }
-    }
-
-    if (aiContent != null && widget.onSaveNote != null) {
-      widget.onSaveNote!(aiContent);
-      Get.back();
-    }
   }
 
   Widget _buildActionButton({
