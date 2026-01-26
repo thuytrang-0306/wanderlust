@@ -51,6 +51,11 @@ class BookingInfoPage extends GetView<BookingInfoController> {
                     // Cancellation policy
                     _buildCancellationPolicy(),
 
+                    // Type-specific details
+                    if (controller.isTour) _buildTourBookingDetails(),
+                    if (controller.isFood) _buildFoodBookingDetails(),
+                    if (controller.isService) _buildServiceBookingDetails(),
+
                     // Guest info
                     _buildGuestInfoSection(),
 
@@ -230,7 +235,12 @@ class BookingInfoPage extends GetView<BookingInfoController> {
             children: [
               Icon(Icons.access_time_outlined, size: 18.sp, color: const Color(0xFF6B7280)),
               SizedBox(width: 8.w),
-              Text('Nhận phòng', style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280))),
+              Text(
+                controller.isTour ? 'Ngày khởi hành' :
+                controller.isFood ? 'Thời gian giao' :
+                controller.isService ? 'Ngày hẹn' : 'Nhận phòng',
+                style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
+              ),
             ],
           ),
           SizedBox(height: 4.h),
@@ -243,27 +253,29 @@ class BookingInfoPage extends GetView<BookingInfoController> {
             ),
           )),
 
-          SizedBox(height: 16.h),
+          // Only show check-out for rooms
+          if (controller.isRoom) ...[
+            SizedBox(height: 16.h),
 
-          // Check-out
-          Row(
-            children: [
-              Icon(Icons.access_time_outlined, size: 18.sp, color: const Color(0xFF6B7280)),
-              SizedBox(width: 8.w),
-              Text('Trả phòng', style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280))),
-            ],
-          ),
-          SizedBox(height: 4.h),
-          Obx(() => Text(
-            controller.bookingData['checkOut'] ?? '',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF374151),
+            // Check-out
+            Row(
+              children: [
+                Icon(Icons.access_time_outlined, size: 18.sp, color: const Color(0xFF6B7280)),
+                SizedBox(width: 8.w),
+                Text('Trả phòng', style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280))),
+              ],
             ),
-          )),
-
-          SizedBox(height: 16.h),
+            SizedBox(height: 4.h),
+            Obx(() => Text(
+              controller.bookingData['checkOut'] ?? '',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF374151),
+              ),
+            )),
+            SizedBox(height: 16.h),
+          ],
 
           // Free cancellation
           Row(
@@ -271,6 +283,9 @@ class BookingInfoPage extends GetView<BookingInfoController> {
               Icon(Icons.check_circle, size: 18.sp, color: AppColors.primary),
               SizedBox(width: 8.w),
               Text(
+                controller.isTour ? 'Chính sách hủy tour' :
+                controller.isFood ? 'Chính sách hủy đơn' :
+                controller.isService ? 'Chính sách hủy dịch vụ' :
                 'Miễn phí hủy phòng',
                 style: TextStyle(fontSize: 14.sp, color: const Color(0xFF374151)),
               ),
@@ -312,11 +327,23 @@ class BookingInfoPage extends GetView<BookingInfoController> {
             ),
           ),
           SizedBox(height: 8.h),
-          Obx(() => Text(
-            controller.bookingData['cancellationPolicy'] ??
-                'Miễn phí hủy phòng trước 24 giờ. Sau thời gian này sẽ tính phí hủy 50% giá trị đặt phòng.',
-            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280), height: 1.4),
-          )),
+          Builder(builder: (context) {
+            // Calculate default policy based on type (static, no reactivity needed)
+            String defaultPolicy = 'Miễn phí hủy phòng trước 24 giờ. Sau thời gian này sẽ tính phí hủy 50% giá trị đặt phòng.';
+            if (controller.isTour) {
+              defaultPolicy = 'Miễn phí hủy tour trước 48 giờ. Sau thời gian này sẽ tính phí hủy 70% giá trị tour.';
+            } else if (controller.isFood) {
+              defaultPolicy = 'Miễn phí hủy đơn trước 2 giờ. Sau thời gian này sẽ tính phí hủy 30% giá trị đơn hàng.';
+            } else if (controller.isService) {
+              defaultPolicy = 'Miễn phí hủy dịch vụ trước 12 giờ. Sau thời gian này sẽ tính phí hủy 50% giá trị dịch vụ.';
+            }
+
+            // Only wrap observable access with Obx
+            return Obx(() => Text(
+              controller.bookingData['cancellationPolicy'] ?? defaultPolicy,
+              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280), height: 1.4),
+            ));
+          }),
         ],
       ),
     );
@@ -752,6 +779,200 @@ class BookingInfoPage extends GetView<BookingInfoController> {
           ),
         ],
       ),
+    );
+  }
+
+  // ========== TYPE-SPECIFIC BOOKING DETAIL SECTIONS ==========
+
+  /// Tour booking details: duration, departure, included services
+  Widget _buildTourBookingDetails() {
+    return Container(
+      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Chi tiết tour',
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF111827),
+            ),
+          ),
+          SizedBox(height: 12.h),
+
+          // Duration
+          if (controller.bookingData['duration'] != null) ...[
+            _buildDetailRow(
+              icon: Icons.schedule,
+              label: 'Thời lượng',
+              value: controller.bookingData['duration'],
+            ),
+            SizedBox(height: 8.h),
+          ],
+
+          // Departure point
+          if (controller.bookingData['departure'] != null) ...[
+            _buildDetailRow(
+              icon: Icons.location_on,
+              label: 'Điểm khởi hành',
+              value: controller.bookingData['departure'],
+            ),
+            SizedBox(height: 8.h),
+          ],
+
+          // Included services
+          Row(
+            children: [
+              Icon(Icons.check_circle_outline, size: 18.sp, color: AppColors.primary),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  'Bao gồm: Xe đưa đón, Hướng dẫn viên, Bữa ăn',
+                  style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Food booking details: category, serving, dietary info
+  Widget _buildFoodBookingDetails() {
+    return Container(
+      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Thông tin món ăn',
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF111827),
+            ),
+          ),
+          SizedBox(height: 12.h),
+
+          // Category
+          if (controller.bookingData['category'] != null) ...[
+            _buildDetailRow(
+              icon: Icons.category,
+              label: 'Loại món',
+              value: controller.bookingData['category'],
+            ),
+            SizedBox(height: 8.h),
+          ],
+
+          // Serving size
+          if (controller.bookingData['serving'] != null) ...[
+            _buildDetailRow(
+              icon: Icons.people,
+              label: 'Khẩu phần',
+              value: controller.bookingData['serving'],
+            ),
+            SizedBox(height: 8.h),
+          ],
+
+          // Dietary info
+          Row(
+            children: [
+              if (controller.bookingData['isVegetarian'] == true) ...[
+                Icon(Icons.eco, size: 16.sp, color: Colors.green),
+                SizedBox(width: 4.w),
+                Text('Chay', style: TextStyle(fontSize: 12.sp, color: Colors.green)),
+                SizedBox(width: 12.w),
+              ],
+              if (controller.bookingData['isSpicy'] == true) ...[
+                Icon(Icons.whatshot, size: 16.sp, color: Colors.orange),
+                SizedBox(width: 4.w),
+                Text('Cay', style: TextStyle(fontSize: 12.sp, color: Colors.orange)),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Service booking details: duration, location
+  Widget _buildServiceBookingDetails() {
+    return Container(
+      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Thông tin dịch vụ',
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF111827),
+            ),
+          ),
+          SizedBox(height: 12.h),
+
+          // Duration
+          if (controller.bookingData['duration'] != null) ...[
+            _buildDetailRow(
+              icon: Icons.schedule,
+              label: 'Thời lượng',
+              value: controller.bookingData['duration'],
+            ),
+            SizedBox(height: 8.h),
+          ],
+
+          // Location
+          if (controller.bookingData['location'] != null) ...[
+            _buildDetailRow(
+              icon: Icons.place,
+              label: 'Địa điểm',
+              value: controller.bookingData['location'],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // Helper widget for detail rows
+  Widget _buildDetailRow({required IconData icon, required String label, required String value}) {
+    return Row(
+      children: [
+        Icon(icon, size: 18.sp, color: const Color(0xFF6B7280)),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF374151)),
+              children: [
+                TextSpan(
+                  text: '$label: ',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                TextSpan(text: value),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

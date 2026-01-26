@@ -318,6 +318,11 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
                       // Amenities
                       _buildAmenities(),
 
+                      // Type-specific details
+                      if (controller.isTourType) _buildTourDetails(),
+                      if (controller.isFoodType) _buildFoodDetails(),
+                      if (controller.isServiceType) _buildServiceDetails(),
+
                       // Gallery preview
                       _buildGalleryPreview(),
 
@@ -633,13 +638,23 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
         return const SizedBox.shrink();
       }
 
+      // Dynamic section title based on listing type
+      String sectionTitle = 'Dịch vụ & Tiện nghi';
+      if (controller.isTourType) {
+        sectionTitle = 'Bao gồm trong tour';
+      } else if (controller.isFoodType) {
+        sectionTitle = 'Thông tin món ăn';
+      } else if (controller.isServiceType) {
+        sectionTitle = 'Bao gồm dịch vụ';
+      }
+
       return Padding(
         padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Dịch vụ & Tiện nghi',
+              sectionTitle,
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w600,
@@ -713,14 +728,26 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
         children: [
           Padding(
             padding: EdgeInsets.only(right: 20.w),
-            child: Text(
-              'Xem trước Homestay',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF111827),
-              ),
-            ),
+            child: Obx(() {
+              // Dynamic gallery title based on listing type
+              String galleryTitle = 'Xem trước Phòng';
+              if (controller.isTourType) {
+                galleryTitle = 'Xem trước Tour';
+              } else if (controller.isFoodType) {
+                galleryTitle = 'Xem trước Món ăn';
+              } else if (controller.isServiceType) {
+                galleryTitle = 'Xem trước Dịch vụ';
+              }
+
+              return Text(
+                galleryTitle,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF111827),
+                ),
+              );
+            }),
           ),
           SizedBox(height: 12.h),
           SizedBox(
@@ -880,7 +907,10 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Phòng và khách',
+                    controller.isRoomType ? 'Phòng và khách' :
+                    controller.isTourType ? 'Số người tham gia' :
+                    controller.isFoodType ? 'Số lượng món' :
+                    'Số lượng dịch vụ',
                     style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
                   ),
                   SizedBox(height: 8.h),
@@ -1114,6 +1144,274 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ========== TYPE-SPECIFIC DETAIL SECTIONS ==========
+
+  /// Tour-specific details: duration, departure, included services
+  Widget _buildTourDetails() {
+    return Obx(() {
+      final listing = controller.listing.value;
+      if (listing == null) return const SizedBox.shrink();
+
+      final details = listing.details;
+      final duration = details['duration'] as String?;
+      final departure = details['departure'] as String?;
+      final includeTransport = details['includeTransport'] as bool? ?? false;
+      final includeMeals = details['includeMeals'] as bool? ?? false;
+      final includeGuide = details['includeGuide'] as bool? ?? false;
+      final groupSize = details['groupSize'] as int?;
+
+      return Padding(
+        padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Chi tiết tour',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF111827),
+              ),
+            ),
+            SizedBox(height: 16.h),
+
+            // Duration badge
+            if (duration != null) ...[
+              _buildInfoRow(
+                icon: Icons.schedule,
+                label: 'Thời lượng',
+                value: duration,
+              ),
+              SizedBox(height: 12.h),
+            ],
+
+            // Departure point
+            if (departure != null) ...[
+              _buildInfoRow(
+                icon: Icons.location_on,
+                label: 'Điểm khởi hành',
+                value: departure,
+              ),
+              SizedBox(height: 12.h),
+            ],
+
+            // Group size
+            if (groupSize != null) ...[
+              _buildInfoRow(
+                icon: Icons.group,
+                label: 'Số người tối đa',
+                value: '$groupSize người/đoàn',
+              ),
+              SizedBox(height: 12.h),
+            ],
+
+            // Included services
+            Text(
+              'Bao gồm:',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF6B7280),
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Wrap(
+              spacing: 12.w,
+              runSpacing: 8.h,
+              children: [
+                if (includeTransport) _buildIncludedBadge(Icons.directions_bus, 'Xe đưa đón'),
+                if (includeMeals) _buildIncludedBadge(Icons.restaurant, 'Bữa ăn'),
+                if (includeGuide) _buildIncludedBadge(Icons.person, 'Hướng dẫn viên'),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  /// Food-specific details: category, serving, dietary info
+  Widget _buildFoodDetails() {
+    return Obx(() {
+      final listing = controller.listing.value;
+      if (listing == null) return const SizedBox.shrink();
+
+      final details = listing.details;
+      final category = details['category'] as String?;
+      final serving = details['serving'] as String?;
+      final isVegetarian = details['isVegetarian'] as bool? ?? false;
+      final isSpicy = details['isSpicy'] as bool? ?? false;
+      final prepTime = details['prepTime'] as String?;
+
+      return Padding(
+        padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Thông tin chi tiết',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF111827),
+              ),
+            ),
+            SizedBox(height: 16.h),
+
+            // Category
+            if (category != null) ...[
+              _buildInfoRow(
+                icon: Icons.category,
+                label: 'Loại món',
+                value: category,
+              ),
+              SizedBox(height: 12.h),
+            ],
+
+            // Serving size
+            if (serving != null) ...[
+              _buildInfoRow(
+                icon: Icons.people,
+                label: 'Khẩu phần',
+                value: serving,
+              ),
+              SizedBox(height: 12.h),
+            ],
+
+            // Preparation time
+            if (prepTime != null) ...[
+              _buildInfoRow(
+                icon: Icons.timer,
+                label: 'Thời gian chuẩn bị',
+                value: prepTime,
+              ),
+              SizedBox(height: 12.h),
+            ],
+
+            // Dietary indicators
+            if (isVegetarian || isSpicy) ...[
+              Text(
+                'Đặc điểm:',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF6B7280),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Wrap(
+                spacing: 12.w,
+                runSpacing: 8.h,
+                children: [
+                  if (isVegetarian) _buildIncludedBadge(Icons.eco, 'Chay'),
+                  if (isSpicy) _buildIncludedBadge(Icons.whatshot, 'Cay'),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+    });
+  }
+
+  /// Service-specific details: duration, location
+  Widget _buildServiceDetails() {
+    return Obx(() {
+      final listing = controller.listing.value;
+      if (listing == null) return const SizedBox.shrink();
+
+      final details = listing.details;
+      final duration = details['duration'] as String?;
+      final location = details['location'] as String?;
+
+      return Padding(
+        padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Thông tin dịch vụ',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF111827),
+              ),
+            ),
+            SizedBox(height: 16.h),
+
+            // Duration
+            if (duration != null) ...[
+              _buildInfoRow(
+                icon: Icons.schedule,
+                label: 'Thời lượng',
+                value: duration,
+              ),
+              SizedBox(height: 12.h),
+            ],
+
+            // Location
+            if (location != null) ...[
+              _buildInfoRow(
+                icon: Icons.place,
+                label: 'Địa điểm',
+                value: location,
+              ),
+            ],
+          ],
+        ),
+      );
+    });
+  }
+
+  // Helper widgets for type-specific sections
+  Widget _buildInfoRow({required IconData icon, required String label, required String value}) {
+    return Row(
+      children: [
+        Icon(icon, size: 20.sp, color: AppColors.primary),
+        SizedBox(width: 12.w),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: TextStyle(fontSize: 14.sp, color: const Color(0xFF374151)),
+              children: [
+                TextSpan(
+                  text: '$label: ',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                TextSpan(text: value),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIncludedBadge(IconData icon, String label) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16.sp, color: AppColors.primary),
+          SizedBox(width: 6.w),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: AppColors.primary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

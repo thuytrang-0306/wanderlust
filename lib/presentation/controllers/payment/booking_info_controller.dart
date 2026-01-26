@@ -118,6 +118,45 @@ class BookingInfoController extends BaseController {
         'cancellationPolicy': args['cancellationPolicy'] ?? listingDetails?['cancellationPolicy'] ??
             'Miễn phí hủy phòng trước 24 giờ. Sau thời gian này sẽ tính phí hủy 50% giá trị đặt phòng.',
       };
+
+      // Add type-specific fields from listingDetails
+      if (listingDetails != null) {
+        // Tour-specific fields
+        if (isTour) {
+          bookingData.addAll({
+            'duration': listingDetails['duration'],
+            'departure': listingDetails['departure'],
+            'includeTransport': listingDetails['includeTransport'],
+            'includeMeals': listingDetails['includeMeals'],
+            'includeGuide': listingDetails['includeGuide'],
+            'groupSize': listingDetails['groupSize'],
+          });
+        }
+        // Food-specific fields
+        else if (isFood) {
+          bookingData.addAll({
+            'category': listingDetails['category'],
+            'serving': listingDetails['serving'],
+            'isVegetarian': listingDetails['isVegetarian'],
+            'isSpicy': listingDetails['isSpicy'],
+            'prepTime': listingDetails['prepTime'],
+          });
+        }
+        // Service-specific fields
+        else if (isService) {
+          bookingData.addAll({
+            'duration': listingDetails['duration'],
+            'location': listingDetails['location'],
+          });
+        }
+        // Room-specific fields (already included above but for completeness)
+        else if (isRoom) {
+          bookingData.addAll({
+            'maxGuests': listingDetails['maxGuests'],
+            'numberOfBeds': listingDetails['numberOfBeds'],
+          });
+        }
+      }
     }
   }
 

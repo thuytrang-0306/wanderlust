@@ -573,12 +573,8 @@ class AccommodationDetailController extends BaseController {
         'priceBreakdown': priceBreakdown,
         'businessId': listing.value!.businessId,
         'businessName': listing.value!.businessName,
-        // Pass listing details for room info
-        'listingDetails': {
-          'roomSize': listing.value!.details['roomSize'] ?? '25m²',
-          'bedType': listing.value!.details['bedType'] ?? '1 giường đơn',
-          'cancellationPolicy': listing.value!.details['cancellationPolicy'],
-        },
+        // Pass listing details - include type-specific fields
+        'listingDetails': _buildListingDetails(),
       };
 
       // Add type-specific fields
@@ -651,5 +647,60 @@ class AccommodationDetailController extends BaseController {
         );
       }
     }
+  }
+
+  /// Build type-specific listing details to pass to BookingInfoPage
+  Map<String, dynamic> _buildListingDetails() {
+    if (listing.value == null) return {};
+
+    final details = listing.value!.details;
+    final Map<String, dynamic> listingDetails = {
+      'cancellationPolicy': details['cancellationPolicy'],
+    };
+
+    // Add type-specific fields based on listing type
+    switch (listingType) {
+      case ListingType.room:
+        listingDetails.addAll({
+          'roomSize': details['roomSize'] ?? '25m²',
+          'bedType': details['bedType'] ?? '1 giường đơn',
+          'maxGuests': details['maxGuests'],
+          'numberOfBeds': details['numberOfBeds'],
+        });
+        break;
+
+      case ListingType.tour:
+        listingDetails.addAll({
+          'duration': details['duration'],
+          'departure': details['departure'],
+          'includeTransport': details['includeTransport'],
+          'includeMeals': details['includeMeals'],
+          'includeGuide': details['includeGuide'],
+          'groupSize': details['groupSize'],
+        });
+        break;
+
+      case ListingType.food:
+        listingDetails.addAll({
+          'category': details['category'],
+          'serving': details['serving'],
+          'isVegetarian': details['isVegetarian'],
+          'isSpicy': details['isSpicy'],
+          'prepTime': details['prepTime'],
+        });
+        break;
+
+      case ListingType.service:
+        listingDetails.addAll({
+          'duration': details['duration'],
+          'location': details['location'],
+        });
+        break;
+
+      default:
+        break;
+    }
+
+    return listingDetails;
   }
 }
