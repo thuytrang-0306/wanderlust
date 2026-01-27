@@ -111,6 +111,40 @@ class CreatePostController extends GetxController {
     }
   }
 
+  // AI Assistant callbacks
+  void setTitle(String title) {
+    titleController.text = title;
+    _updateShareButton();
+    AppSnackbar.showSuccess(
+      title: 'Thành công',
+      message: 'Đã áp dụng tiêu đề AI',
+    );
+  }
+
+  void setDescription(String content) {
+    descriptionController.text = content;
+    descriptionLength.value = content.length;
+    _updateShareButton();
+    AppSnackbar.showSuccess(
+      title: 'Thành công',
+      message: 'Đã áp dụng nội dung AI',
+    );
+  }
+
+  void setTags(List<String> tags) {
+    for (var tag in tags) {
+      // Clean tag (remove # if present)
+      String cleanTag = tag.replaceAll('#', '').trim();
+      if (cleanTag.isNotEmpty && !selectedTags.contains(cleanTag)) {
+        selectedTags.add(cleanTag);
+      }
+    }
+    AppSnackbar.showSuccess(
+      title: 'Thành công',
+      message: 'Đã thêm ${tags.length} tags',
+    );
+  }
+
   Future<void> sharePost() async {
     if (!canShare.value) {
       AppSnackbar.showWarning(

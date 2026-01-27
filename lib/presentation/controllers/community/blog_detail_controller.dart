@@ -13,11 +13,12 @@ import 'package:wanderlust/core/widgets/app_snackbar.dart';
 import 'package:wanderlust/core/services/saved_blogs_service.dart';
 import 'package:wanderlust/data/models/listing_model.dart';
 import 'package:wanderlust/presentation/controllers/discover/discover_controller.dart';
+import 'package:wanderlust/presentation/controllers/ai/ai_blog_assistant_controller.dart';
 
 class BlogDetailController extends BaseController {
   // Services
   final BlogService _blogService = Get.find<BlogService>();
-  
+
   // Lazy load SavedBlogsService
   SavedBlogsService get _savedBlogsService {
     if (!Get.isRegistered<SavedBlogsService>()) {
@@ -26,12 +27,25 @@ class BlogDetailController extends BaseController {
     return Get.find<SavedBlogsService>();
   }
 
+  // AI Blog Assistant Controller (lazy load)
+  AiBlogAssistantController? _aiAssistant;
+  AiBlogAssistantController get aiAssistant {
+    if (_aiAssistant == null) {
+      _aiAssistant = Get.put(AiBlogAssistantController(), tag: 'blog_reading');
+    }
+    return _aiAssistant!;
+  }
+
   // Observable values
   final RxBool isBookmarked = false.obs;
   final RxBool isLiked = false.obs;
   final RxInt likeCount = 0.obs;
   final RxInt commentCount = 0.obs;
   final RxBool isLoadingData = true.obs;
+
+  // AI Reading Assistant state
+  final RxBool showAiInsights = false.obs;
+  final RxBool hasGeneratedInsights = false.obs;
 
   // Lock to prevent concurrent toggleLike calls
   bool _isTogglingLike = false;
@@ -644,6 +658,46 @@ ${post.destinations.isNotEmpty ? '📍 ${post.destinations.join(", ")}' : ''}
         title: 'Lỗi',
         message: 'Không thể chia sẻ bài viết. Vui lòng thử lại.',
       );
+    }
+  }
+
+  /// Generate AI summary for the blog
+  Future<void> generateSummary() async {
+    if (blogPost.value == null) return;
+
+    final post = blogPost.value!;
+    final content = [
+      post.title,
+      if (post.excerpt.isNotEmpty) post.excerpt,
+      if (post.content.isNotEmpty) post.content,
+    ].join('\n\n');
+
+    await aiAssistant.summarizeBlog(content);
+  }
+
+  /// Generate AI insights from the blog
+  Future<void> generateInsights() async {
+    if (blogPost.value == null || hasGeneratedInsights.value) return;
+
+    final post = blogPost.value!;
+    final content = [
+      post.title,
+      if (post.excerpt.isNotEmpty) post.excerpt,
+      if (post.content.isNotEmpty) post.content,
+    ].join('\n\n');
+
+    await aiAssistant.extractInsights(content);
+    hasGeneratedInsights.value = true;
+    showAiInsights.value = true;
+  }
+
+  /// Toggle AI insights visibility
+  void toggleAiInsights() {
+    showAiInsights.value = !showAiInsights.value;
+
+    // Generate insights on first show
+    if (showAiInsights.value && !hasGeneratedInsights.value) {
+      generateInsights();
     }
   }
 }

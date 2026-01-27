@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
@@ -39,6 +40,23 @@ class BlogDetailPage extends StatelessWidget {
           ),
         ),
         actions: [
+          // AI Assistant button
+          IconButton(
+            icon: Container(
+              padding: EdgeInsets.all(6.w),
+              decoration: BoxDecoration(
+                gradient: AppColors.gradient101,
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Icon(
+                Icons.auto_awesome,
+                color: AppColors.primary,
+                size: 20.sp,
+              ),
+            ),
+            onPressed: () => _showAiSummarySheet(controller),
+          ),
+          // Bookmark button
           Obx(
             () => IconButton(
               icon: Icon(
@@ -97,6 +115,9 @@ class BlogDetailPage extends StatelessWidget {
 
                     // Article content
                     _buildArticleContent(post),
+
+                    // AI Insights section
+                    _buildAiInsightsSection(controller),
 
                     // Business listings section
                     _buildBusinessListingsSection(controller),
@@ -602,6 +623,351 @@ class BlogDetailPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAiInsightsSection(BlogDetailController controller) {
+    return Obx(() {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 16.h),
+
+            // AI Insights Toggle Button
+            GestureDetector(
+              onTap: controller.toggleAiInsights,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                decoration: BoxDecoration(
+                  gradient: AppColors.gradient101,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: AppColors.primary, size: 20.sp),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'AI Insights',
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      controller.showAiInsights.value
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: AppColors.primary,
+                      size: 24.sp,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // AI Insights Content
+            if (controller.showAiInsights.value) ...[
+              SizedBox(height: 16.h),
+              Obx(() {
+                final aiController = controller.aiAssistant;
+
+                // Loading state
+                if (aiController.isExtractingInsights.value) {
+                  return Container(
+                    padding: EdgeInsets.all(20.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.neutral50,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Column(
+                      children: [
+                        CircularProgressIndicator(color: AppColors.primary),
+                        SizedBox(height: 12.h),
+                        Text(
+                          'AI đang phân tích bài viết...',
+                          style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Insights Content
+                if (aiController.blogInsights.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                final insights = aiController.blogInsights;
+                return Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.neutral200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Budget
+                      _buildInsightRow('💰 Chi phí:', insights['budget'] ?? 'Không đề cập'),
+                      SizedBox(height: 12.h),
+
+                      // Duration
+                      _buildInsightRow('⏰ Thời gian:', insights['duration'] ?? 'Không đề cập'),
+                      SizedBox(height: 12.h),
+
+                      // Best time
+                      _buildInsightRow('🌤️ Thời điểm tốt nhất:', insights['bestTime'] ?? 'Không đề cập'),
+                      SizedBox(height: 12.h),
+
+                      // Accommodation
+                      _buildInsightRow('🏨 Lưu trú:', insights['accommodation'] ?? 'Không đề cập'),
+
+                      // Must Try
+                      if (insights['mustTry'] != null) ...[
+                        SizedBox(height: 16.h),
+                        Text(
+                          '🍜 Món ngon phải thử:',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        ..._buildListItems(insights['mustTry']),
+                      ],
+
+                      // Highlights
+                      if (insights['highlights'] != null) ...[
+                        SizedBox(height: 16.h),
+                        Text(
+                          '🌟 Điểm nhấn:',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        ..._buildListItems(insights['highlights']),
+                      ],
+                    ],
+                  ),
+                );
+              }),
+            ],
+
+            SizedBox(height: 16.h),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildInsightRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Safe list items builder - handles both List and String types
+  List<Widget> _buildListItems(dynamic data) {
+    List<String> items = [];
+
+    if (data is List) {
+      items = data.map((e) => e.toString()).toList();
+    } else if (data is String) {
+      // If string, split by newline or comma
+      if (data.contains('\n')) {
+        items = data.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      } else if (data.contains(',')) {
+        items = data.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      } else {
+        items = [data];
+      }
+    }
+
+    return items.map((item) => Padding(
+      padding: EdgeInsets.only(bottom: 4.h, left: 8.w),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('• ', style: TextStyle(color: AppColors.primary, fontSize: 14.sp)),
+          Expanded(
+            child: Text(
+              item,
+              style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    )).toList();
+  }
+
+  void _showAiSummarySheet(BlogDetailController controller) {
+    Get.bottomSheet(
+      Container(
+        height: 0.75.sh,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                gradient: AppColors.gradient101,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: AppColors.primary, size: 24.sp),
+                  SizedBox(width: 12.w),
+                  Text(
+                    'AI Tóm tắt bài viết',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Get.back(),
+                    icon: Icon(Icons.close, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content
+            Expanded(
+              child: Obx(() {
+                final aiController = controller.aiAssistant;
+
+                // Loading state
+                if (aiController.isSummarizing.value) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: AppColors.primary),
+                        SizedBox(height: 16.h),
+                        Text(
+                          'AI đang tóm tắt bài viết...',
+                          style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Summary content
+                if (aiController.blogSummary.value.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.summarize, size: 64.sp, color: AppColors.neutral300),
+                        SizedBox(height: 16.h),
+                        Text(
+                          'Nhấn nút bên dưới để tạo tóm tắt',
+                          style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Use Markdown or fallback to Text if error
+                return SingleChildScrollView(
+                  padding: EdgeInsets.all(16.w),
+                  child: SelectableText(
+                    aiController.blogSummary.value,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: AppColors.textSecondary,
+                      height: 1.8,
+                    ),
+                  ),
+                );
+              }),
+            ),
+
+            // Generate button
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    offset: const Offset(0, -2),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              child: Obx(() {
+                final aiController = controller.aiAssistant;
+
+                return SizedBox(
+                  width: double.infinity,
+                  height: 48.h,
+                  child: ElevatedButton(
+                    onPressed:
+                        aiController.isSummarizing.value
+                            ? null
+                            : () => controller.generateSummary(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      aiController.blogSummary.value.isEmpty ? 'Tạo tóm tắt AI' : 'Tạo lại',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+      isDismissible: true,
+      enableDrag: true,
+      isScrollControlled: true,
     );
   }
 }

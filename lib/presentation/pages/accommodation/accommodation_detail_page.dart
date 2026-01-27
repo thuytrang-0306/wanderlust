@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/widgets/app_image.dart';
 import 'package:wanderlust/presentation/controllers/accommodation/accommodation_detail_controller.dart';
@@ -22,6 +24,9 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
   double _scrollOffset = 0;
   bool _isCollapsed = false;
   double _titleOpacity = 0.0;
+
+  // Tour itinerary state
+  int _selectedDay = 0;
 
   // Constants
   static final double _headerHeight = 280.h;
@@ -314,6 +319,9 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
 
                       // Business/Host info
                       _buildHostInfo(),
+
+                      // Spacing after business card
+                      SizedBox(height: 24.h),
 
                       // Amenities
                       _buildAmenities(),
@@ -1150,7 +1158,7 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
 
   // ========== TYPE-SPECIFIC DETAIL SECTIONS ==========
 
-  /// Tour-specific details: duration, departure, included services
+  /// Tour-specific details: duration, departure, included services, map, itinerary
   Widget _buildTourDetails() {
     return Obx(() {
       final listing = controller.listing.value;
@@ -1164,72 +1172,171 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
       final includeGuide = details['includeGuide'] as bool? ?? false;
       final groupSize = details['groupSize'] as int?;
 
-      return Padding(
-        padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Chi tiết tour',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF111827),
-              ),
-            ),
-            SizedBox(height: 16.h),
+      // Mock data for 3-day tour itinerary from TP.HCM to Nha Trang
+      final mockItinerary = [
+        {
+          'day': 1,
+          'title': 'Ngày 1: Khởi hành - Khám phá Nha Trang',
+          'activities': [
+            {'time': '06:00', 'icon': Icons.flight_takeoff, 'title': 'Khởi hành từ TP.HCM', 'description': 'Tập trung tại sân bay Tân Sơn Nhất'},
+            {'time': '07:30', 'icon': Icons.flight_land, 'title': 'Đến Nha Trang', 'description': 'Di chuyển về khách sạn nhận phòng'},
+            {'time': '09:00', 'icon': Icons.restaurant, 'title': 'Ăn sáng', 'description': 'Buffet sáng tại khách sạn'},
+            {'time': '10:30', 'icon': Icons.beach_access, 'title': 'Tham quan bãi biển Nha Trang', 'description': 'Tắm biển, vui chơi tại bãi biển'},
+            {'time': '12:30', 'icon': Icons.restaurant, 'title': 'Ăn trưa', 'description': 'Thưởng thức hải sản tươi sống'},
+            {'time': '14:00', 'icon': Icons.temple_buddhist, 'title': 'Thăm Tháp Bà Ponagar', 'description': 'Tìm hiểu văn hóa Chăm'},
+            {'time': '16:30', 'icon': Icons.hot_tub, 'title': 'Tắm bùn I-Resort', 'description': 'Thư giãn với dịch vụ tắm bùn'},
+            {'time': '19:00', 'icon': Icons.restaurant, 'title': 'Ăn tối', 'description': 'BBQ hải sản ven biển'},
+          ],
+        },
+        {
+          'day': 2,
+          'title': 'Ngày 2: Tour 4 đảo',
+          'activities': [
+            {'time': '08:00', 'icon': Icons.breakfast_dining, 'title': 'Ăn sáng', 'description': 'Buffet sáng tại khách sạn'},
+            {'time': '09:00', 'icon': Icons.directions_boat, 'title': 'Khởi hành tour 4 đảo', 'description': 'Di chuyển bằng tàu cao tốc'},
+            {'time': '10:00', 'icon': Icons.water, 'title': 'Đảo Hòn Mun', 'description': 'Lặn ngắm san hô'},
+            {'time': '11:30', 'icon': Icons.pool, 'title': 'Thủy cung Trí Nguyên', 'description': 'Tham quan thủy cung'},
+            {'time': '12:30', 'icon': Icons.restaurant, 'title': 'Ăn trưa trên đảo', 'description': 'Hải sản tươi sống'},
+            {'time': '14:00', 'icon': Icons.music_note, 'title': 'Đảo Hòn Tằm', 'description': 'Vui chơi, tắm biển'},
+            {'time': '16:00', 'icon': Icons.kayaking, 'title': 'Hoạt động thể thao biển', 'description': 'Chèo thuyền kayak, jet ski'},
+            {'time': '17:30', 'icon': Icons.directions_boat, 'title': 'Về lại bờ', 'description': 'Di chuyển về khách sạn'},
+            {'time': '19:00', 'icon': Icons.restaurant, 'title': 'Ăn tối tự do', 'description': 'Khám phá ẩm thực địa phương'},
+          ],
+        },
+        {
+          'day': 3,
+          'title': 'Ngày 3: Vinpearl Land - Về TP.HCM',
+          'activities': [
+            {'time': '08:00', 'icon': Icons.breakfast_dining, 'title': 'Ăn sáng', 'description': 'Buffet sáng tại khách sạn'},
+            {'time': '09:00', 'icon': Icons.tram, 'title': 'Đi cáp treo Vinpearl', 'description': 'Trải nghiệm cáp treo dài nhất VN'},
+            {'time': '09:30', 'icon': Icons.attractions, 'title': 'Vinpearl Land', 'description': 'Vui chơi tại công viên giải trí'},
+            {'time': '12:00', 'icon': Icons.restaurant, 'title': 'Ăn trưa', 'description': 'Buffet tại Vinpearl'},
+            {'time': '14:00', 'icon': Icons.pool, 'title': 'Thủy cung & bãi biển', 'description': 'Tham quan thủy cung, tắm biển'},
+            {'time': '16:00', 'icon': Icons.shopping_bag, 'title': 'Mua sắm quà lưu niệm', 'description': 'Chợ Đầm, phố đi bộ'},
+            {'time': '18:00', 'icon': Icons.restaurant, 'title': 'Ăn tối', 'description': 'Bữa tối tại nhà hàng'},
+            {'time': '20:00', 'icon': Icons.flight_takeoff, 'title': 'Bay về TP.HCM', 'description': 'Kết thúc chuyến đi'},
+          ],
+        },
+      ];
 
-            // Duration badge
-            if (duration != null) ...[
-              _buildInfoRow(
-                icon: Icons.schedule,
-                label: 'Thời lượng',
-                value: duration,
-              ),
-              SizedBox(height: 12.h),
-            ],
+      final currentDayData = mockItinerary[_selectedDay];
 
-            // Departure point
-            if (departure != null) ...[
-              _buildInfoRow(
-                icon: Icons.location_on,
-                label: 'Điểm khởi hành',
-                value: departure,
-              ),
-              SizedBox(height: 12.h),
-            ],
-
-            // Group size
-            if (groupSize != null) ...[
-              _buildInfoRow(
-                icon: Icons.group,
-                label: 'Số người tối đa',
-                value: '$groupSize người/đoàn',
-              ),
-              SizedBox(height: 12.h),
-            ],
-
-            // Included services
-            Text(
-              'Bao gồm:',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF6B7280),
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Wrap(
-              spacing: 12.w,
-              runSpacing: 8.h,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Basic tour info
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (includeTransport) _buildIncludedBadge(Icons.directions_bus, 'Xe đưa đón'),
-                if (includeMeals) _buildIncludedBadge(Icons.restaurant, 'Bữa ăn'),
-                if (includeGuide) _buildIncludedBadge(Icons.person, 'Hướng dẫn viên'),
+                Text(
+                  'Chi tiết tour',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+
+                // Duration
+                if (duration != null) ...[
+                  _buildInfoRow(
+                    icon: Icons.schedule,
+                    label: 'Thời lượng',
+                    value: duration,
+                  ),
+                  SizedBox(height: 12.h),
+                ],
+
+                // Departure point
+                if (departure != null) ...[
+                  _buildInfoRow(
+                    icon: Icons.location_on,
+                    label: 'Điểm khởi hành',
+                    value: departure,
+                  ),
+                  SizedBox(height: 12.h),
+                ],
+
+                // Group size
+                if (groupSize != null) ...[
+                  _buildInfoRow(
+                    icon: Icons.group,
+                    label: 'Số người tối đa',
+                    value: '$groupSize người/đoàn',
+                  ),
+                  SizedBox(height: 12.h),
+                ],
+
+                // Included services
+                SizedBox(height: 8.h),
+                Text(
+                  'Bao gồm:',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF6B7280),
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Wrap(
+                  spacing: 12.w,
+                  runSpacing: 8.h,
+                  children: [
+                    if (includeTransport) _buildIncludedBadge(Icons.directions_bus, 'Xe đưa đón'),
+                    if (includeMeals) _buildIncludedBadge(Icons.restaurant, 'Bữa ăn'),
+                    if (includeGuide) _buildIncludedBadge(Icons.person, 'Hướng dẫn viên'),
+                  ],
+                ),
               ],
             ),
-          ],
-        ),
+          ),
+
+          SizedBox(height: 32.h),
+
+          // Map section with route
+          _buildItineraryMap(),
+
+          SizedBox(height: 32.h),
+
+          // Location cards (Departure & Arrival)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Column(
+              children: [
+                _buildLocationCard(
+                  title: 'Xuất phát',
+                  location: 'TP. Hồ Chí Minh',
+                  time: '06:00 AM',
+                  imageUrl: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482',
+                  isStart: true,
+                ),
+                SizedBox(height: 12.h),
+                _buildLocationCard(
+                  title: 'Trạm',
+                  location: 'Nha Trang, Khánh Hòa',
+                  time: '07:30 AM',
+                  imageUrl: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b',
+                  isStart: false,
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 32.h),
+
+          // Day timeline selector
+          _buildDayTimeline(mockItinerary.length),
+
+          SizedBox(height: 24.h),
+
+          // Detailed day itinerary
+          _buildDayItinerary(currentDayData),
+
+          SizedBox(height: 24.h),
+        ],
       );
     });
   }
@@ -1413,6 +1520,427 @@ class _AccommodationDetailPageState extends State<AccommodationDetailPage> {
           ),
         ],
       ),
+    );
+  }
+
+  // ========== TOUR-SPECIFIC WIDGETS ==========
+
+  /// Map section with route from TP.HCM to Nha Trang
+  Widget _buildItineraryMap() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Lịch trình',
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF111827),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16.r),
+            child: Container(
+              height: 240.h,
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: const LatLng(11.5, 108.0), // Midpoint between HCMC and Nha Trang
+                  initialZoom: 7.0,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                  ),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.wanderlust.app',
+                  ),
+                  // Route polyline
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: [
+                          const LatLng(10.8231, 106.6297), // TP.HCM
+                          const LatLng(11.0, 107.0),
+                          const LatLng(11.5, 108.0),
+                          const LatLng(12.2388, 109.1967), // Nha Trang
+                        ],
+                        color: AppColors.primary,
+                        strokeWidth: 4.0,
+                      ),
+                    ],
+                  ),
+                  // Markers
+                  MarkerLayer(
+                    markers: [
+                      // Start marker (TP.HCM)
+                      Marker(
+                        point: const LatLng(10.8231, 106.6297),
+                        width: 40.w,
+                        height: 40.w,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(Icons.flight_takeoff, color: Colors.white, size: 20.sp),
+                        ),
+                      ),
+                      // End marker (Nha Trang)
+                      Marker(
+                        point: const LatLng(12.2388, 109.1967),
+                        width: 40.w,
+                        height: 40.w,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(Icons.location_on, color: Colors.white, size: 20.sp),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Location card (Departure/Arrival) - Optimized responsive
+  Widget _buildLocationCard({
+    required String title,
+    required String location,
+    required String time,
+    required String imageUrl,
+    required bool isStart,
+  }) {
+    return Container(
+      constraints: BoxConstraints(
+        minHeight: 95.h,
+        maxHeight: 110.h,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            // Location image
+            ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.r),
+                bottomLeft: Radius.circular(12.r),
+              ),
+              child: Image.network(
+                imageUrl,
+                width: 95.w,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 95.w,
+                    color: const Color(0xFFF3F4F6),
+                    child: Icon(Icons.image, color: const Color(0xFF9CA3AF), size: 32.sp),
+                  );
+                },
+              ),
+            ),
+
+            // Location info
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Badge
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                      decoration: BoxDecoration(
+                        color: isStart
+                            ? Colors.green.withValues(alpha: 0.1)
+                            : Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w600,
+                          color: isStart ? Colors.green : Colors.orange,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    // Location name
+                    Flexible(
+                      child: Text(
+                        location,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF111827),
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    // Time
+                    Row(
+                      children: [
+                        Icon(Icons.access_time, size: 13.sp, color: const Color(0xFF6B7280)),
+                        SizedBox(width: 4.w),
+                        Flexible(
+                          child: Text(
+                            time,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: const Color(0xFF6B7280),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Day timeline selector
+  Widget _buildDayTimeline(int totalDays) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Lịch trình chi tiết',
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF111827),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          Row(
+            children: List.generate(totalDays, (index) {
+              final isSelected = index == _selectedDay;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedDay = index;
+                    });
+                  },
+                  child: Container(
+                    margin: EdgeInsets.only(right: index < totalDays - 1 ? 8.w : 0),
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primary : const Color(0xFFE5E7EB),
+                        width: isSelected ? 2 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      'Ngày ${index + 1}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Detailed day itinerary
+  Widget _buildDayItinerary(Map<String, dynamic> dayData) {
+    final title = dayData['title'] as String;
+    final activities = dayData['activities'] as List;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Day title
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF111827),
+            ),
+          ),
+          SizedBox(height: 16.h),
+
+          // Activities list
+          ...activities.asMap().entries.map((entry) {
+            final index = entry.key;
+            final activity = entry.value as Map<String, dynamic>;
+            final isLast = index == activities.length - 1;
+
+            return _buildActivityItem(
+              time: activity['time'] as String,
+              icon: activity['icon'] as IconData,
+              title: activity['title'] as String,
+              description: activity['description'] as String,
+              isLast: isLast,
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  /// Activity item in itinerary
+  Widget _buildActivityItem({
+    required String time,
+    required IconData icon,
+    required String title,
+    required String description,
+    required bool isLast,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Timeline
+        SizedBox(
+          width: 60.w,
+          child: Column(
+            children: [
+              // Time
+              Text(
+                time,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Connector
+        Column(
+          children: [
+            // Icon
+            Container(
+              width: 40.w,
+              height: 40.w,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary, width: 2),
+              ),
+              child: Icon(icon, color: AppColors.primary, size: 20.sp),
+            ),
+            // Line to next
+            if (!isLast)
+              Container(
+                width: 2,
+                height: 40.h,
+                color: const Color(0xFFE5E7EB),
+              ),
+          ],
+        ),
+
+        SizedBox(width: 12.w),
+
+        // Content
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: isLast ? 0 : 16.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: const Color(0xFF6B7280),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

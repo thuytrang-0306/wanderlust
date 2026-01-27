@@ -5,6 +5,7 @@ import 'package:wanderlust/core/constants/app_colors.dart';
 import 'package:wanderlust/core/constants/app_spacing.dart';
 import 'package:wanderlust/core/constants/app_typography.dart';
 import 'package:wanderlust/presentation/controllers/community/create_post_controller.dart';
+import 'package:wanderlust/presentation/widgets/ai_blog_assistant_sheet.dart';
 import 'dart:io';
 
 class CreatePostPage extends GetView<CreatePostController> {
@@ -58,6 +59,49 @@ class CreatePostPage extends GetView<CreatePostController> {
           ],
         ),
       ),
+      floatingActionButton: _buildAiFab(),
+    );
+  }
+
+  Widget _buildAiFab() {
+    return FloatingActionButton.extended(
+      onPressed: () => _showAiAssistant(),
+      backgroundColor: AppColors.primary,
+      elevation: 4,
+      icon: Icon(Icons.auto_awesome, color: Colors.white, size: 24.sp),
+      label: Text(
+        'AI Trợ lý viết',
+        style: AppTypography.bodyM.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  void _showAiAssistant() {
+    AiBlogAssistantSheet.show(
+      // Callbacks for applying AI-generated content
+      onTitleSelected: (title) {
+        controller.setTitle(title);
+      },
+      onBlogGenerated: (content) {
+        controller.setDescription(content);
+      },
+      onContentImproved: (content) {
+        controller.setDescription(content);
+      },
+      onTagsGenerated: (tags) {
+        controller.setTags(tags);
+      },
+      // Context for AI generation
+      tags: controller.selectedTags.toList(),
+      destinations: controller.selectedTags
+          .where((tag) => ['TaXua', 'Haiphong', 'DaNang'].contains(tag))
+          .toList(),
+      imageCount: controller.selectedImages.length,
+      title: controller.titleController.text,
+      content: controller.descriptionController.text,
     );
   }
 
